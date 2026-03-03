@@ -465,7 +465,7 @@ char *Sys_DefaultHomePath(void) {
 #endif
 
 void Sys_SetProcessorAffinity(void) {
-#if defined(__linux__)
+#if defined(__linux__) && !defined(__EMSCRIPTEN__)
 	uint32_t cores;
 
 	if (sscanf(com_affinity->string, "%X", &cores) != 1)

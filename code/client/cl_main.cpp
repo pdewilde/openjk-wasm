@@ -1035,13 +1035,23 @@ static CMiniHeap *GetG2VertSpaceServer(void) { return G2VertSpaceServer; }
 #define DEFAULT_RENDER_LIBRARY "rdsp-vanilla"
 #endif
 
+#ifdef __EMSCRIPTEN__
+extern "C" refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp);
+#endif
+
 void CL_InitRef(void) {
 	refexport_t *ret;
 	static refimport_t rit;
-	char dllName[MAX_OSPATH];
-	GetRefAPI_t GetRefAPI;
 
 	Com_Printf("----- Initializing Renderer ----\n");
+
+#ifdef __EMSCRIPTEN__
+	// In WASM builds, the renderer is statically linked
+	Com_Printf("Using statically linked renderer\n");
+	ret = GetRefAPI(REF_API_VERSION, &rit);
+#else
+	GetRefAPI_t GetRefAPI;
+	char dllName[MAX_OSPATH];
 	cl_renderer = Cvar_Get("cl_renderer", DEFAULT_RENDER_LIBRARY, CVAR_ARCHIVE | CVAR_LATCH);
 
 	Com_sprintf(dllName, sizeof(dllName), "%s_" ARCH_STRING DLL_EXT, cl_renderer->string);
@@ -1058,11 +1068,12 @@ void CL_InitRef(void) {
 		Com_Error(ERR_FATAL, "Failed to load renderer\n");
 	}
 
-	memset(&rit, 0, sizeof(rit));
-
 	GetRefAPI = (GetRefAPI_t)Sys_LoadFunction(rendererLib, "GetRefAPI");
 	if (!GetRefAPI)
 		Com_Error(ERR_FATAL, "Can't load symbol GetRefAPI: '%s'", Sys_LibraryError());
+#endif
+
+	memset(&rit, 0, sizeof(rit));
 
 #define RIT(y) rit.y = y
 	RIT(CIN_PlayCinematic);

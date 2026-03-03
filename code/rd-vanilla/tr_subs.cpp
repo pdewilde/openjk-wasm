@@ -27,6 +27,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 // tr_subs.cpp - common function replacements for modular renderer
 #include "tr_local.h"
 
+#if 0
 void QDECL Com_Printf(const char *msg, ...) {
 	va_list argptr;
 	char text[1024];
@@ -66,6 +67,7 @@ void Com_DPrintf(const char *format, ...) {
 
 	ri.Printf(PRINT_DEVELOPER, "%s", text);
 }
+#endif
 
 // HUNK
 

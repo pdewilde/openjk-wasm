@@ -36,7 +36,7 @@ USER INTERFACE SABER LOADING & DISPLAY CODE
 #include "../ghoul2/G2.h"
 
 #define MAX_SABER_DATA_SIZE 0x80000
-char SaberParms[MAX_SABER_DATA_SIZE];
+static char SaberParms[MAX_SABER_DATA_SIZE];
 qboolean ui_saber_parms_parsed = qfalse;
 
 static qhandle_t redSaberGlowShader;
@@ -65,6 +65,8 @@ void UI_CacheSaberGlowGraphics(void) { // FIXME: these get fucked by vid_restart
 	purpleSaberGlowShader = re.RegisterShader("gfx/effects/sabers/purple_glow");
 	purpleSaberCoreShader = re.RegisterShader("gfx/effects/sabers/purple_line");
 }
+
+
 
 qboolean UI_ParseLiteral(const char **data, const char *string) {
 	const char *token;
@@ -378,7 +380,7 @@ void UI_DoSaber(vec3_t origin, vec3_t dir, float length, float lengthMax, float 
 	DC->addRefEntityToScene(&saber);
 }
 
-saber_colors_t TranslateSaberColor(const char *name) {
+saber_colors_t UI_TranslateSaberColor(const char *name) {
 	if (!Q_stricmp(name, "red")) {
 		return SABER_RED;
 	}
@@ -464,7 +466,7 @@ void UI_SaberDrawBlade(itemDef_t *item, char *saberName, int saberModel, saberTy
 	{
 		DC->getCVarString("ui_saber2_color", bladeColorString, sizeof(bladeColorString));
 	}
-	saber_colors_t bladeColor = TranslateSaberColor(bladeColorString);
+	saber_colors_t bladeColor = UI_TranslateSaberColor(bladeColorString);
 
 	float bladeLength = UI_SaberBladeLengthForSaber(saberName, bladeNum);
 	float bladeRadius = UI_SaberBladeRadiusForSaber(saberName, bladeNum);

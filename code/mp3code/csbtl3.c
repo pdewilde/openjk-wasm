@@ -41,7 +41,7 @@ void sbt_mono_L3(float *sample, short *pcm, int ch) {
 	ch = 0;
 	for (i = 0; i < 18; i++) {
 		fdct32(sample, pMP3Stream->vbuf + pMP3Stream->vb_ptr);
-		window(pMP3Stream->vbuf, pMP3Stream->vb_ptr, pcm);
+		MP3_window(pMP3Stream->vbuf, pMP3Stream->vb_ptr, pcm);
 		sample += 32;
 		pMP3Stream->vb_ptr = (pMP3Stream->vb_ptr - 32) & 511;
 		pcm += 32;

@@ -26,6 +26,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include <sys/stat.h>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 #include "qcommon/qcommon.h"
 #include "sys_local.h"
 #include "sys_loadlib.h"
@@ -711,6 +715,11 @@ int main(int argc, char *argv[]) {
 
 	NET_Init();
 
+#ifdef __EMSCRIPTEN__
+	// In the browser, we must yield control to the browser event loop.
+	// emscripten_set_main_loop calls Com_Frame via requestAnimationFrame.
+	emscripten_set_main_loop(Com_Frame, 0, 1);
+#else
 	// main game loop
 	while (1) {
 		if (com_busyWait->integer) {
@@ -734,6 +743,7 @@ int main(int argc, char *argv[]) {
 		// run the game
 		Com_Frame();
 	}
+#endif
 
 	// never gets here
 	return 0;

@@ -55,6 +55,8 @@ void window16_dual(float *vbuf, int vb_ptr, short *pcm);
 void window8(float *vbuf, int vb_ptr, short *pcm);
 void window8_dual(float *vbuf, int vb_ptr, short *pcm);
 
+extern void MP3_window(float *vbuf, int vb_ptr, short *pcm);
+
 /*-------------------------------------------------------------------------*/
 /* circular window buffers */
 #include "mp3struct.h"
@@ -113,7 +115,7 @@ void sbt_mono(float *sample, short *pcm, int n) {
 
 	for (i = 0; i < n; i++) {
 		fdct32(sample, pMP3Stream->vbuf + pMP3Stream->vb_ptr);
-		window(pMP3Stream->vbuf, pMP3Stream->vb_ptr, pcm);
+		MP3_window(pMP3Stream->vbuf, pMP3Stream->vb_ptr, pcm);
 		sample += 64;
 		pMP3Stream->vb_ptr = (pMP3Stream->vb_ptr - 32) & 511;
 		pcm += 32;
@@ -140,7 +142,7 @@ void sbt_dual_mono(float *sample, short *pcm, int n) {
 
 	for (i = 0; i < n; i++) {
 		fdct32_dual_mono(sample, pMP3Stream->vbuf + pMP3Stream->vb_ptr);
-		window(pMP3Stream->vbuf, pMP3Stream->vb_ptr, pcm);
+		MP3_window(pMP3Stream->vbuf, pMP3Stream->vb_ptr, pcm);
 		sample += 64;
 		pMP3Stream->vb_ptr = (pMP3Stream->vb_ptr - 32) & 511;
 		pcm += 32;
@@ -153,7 +155,7 @@ void sbt_dual_left(float *sample, short *pcm, int n) {
 
 	for (i = 0; i < n; i++) {
 		fdct32_dual(sample, pMP3Stream->vbuf + pMP3Stream->vb_ptr);
-		window(pMP3Stream->vbuf, pMP3Stream->vb_ptr, pcm);
+		MP3_window(pMP3Stream->vbuf, pMP3Stream->vb_ptr, pcm);
 		sample += 64;
 		pMP3Stream->vb_ptr = (pMP3Stream->vb_ptr - 32) & 511;
 		pcm += 32;
@@ -167,7 +169,7 @@ void sbt_dual_right(float *sample, short *pcm, int n) {
 	sample++; /* point to right chan */
 	for (i = 0; i < n; i++) {
 		fdct32_dual(sample, pMP3Stream->vbuf + pMP3Stream->vb_ptr);
-		window(pMP3Stream->vbuf, pMP3Stream->vb_ptr, pcm);
+		MP3_window(pMP3Stream->vbuf, pMP3Stream->vb_ptr, pcm);
 		sample += 64;
 		pMP3Stream->vb_ptr = (pMP3Stream->vb_ptr - 32) & 511;
 		pcm += 32;

@@ -46,6 +46,7 @@ void UI_LoadMenus(const char *menuFile, qboolean reset);
 extern vmCvar_t ui_char_color_red;
 extern vmCvar_t ui_char_color_green;
 extern vmCvar_t ui_char_color_blue;
+void UI_LoadMenus(const char *menuFile, qboolean reset);
 
 void *UI_Alloc(int size);
 

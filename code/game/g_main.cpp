@@ -160,7 +160,7 @@ cvar_t *g_weaponRespawn;
 cvar_t *g_subtitles;
 cvar_t *g_ICARUSDebug;
 
-cvar_t *com_buildScript;
+static cvar_t *com_buildScript;
 
 cvar_t *g_skippingcin;
 cvar_t *g_AIsurrender;
@@ -854,6 +854,7 @@ Com_Error
 -------------------------
 */
 
+#if 0
 void Com_Error(int level, const char *error, ...) {
 	va_list argptr;
 	char text[1024];
@@ -881,6 +882,7 @@ void Com_Printf(const char *msg, ...) {
 
 	gi.Printf("%s", text);
 }
+#endif
 
 /*
 ========================================================================

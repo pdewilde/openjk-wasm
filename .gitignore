@@ -193,3 +193,8 @@ pip-log.txt
 #############
 [Bb]uild*/
 cmake-build-*
+
+# My messy build paths
+build-native
+build-wasm
+GameData

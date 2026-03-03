@@ -124,7 +124,8 @@ public:
 	}
 }; // animFileSet_t
 
-extern stringID_table_t animTable [MAX_ANIMATIONS+1];
+#include "../cgame/animtable.h"
+
 
 //Interest points
 

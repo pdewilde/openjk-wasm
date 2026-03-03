@@ -626,6 +626,10 @@ static void SV_WE_AddWeatherZone(vec3_t mins, vec3_t maxs) { return re.AddWeathe
 
 static bool SV_WE_SetTempGlobalFogColor(vec3_t color) { return re.SetTempGlobalFogColor(color); }
 
+#ifdef __EMSCRIPTEN__
+extern "C" game_export_t *QDECL GetGameAPI(game_import_t *import);
+#endif
+
 /*
 ===============
 SV_InitGameProgs
@@ -795,6 +799,13 @@ void SV_InitGameProgs(void) {
 	import.WE_AddWeatherZone = SV_WE_AddWeatherZone;
 	import.WE_SetTempGlobalFogColor = SV_WE_SetTempGlobalFogColor;
 
+#ifdef __EMSCRIPTEN__
+	// In WASM builds, the game module is statically linked
+	ge = GetGameAPI(&import);
+	if (!ge) {
+		Com_Error(ERR_DROP, "Failed to get game API from statically linked game module");
+	}
+#else
 #ifdef JK2_MODE
 	const char *gamename = "jospgame";
 #else
@@ -811,6 +822,7 @@ void SV_InitGameProgs(void) {
 		Sys_UnloadDll(gameLibrary);
 		Com_Error(ERR_DROP, "Failed to load %s library", gamename);
 	}
+#endif
 
 	if (ge->apiversion != GAME_API_VERSION) {
 		int apiVersion = ge->apiversion;

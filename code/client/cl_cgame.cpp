@@ -58,18 +58,31 @@ extern qboolean R_inPVS(vec3_t p1, vec3_t p2);
 
 void UI_SetActiveMenu(const char *menuname, const char *menuID);
 
+#ifdef __EMSCRIPTEN__
+extern "C" {
+	void CG_dllEntry(intptr_t (*)(intptr_t, ...));
+	intptr_t CG_vmMain(int, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t);
+}
+#endif
+
 qboolean CL_InitCGameVM(void *gameLibrary) {
 	typedef intptr_t SyscallProc(intptr_t, ...);
 	typedef void DllEntryProc(SyscallProc *);
 
-	DllEntryProc *dllEntry = (DllEntryProc *)Sys_LoadFunction(gameLibrary, "dllEntry");
+#ifdef __EMSCRIPTEN__
+	// In WASM builds, cgame is statically linked in the game module
+
+	DllEntryProc *dllEntryPtr = CG_dllEntry;
+	cgvm.entryPoint = CG_vmMain;
+#else
+	DllEntryProc *dllEntryPtr = (DllEntryProc *)Sys_LoadFunction(gameLibrary, "dllEntry");
 
 	// NOTE: arm64 mac has a different calling convention for fixed parameters vs. variadic parameters.
 	//       As the cgame entryPoints (vmMain) in jk2 and jka use fixed arg0 to arg7 we can't use "..." around here or we end up with undefined behavior.
 	//       See: https://developer.apple.com/documentation/apple-silicon/addressing-architectural-differences-in-your-macos-code
 	cgvm.entryPoint = (intptr_t(*)(int, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t))Sys_LoadFunction(gameLibrary, "vmMain");
 
-	if (!cgvm.entryPoint || !dllEntry) {
+	if (!cgvm.entryPoint || !dllEntryPtr) {
 #ifdef JK2_MODE
 		const char *gamename = "jospgame";
 #else
@@ -79,8 +92,9 @@ qboolean CL_InitCGameVM(void *gameLibrary) {
 		Com_Printf("CL_InitCGameVM: client game entry point not found in %s" ARCH_STRING DLL_EXT ": %s\n", gamename, Sys_LibraryError());
 		return qfalse;
 	}
+#endif
 
-	dllEntry(VM_DllSyscall);
+	dllEntryPtr(VM_DllSyscall);
 
 	return qtrue;
 }

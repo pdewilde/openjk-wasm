@@ -25,9 +25,22 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 // moved it from the original header file for PCH reasons...
 //
+// This header is designed to be included multiple times.
+// Once without ANIMTABLE_DEFINITION for extern declarations,
+// and once with ANIMTABLE_DEFINITION in a .cpp file to define the table.
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef ANIMTABLE_DEFINITION
 stringID_table_t animTable [MAX_ANIMATIONS+1] =
 {
+#else
+extern stringID_table_t animTable [MAX_ANIMATIONS+1];
+#endif
+
+#ifdef ANIMTABLE_DEFINITION
 	//=================================================
 	//HEAD ANIMS
 	//=================================================
@@ -1812,3 +1825,8 @@ stringID_table_t animTable [MAX_ANIMATIONS+1] =
 	//must be terminated
 	{ NULL,-1 }
 };
+#endif
+
+#ifdef __cplusplus
+}
+#endif

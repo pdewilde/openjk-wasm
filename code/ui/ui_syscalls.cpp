@@ -96,14 +96,14 @@ void trap_GetGlconfig(glconfig_t *glconfig) {
 }
 
 // this returns a handle.  arg0 is the name in the format "idlogo.roq", set arg1 to NULL, alteredstates to qfalse (do not alter gamestate)
-int trap_CIN_PlayCinematic(const char *arg0, int xpos, int ypos, int width, int height, int bits, const char *psAudioFile) {
+int UI_trap_CIN_PlayCinematic(const char *arg0, int xpos, int ypos, int width, int height, int bits, const char *psAudioFile) {
 	//  return syscall(UI_CIN_PLAYCINEMATIC, arg0, xpos, ypos, width, height, bits, psAudioFile);
 	return CIN_PlayCinematic(arg0, xpos, ypos, width, height, bits, psAudioFile);
 }
 
 // stops playing the cinematic and ends it.  should always return FMV_EOF
 // cinematics must be stopped in reverse order of when they are started
-int trap_CIN_StopCinematic(int handle) {
+int UI_trap_CIN_StopCinematic(int handle) {
 	//  return syscall(UI_CIN_STOPCINEMATIC, handle);
 	return CIN_StopCinematic(handle);
 }

@@ -37,7 +37,7 @@ portable C
 #include "config.h"
 
 /*-------------------------------------------------------------------------*/
-void window(float *vbuf, int vb_ptr, short *pcm) {
+void MP3_window(float *vbuf, int vb_ptr, short *pcm) {
 	int i, j;
 	int si, bx;
 	const float *coef;

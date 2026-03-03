@@ -35,6 +35,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #define LOOK_SWING_SCALE 0.5f
 #define CG_SWINGSPEED 0.3f
 
+#define ANIMTABLE_DEFINITION
 #include "animtable.h"
 
 extern qboolean WP_SaberBladeUseSecondBladeStyle(saberInfo_t *saber, int bladeNum);

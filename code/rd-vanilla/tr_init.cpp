@@ -174,13 +174,13 @@ cvar_t *broadsword_ragtobase;
 cvar_t *broadsword_dircap;
 
 // More bullshit needed for the proper modular renderer --eez
-cvar_t *sv_mapname;
-cvar_t *sv_mapChecksum;
-cvar_t *se_language; // JKA
+static cvar_t *r_sv_mapname;
+static cvar_t *r_sv_mapChecksum;
+static cvar_t *r_se_language; // JKA
 #ifdef JK2_MODE
 cvar_t *sp_language; // JK2
 #endif
-cvar_t *com_buildScript;
+static cvar_t *r_com_buildScript;
 
 cvar_t *r_environmentMapping;
 cvar_t *r_screenshotJpegQuality;
@@ -1519,13 +1519,13 @@ void R_Register(void) {
 	Ghoul2 Insert End
 	*/
 
-	sv_mapname = ri.Cvar_Get("mapname", "nomap", CVAR_SERVERINFO | CVAR_ROM);
-	sv_mapChecksum = ri.Cvar_Get("sv_mapChecksum", "", CVAR_ROM);
-	se_language = ri.Cvar_Get("se_language", "english", CVAR_ARCHIVE | CVAR_NORESTART);
+	r_sv_mapname = ri.Cvar_Get("mapname", "nomap", CVAR_SERVERINFO | CVAR_ROM);
+	r_sv_mapChecksum = ri.Cvar_Get("r_sv_mapChecksum", "", CVAR_ROM);
+	r_se_language = ri.Cvar_Get("r_se_language", "english", CVAR_ARCHIVE | CVAR_NORESTART);
 #ifdef JK2_MODE
 	sp_language = ri.Cvar_Get("sp_language", va("%d", SP_LANGUAGE_ENGLISH), CVAR_ARCHIVE | CVAR_NORESTART);
 #endif
-	com_buildScript = ri.Cvar_Get("com_buildScript", "0", 0);
+	r_com_buildScript = ri.Cvar_Get("r_com_buildScript", "0", 0);
 
 	r_modelpoolmegs = ri.Cvar_Get("r_modelpoolmegs", "20", CVAR_ARCHIVE);
 	if (ri.LowPhysicalMemory()) {

@@ -44,7 +44,7 @@ USER INTERFACE MAIN
 
 #include "../game/bg_public.h"
 #include "../game/anims.h"
-extern stringID_table_t animTable[MAX_ANIMATIONS + 1];
+#include "../cgame/animtable.h"
 
 #include "../qcommon/stringed_ingame.h"
 #include "../qcommon/stv_version.h"
@@ -533,7 +533,7 @@ This is the only way control passes into the module.
 This must be the very first function compiled into the .qvm file
 ================
 */
-extern "C" Q_EXPORT intptr_t QDECL vmMain(int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9,
+extern "C" Q_EXPORT intptr_t QDECL UI_vmMain(int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9,
 										  int arg10, int arg11) {
 	return 0;
 }
@@ -1402,21 +1402,21 @@ UI_StopCinematic
 */
 static void UI_StopCinematic(int handle) {
 	if (handle >= 0) {
-		trap_CIN_StopCinematic(handle);
+		UI_trap_CIN_StopCinematic(handle);
 	} else {
 		handle = abs(handle);
 		if (handle == UI_MAPCINEMATIC) {
 			// FIXME - BOB do we need this?
 			//			if (uiInfo.mapList[ui_currentMap.integer].cinematic >= 0)
 			//			{
-			//				trap_CIN_StopCinematic(uiInfo.mapList[ui_currentMap.integer].cinematic);
+			//				UI_trap_CIN_StopCinematic(uiInfo.mapList[ui_currentMap.integer].cinematic);
 			//				uiInfo.mapList[ui_currentMap.integer].cinematic = -1;
 			//			}
 		} else if (handle == UI_NETMAPCINEMATIC) {
 			// FIXME - BOB do we need this?
 			//			if (uiInfo.serverStatus.currentServerCinematic >= 0)
 			//			{
-			//				trap_CIN_StopCinematic(uiInfo.serverStatus.currentServerCinematic);
+			//				UI_trap_CIN_StopCinematic(uiInfo.serverStatus.currentServerCinematic);
 			//				uiInfo.serverStatus.currentServerCinematic = -1;
 			//			}
 		} else if (handle == UI_CLANCINEMATIC) {
@@ -1426,7 +1426,7 @@ static void UI_StopCinematic(int handle) {
 			//			{
 			//				if (uiInfo.teamList[i].cinematic >= 0)
 			//				{
-			//					trap_CIN_StopCinematic(uiInfo.teamList[i].cinematic);
+			//					UI_trap_CIN_StopCinematic(uiInfo.teamList[i].cinematic);
 			//					uiInfo.teamList[i].cinematic = -1;
 			//				}
 			//			}
@@ -1609,7 +1609,7 @@ static void UI_FeederSelection(float feederID, int index, itemDef_t *item) {
 			uiInfo.movieIndex = index;
 			if (uiInfo.previewMovie >= 0)
 			{
-				trap_CIN_StopCinematic(uiInfo.previewMovie);
+				UI_trap_CIN_StopCinematic(uiInfo.previewMovie);
 			}
 			uiInfo.previewMovie = -1;
 		}

@@ -139,7 +139,11 @@ void WIN_Present(window_t *window) {
 
 		if (r_swapInterval->modified) {
 			r_swapInterval->modified = qfalse;
+#ifdef __EMSCRIPTEN__
+			if (SDL_GL_SetSwapInterval(1) == -1) {
+#else
 			if (SDL_GL_SetSwapInterval(r_swapInterval->integer) == -1) {
+#endif
 				Com_DPrintf("SDL_GL_SetSwapInterval failed: %s\n", SDL_GetError());
 			}
 		}
@@ -545,7 +549,11 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 				continue;
 			}
 
+#ifdef __EMSCRIPTEN__
+			if (SDL_GL_SetSwapInterval(1) == -1) {
+#else
 			if (SDL_GL_SetSwapInterval(r_swapInterval->integer) == -1) {
+#endif
 				Com_DPrintf("SDL_GL_SetSwapInterval failed: %s\n", SDL_GetError());
 			}
 

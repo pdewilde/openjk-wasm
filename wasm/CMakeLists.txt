@@ -40,6 +40,7 @@ add_compile_definitions(
     __linux__
     ARCH_STRING="wasm32"
     RENDERER          # needed for rd-vanilla sources
+    DEFAULT_ES=2      # needed for GL4ES to use GLES2 backend
 )
 
 # ============================================================================
@@ -654,8 +655,12 @@ target_link_options(openjk_wasm PRIVATE
     -sFORCE_FILESYSTEM=1
     -sWASM=1
     -sFULL_ES2=1
+    -sSTACK_SIZE=8388608
     -sERROR_ON_UNDEFINED_SYMBOLS=0
-    -O2
+    -O0 -g
+    -sASSERTIONS=1
+    # Preload game assets
+    --preload-file "${ProjectRoot}/GameData/base@base"
     # Output HTML page
     --shell-file "${CMAKE_SOURCE_DIR}/shell.html"
 )

@@ -24,9 +24,18 @@ The objective is to port the OpenJK Jedi Academy single-player engine to WebAsse
 4. **Emscripten Core Loop Hooking**
    - **Action:** A traditional desktop PC runs an infinite blocking loop: `while(true) { Com_Frame(); }`. For a browser execution context, this immediately crashes the Javascript thread. We intercepted the primary loop inside `sys_main.cpp` to yield cleanly using Emscripten's `emscripten_set_main_loop(Com_Frame, 0, 1)`, letting the browser gracefully handle drawing intervals.
 
+5. **Virtual File System (VFS) and Assets**
+   - **Action:** Implemented Emscripten's `--preload-file` packaging to map the large `base/` directory and `.pk3` files into the WASM virtual filesystem, allowing `FS_Startup` to succeed and load the game assets correctly without modifying the engine's I/O layer.
+
+6. **Input and Pointer Lock**
+   - **Action:** Wired up SDL2's input handling through Emscripten. We added `#canvas` element targeting explicitly for Emscripten's keyboard and mouse hooks, ensuring that clicking the game properly captures pointer lock and correctly feeds relative mouse movements to the game camera.
+
+7. **Audio and VSync Pacing**
+   - **Action:** Enabled Emscripten's built-in OpenAL emulation (`-s USE_OPENAL=1`) which intercepts the engine's OpenAL calls and implements them over Web Audio API, restoring music and sound effects.
+   - **Action:** Fixed severe main loop stuttering by forcing `LIBGL_VSYNC=1` in the GL4ES environment variables and `SDL_GL_SetSwapInterval(1)`, which instructs Emscripten to bypass legacy thread-sleeping mechanisms and rely on `requestAnimationFrame` for buttery-smooth pacing.
+
 ## Next Steps
 
-With the monolithic binary linking perfectly natively, we transition immediately into Phase 4 and Phase 5:
-- Writing the browser HTML5 boilerplate to instantiate the `.wasm` environment.
-- Utilizing Emscripten's virtual filesystem (VFS) to efficiently pre-load the gigantic `assetsX.pk3` level bundles required to safely escape the `Com_Init` sequence.
-- Validating rendering pipelines visually for the first time.
+With the monolithic binary compiling, rendering, and actively playable in the browser, the next immediate goals are:
+- Fixing the canvas and resolution cutoff issues, particularly in menus (e.g., lightsaber configuration) where the game attempts to switch internal `r_mode` resolutions and doesn't map perfectly to the browser viewport.
+- Setting up persistent file storage (e.g., IndexedDB / IDBFS) for save games and configuration files.

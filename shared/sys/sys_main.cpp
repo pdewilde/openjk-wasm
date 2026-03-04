@@ -667,12 +667,21 @@ char *Sys_StripAppBundle(char *dir) {
 #endif
 #endif
 
+#ifdef __EMSCRIPTEN__
+extern "C" void initialize_gl4es();
+#endif
+
 int main(int argc, char *argv[]) {
 	int i;
 	char commandLine[MAX_STRING_CHARS] = {0};
 
 	Sys_PlatformInit();
 	CON_Init();
+
+#ifdef __EMSCRIPTEN__
+	setenv("LIBGL_VSYNC", "1", 1);
+	initialize_gl4es();
+#endif
 
 	// get the initial time base
 	Sys_Milliseconds();

@@ -731,6 +731,10 @@ void IN_Init(void *windowData) {
 
 	SDL_window = (SDL_Window *)windowData;
 
+#ifdef __EMSCRIPTEN__
+	SDL_SetHint(SDL_HINT_EMSCRIPTEN_KEYBOARD_ELEMENT, "#canvas");
+#endif
+
 	Com_DPrintf("\n------- Input Initialization -------\n");
 
 	// joystick variables

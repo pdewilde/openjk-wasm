@@ -64,6 +64,7 @@ If you have the Mac App Store Version of Jedi Academy, follow these steps to get
 
 * [Compilation guide](https://github.com/JACoders/OpenJK/wiki/Compilation-guide)
 * [Debugging guide](https://github.com/JACoders/OpenJK/wiki/Debugging)
+* [WebAssembly (WASM) Compilation guide](wasm/README.md)
 
 
 ### Contributing to OpenJK

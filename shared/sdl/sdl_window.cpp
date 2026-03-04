@@ -26,6 +26,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "sys/sys_local.h"
 #include "sdl_icon.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/html5.h>
+#endif
+
 enum rserr_t {
 	RSERR_OK,
 
@@ -357,6 +361,7 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		SDL_FreeSurface(icon);
 		return RSERR_INVALID_MODE;
 	}
+
 	Com_Printf(" %d %d\n", glConfig->vidWidth, glConfig->vidHeight);
 
 	// Center window
@@ -365,6 +370,7 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		y = (desktopMode.h / 2) - (glConfig->vidHeight / 2);
 	}
 
+#ifndef __EMSCRIPTEN__
 	// Destroy existing state if it exists
 	if (opengl_context != NULL) {
 		SDL_GL_DeleteContext(opengl_context);
@@ -377,6 +383,7 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		SDL_DestroyWindow(screen);
 		screen = NULL;
 	}
+#endif
 
 	if (fullscreen) {
 		flags |= SDL_WINDOW_FULLSCREEN;
@@ -509,10 +516,21 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 			SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, !r_allowSoftwareGL->integer);
 
+#ifdef __EMSCRIPTEN__
+			if (screen == NULL) {
+				if ((screen = SDL_CreateWindow(windowTitle, x, y, glConfig->vidWidth, glConfig->vidHeight, flags)) == NULL) {
+					Com_DPrintf("SDL_CreateWindow failed: %s\n", SDL_GetError());
+					continue;
+				}
+			} else {
+				SDL_SetWindowSize(screen, glConfig->vidWidth, glConfig->vidHeight);
+			}
+#else
 			if ((screen = SDL_CreateWindow(windowTitle, x, y, glConfig->vidWidth, glConfig->vidHeight, flags)) == NULL) {
 				Com_DPrintf("SDL_CreateWindow failed: %s\n", SDL_GetError());
 				continue;
 			}
+#endif
 
 #ifndef MACOS_X
 			SDL_SetWindowIcon(screen, icon);
@@ -544,10 +562,19 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 				}
 			}
 
+#ifdef __EMSCRIPTEN__
+			if (opengl_context == NULL) {
+				if ((opengl_context = SDL_GL_CreateContext(screen)) == NULL) {
+					Com_Printf("SDL_GL_CreateContext failed: %s\n", SDL_GetError());
+					continue;
+				}
+			}
+#else
 			if ((opengl_context = SDL_GL_CreateContext(screen)) == NULL) {
 				Com_Printf("SDL_GL_CreateContext failed: %s\n", SDL_GetError());
 				continue;
 			}
+#endif
 
 #ifdef __EMSCRIPTEN__
 			if (SDL_GL_SetSwapInterval(1) == -1) {
@@ -692,8 +719,16 @@ window_t WIN_Init(const windowDesc_t *windowDesc, glconfig_t *glConfig) {
 
 	glConfig->deviceSupportsGamma = (qboolean)(!r_ignorehwgamma->integer && SDL_SetWindowBrightness(screen, 1.0f) >= 0);
 
+#ifdef __EMSCRIPTEN__
+	static qboolean inputInitialized = qfalse;
+	if (!inputInitialized) {
+		IN_Init(screen);
+		inputInitialized = qtrue;
+	}
+#else
 	// This depends on SDL_INIT_VIDEO, hence having it here
 	IN_Init(screen);
+#endif
 
 	// window_t is only really useful for Windows if the renderer wants to create a D3D context.
 	window_t window = {};
@@ -728,10 +763,11 @@ void WIN_Shutdown(void) {
 	Cmd_RemoveCommand("modelist");
 	Cmd_RemoveCommand("minimize");
 
+#ifndef __EMSCRIPTEN__
 	IN_Shutdown();
-
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 	screen = NULL;
+#endif
 }
 
 void GLimp_EnableLogging(qboolean enable) {}

@@ -34,8 +34,12 @@ The objective is to port the OpenJK Jedi Academy single-player engine to WebAsse
    - **Action:** Enabled Emscripten's built-in OpenAL emulation (`-s USE_OPENAL=1`) which intercepts the engine's OpenAL calls and implements them over Web Audio API, restoring music and sound effects.
    - **Action:** Fixed severe main loop stuttering by forcing `LIBGL_VSYNC=1` in the GL4ES environment variables and `SDL_GL_SetSwapInterval(1)`, which instructs Emscripten to bypass legacy thread-sleeping mechanisms and rely on `requestAnimationFrame` for buttery-smooth pacing.
 
+8. **Resolution and Viewport Scaling**
+   - **Action:** Fixed WebGL scissor clipping errors caused by the UI viewport scaling bounds exceeding the browser's Canvas dimensions.
+   - **Action:** Patched `vid_restart` sequence to skip `SDL_QuitSubSystem` and `IN_Shutdown` to prevent Emscripten from losing the WebGL context and pointer lock state. We now rely on CSS (`width: 100%; height: 100%; object-fit: contain`) to upscale the underlying viewport to fill the screen rather than risking a context drop.
+
 ## Next Steps
 
 With the monolithic binary compiling, rendering, and actively playable in the browser, the next immediate goals are:
-- Fixing the canvas and resolution cutoff issues, particularly in menus (e.g., lightsaber configuration) where the game attempts to switch internal `r_mode` resolutions and doesn't map perfectly to the browser viewport.
 - Setting up persistent file storage (e.g., IndexedDB / IDBFS) for save games and configuration files.
+- Fixing remaining in-game UI and gameplay bugs (e.g., missing crosshairs, choppy menu audio).

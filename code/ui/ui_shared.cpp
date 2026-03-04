@@ -6575,6 +6575,13 @@ void Item_Model_Paint(itemDef_t *item) {
 	refdef.width = w * DC->xscale;
 	refdef.height = h * DC->yscale;
 
+	// Cap to screen resolution to prevent OpenGL scissor bounds violations
+	extern glconfig_t glConfig;
+	if (refdef.x < 0) refdef.x = 0;
+	if (refdef.y < 0) refdef.y = 0;
+	if (refdef.x + refdef.width > glConfig.vidWidth) refdef.width = glConfig.vidWidth - refdef.x;
+	if (refdef.y + refdef.height > glConfig.vidHeight) refdef.height = glConfig.vidHeight - refdef.y;
+
 	if (item->flags & ITF_G2VALID) { // ghoul2 models don't have bounds, so we have to parse them.
 		VectorCopy(modelPtr->g2mins, mins);
 		VectorCopy(modelPtr->g2maxs, maxs);

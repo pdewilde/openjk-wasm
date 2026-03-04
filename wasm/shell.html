@@ -1,11 +1,17 @@
 <!doctype html>
 <html lang="en-us">
+
 <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>OpenJK — Jedi Academy</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             background: #000;
             color: #eee;
@@ -17,24 +23,35 @@
             height: 100vh;
             overflow: hidden;
         }
+
         #status {
             color: #aaa;
             font-size: 14px;
             margin-bottom: 10px;
         }
+
         canvas.emscripten {
             border: 0;
             cursor: none;
             outline: none;
+            max-width: 100%;
+            max-height: 100vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
         }
-        .spinner { display: none; }
+
+        .spinner {
+            display: none;
+        }
+
         #output {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             height: 150px;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0, 0, 0, 0.85);
             color: #0f0;
             font-family: monospace;
             font-size: 11px;
@@ -44,6 +61,7 @@
         }
     </style>
 </head>
+
 <body>
     <div id="status">Downloading...</div>
     <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
@@ -55,14 +73,14 @@
         var outputElement = document.getElementById('output');
 
         // Toggle console with backtick
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === '`') {
                 outputElement.style.display = outputElement.style.display === 'none' ? 'block' : 'none';
             }
         });
 
         var Module = {
-            print: function(text) {
+            print: function (text) {
                 if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
                 console.log(text);
                 if (outputElement) {
@@ -70,26 +88,27 @@
                     outputElement.scrollTop = outputElement.scrollHeight;
                 }
             },
-            printErr: function(text) {
+            printErr: function (text) {
                 if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
                 console.error(text);
             },
             canvas: canvasElement,
-            setStatus: function(text) {
+            setStatus: function (text) {
                 if (text) statusElement.innerHTML = text;
                 else statusElement.style.display = 'none';
             },
             totalDependencies: 0,
-            monitorRunDependencies: function(left) {
+            monitorRunDependencies: function (left) {
                 this.totalDependencies = Math.max(this.totalDependencies, left);
-                Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'Running...');
+                Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')' : 'Running...');
             }
         };
         Module.setStatus('Downloading...');
-        window.onerror = function() {
+        window.onerror = function () {
             Module.setStatus('Exception thrown, see JavaScript console');
         };
     </script>
     {{{ SCRIPT }}}
 </body>
+
 </html>

@@ -2331,7 +2331,6 @@ void CG_DrawActiveFrame(int serverTime, stereoFrame_t stereoView, qboolean demoP
 	if (!cg.hyperspace) {
 		CG_AddPacketEntities(qfalse); // adter calcViewValues, so predicted player state is correct
 		CG_AddMarks();
-		CG_AddLocalEntities();
 	}
 	CG_AddViewWeapon(&cg.predictedPlayerState);
 
@@ -2346,6 +2345,11 @@ void CG_DrawActiveFrame(int serverTime, stereoFrame_t stereoView, qboolean demoP
 	if (cg.testModelEntity.hModel) {
 		CG_AddTestModel();
 	}
+
+	if ( !cg.hyperspace ) {
+		CG_AddLocalEntities();
+	}
+
 	cg.refdef.time = cg.time;
 	memcpy(cg.refdef.areamask, cg.snap->areamask, sizeof(cg.refdef.areamask));
 

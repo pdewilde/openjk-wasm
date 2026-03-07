@@ -42,7 +42,7 @@ qboolean stdinIsATTY = qfalse;
 // Used to determine where to store user-specific files
 static char homePath[MAX_OSPATH] = {0};
 
-void Sys_PlatformInit(void) {
+void Sys_PlatformInit(int argc, char *argv[]) {
 	const char *term = getenv("TERM");
 
 	signal(SIGHUP, Sys_SigHandler);

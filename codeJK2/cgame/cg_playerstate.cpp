@@ -36,25 +36,26 @@ CG_CheckAmmo
 If the ammo has gone low enough to generate the warning, play a sound
 ==============
 */
-void CG_CheckAmmo(void) {
-	//	int		i;
-	int total;
-	int previous;
-	//	int		weapons;
+void CG_CheckAmmo( void )
+{
+//	int		i;
+	int		total;
+	int		previous;
+//	int		weapons;
 
 #if 0
-		
+
 	// see about how many seconds of ammo we have remaining
 	weapons = cg.snap->ps.stats[ STAT_WEAPONS ];
 	total = 0;
 
-	for ( i = WP_STUN_BATON; i < WP_NUM_WEAPONS  i++ ) 
+	for ( i = WP_STUN_BATON; i < WP_NUM_WEAPONS  i++ )
 	{
 		if ( ! ( weapons & ( 1 << i ) ) )
 			continue;
 
 		/*
-		switch ( i ) 
+		switch ( i )
 		{
 		case WP_ROCKET_LAUNCHER:
 		case WP_GRENADE_LAUNCHER:
@@ -67,8 +68,8 @@ void CG_CheckAmmo(void) {
 			break;
 		}
 		*/
-		
-		if ( total >= 5000 ) 
+
+		if ( total >= 5000 )
 		{
 			cg.lowAmmoWarning = 0;
 			return;
@@ -77,7 +78,8 @@ void CG_CheckAmmo(void) {
 #endif
 
 	// Don't bother drawing the ammo warning when have no weapon selected
-	if (cg.weaponSelect == WP_NONE) {
+	if ( cg.weaponSelect == WP_NONE )
+	{
 		return;
 	}
 
@@ -89,19 +91,21 @@ void CG_CheckAmmo(void) {
 		return;
 	}
 
+
 	previous = cg.lowAmmoWarning;
 
-	if (!total) // We're completely freak'in out!
+	if (!total)		// We're completely freak'in out!
 	{
 		cg.lowAmmoWarning = 2;
-	} else // Got a little left
+	}
+	else			// Got a little left
 	{
 		cg.lowAmmoWarning = 1;
 	}
 
 	// play a sound on transitions
-	if (cg.lowAmmoWarning != previous) {
-		cgi_S_StartLocalSound(cgs.media.noAmmoSound, CHAN_LOCAL_SOUND); //"sound/weapons/noammo.wav"
+	if ( cg.lowAmmoWarning != previous ) {
+		cgi_S_StartLocalSound( cgs.media.noAmmoSound, CHAN_LOCAL_SOUND ); //"sound/weapons/noammo.wav"
 	}
 }
 
@@ -110,22 +114,22 @@ void CG_CheckAmmo(void) {
 CG_DamageFeedback
 ==============
 */
-void CG_DamageFeedback(int yawByte, int pitchByte, int damage) {
-	float left, front, up;
-	float kick;
-	int health;
-	float scale;
-	vec3_t dir;
-	vec3_t angles;
-	float dist;
-	float yaw, pitch;
+void CG_DamageFeedback( int yawByte, int pitchByte, int damage ) {
+	float		left, front, up;
+	float		kick;
+	int			health;
+	float		scale;
+	vec3_t		dir;
+	vec3_t		angles;
+	float		dist;
+	float		yaw, pitch;
 
-	// FIXME: Based on MOD, do different kinds of damage effects,
+	//FIXME: Based on MOD, do different kinds of damage effects,
 	//		for example, Borg damage could progressively tint screen green and raise FOV?
 
 	// the lower on health you are, the greater the view kick will be
 	health = cg.snap->ps.stats[STAT_HEALTH];
-	if (health < 40) {
+	if ( health < 40 ) {
 		scale = 1;
 	} else {
 		scale = 40.0 / health;
@@ -138,7 +142,7 @@ void CG_DamageFeedback(int yawByte, int pitchByte, int damage) {
 		kick = 10;
 
 	// if yaw and pitch are both 255, make the damage always centered (falling, etc)
-	if (yawByte == 255 && pitchByte == 255) {
+	if ( yawByte == 255 && pitchByte == 255 ) {
 		cg.damageX = 0;
 		cg.damageY = 0;
 		cg.v_dmg_roll = 0;
@@ -152,18 +156,18 @@ void CG_DamageFeedback(int yawByte, int pitchByte, int damage) {
 		angles[YAW] = yaw;
 		angles[ROLL] = 0;
 
-		AngleVectors(angles, dir, NULL, NULL);
-		VectorSubtract(vec3_origin, dir, dir);
+		AngleVectors( angles, dir, NULL, NULL );
+		VectorSubtract( vec3_origin, dir, dir );
 
-		front = DotProduct(dir, cg.refdef.viewaxis[0]);
-		left = DotProduct(dir, cg.refdef.viewaxis[1]);
-		up = DotProduct(dir, cg.refdef.viewaxis[2]);
+		front = DotProduct (dir, cg.refdef.viewaxis[0] );
+		left = DotProduct (dir, cg.refdef.viewaxis[1] );
+		up = DotProduct (dir, cg.refdef.viewaxis[2] );
 
 		dir[0] = front;
 		dir[1] = left;
 		dir[2] = 0;
-		dist = VectorLength(dir);
-		if (dist < 0.1) {
+		dist = VectorLength( dir );
+		if ( dist < 0.1 ) {
 			dist = 0.1f;
 		}
 
@@ -171,7 +175,7 @@ void CG_DamageFeedback(int yawByte, int pitchByte, int damage) {
 
 		cg.v_dmg_pitch = -kick * front;
 
-		if (front <= 0.1) {
+		if ( front <= 0.1 ) {
 			front = 0.1f;
 		}
 		cg.damageX = -left / front;
@@ -179,28 +183,31 @@ void CG_DamageFeedback(int yawByte, int pitchByte, int damage) {
 	}
 
 	// clamp the position
-	if (cg.damageX > 1.0) {
+	if ( cg.damageX > 1.0 ) {
 		cg.damageX = 1.0;
 	}
-	if (cg.damageX < -1.0) {
+	if ( cg.damageX < - 1.0 ) {
 		cg.damageX = -1.0;
 	}
 
-	if (cg.damageY > 1.0) {
+	if ( cg.damageY > 1.0 ) {
 		cg.damageY = 1.0;
 	}
-	if (cg.damageY < -1.0) {
+	if ( cg.damageY < - 1.0 ) {
 		cg.damageY = -1.0;
 	}
 
 	// don't let the screen flashes vary as much
-	if (kick > 10) {
+	if ( kick > 10 ) {
 		kick = 10;
 	}
 	cg.damageValue = kick;
 	cg.v_dmg_time = cg.time + DAMAGE_TIME;
 	cg.damageTime = cg.snap->serverTime;
 }
+
+
+
 
 /*
 ================
@@ -209,17 +216,18 @@ CG_Respawn
 A respawn happened this snapshot
 ================
 */
-void CG_Respawn(void) {
+void CG_Respawn( void ) {
 	// no error decay on player movement
 	cg.thisFrameTeleport = qtrue;
 
 	// display weapons available
-	//	cg.weaponSelectTime = cg.time;
+//	cg.weaponSelectTime = cg.time;
 	SetWeaponSelectTime();
 
 	// select the weapon the server says we are using
 	cg.weaponSelect = cg.snap->ps.weapon;
 }
+
 
 /*
 ==============
@@ -227,10 +235,10 @@ CG_CheckPlayerstateEvents
 
 ==============
 */
-void CG_CheckPlayerstateEvents(playerState_t *ps, playerState_t *ops) {
-	int i;
-	int event;
-	centity_t *cent;
+void CG_CheckPlayerstateEvents( playerState_t *ps, playerState_t *ops ) {
+	int			i;
+	int			event;
+	centity_t	*cent;
 
 #if 0
 	if ( ps->externalEvent && ps->externalEvent != ops->externalEvent ) {
@@ -241,14 +249,15 @@ void CG_CheckPlayerstateEvents(playerState_t *ps, playerState_t *ops) {
 	}
 #endif
 
-	for (i = ps->eventSequence - MAX_PS_EVENTS; i < ps->eventSequence; i++) {
-		if (ps->events[i & (MAX_PS_EVENTS - 1)] != ops->events[i & (MAX_PS_EVENTS - 1)] || i >= ops->eventSequence) {
-			event = ps->events[i & (MAX_PS_EVENTS - 1)];
+	for ( i = ps->eventSequence - MAX_PS_EVENTS ; i < ps->eventSequence ; i++ ) {
+		if ( ps->events[i & (MAX_PS_EVENTS-1)] != ops->events[i & (MAX_PS_EVENTS-1)]
+			|| i >= ops->eventSequence ) {
+			event = ps->events[ i & (MAX_PS_EVENTS-1) ];
 
-			cent = &cg_entities[ps->clientNum];
+			cent = &cg_entities[ ps->clientNum ];
 			cent->currentState.event = event;
-			cent->currentState.eventParm = ps->eventParms[i & (MAX_PS_EVENTS - 1)];
-			CG_EntityEvent(cent, cent->lerpOrigin);
+			cent->currentState.eventParm = ps->eventParms[ i & (MAX_PS_EVENTS-1) ];
+			CG_EntityEvent( cent, cent->lerpOrigin );
 		}
 	}
 }
@@ -318,28 +327,28 @@ CG_TransitionPlayerState
 
 ===============
 */
-void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops) {
+void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 	// teleporting
-	if ((ps->eFlags ^ ops->eFlags) & EF_TELEPORT_BIT) {
+	if ( ( ps->eFlags ^ ops->eFlags ) & EF_TELEPORT_BIT ) {
 		cg.thisFrameTeleport = qtrue;
 	} else {
 		cg.thisFrameTeleport = qfalse;
 	}
 
 	// check for changing follow mode
-	if (ps->clientNum != ops->clientNum) {
+	if ( ps->clientNum != ops->clientNum ) {
 		cg.thisFrameTeleport = qtrue;
 		// make sure we don't get any unwanted transition effects
 		*ops = *ps;
 	}
 
 	// damage events (player is getting wounded)
-	if (ps->damageEvent != ops->damageEvent && ps->damageCount) {
-		CG_DamageFeedback(ps->damageYaw, ps->damagePitch, ps->damageCount);
+	if ( ps->damageEvent != ops->damageEvent && ps->damageCount ) {
+		CG_DamageFeedback( ps->damageYaw, ps->damagePitch, ps->damageCount );
 	}
 
 	// respawning
-	if (ps->persistant[PERS_SPAWN_COUNT] != ops->persistant[PERS_SPAWN_COUNT]) {
+	if ( ps->persistant[PERS_SPAWN_COUNT] != ops->persistant[PERS_SPAWN_COUNT] ) {
 		CG_Respawn();
 	}
 
@@ -347,14 +356,17 @@ void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops) {
 	CG_CheckAmmo();
 
 	// run events
-	CG_CheckPlayerstateEvents(ps, ops);
+	CG_CheckPlayerstateEvents( ps, ops );
 
 	// smooth the ducking viewheight change
-	if (ps->viewheight != ops->viewheight) {
-		if (!cg.nextFrameTeleport) { // when we crouch/uncrouch in mid-air, our viewhieght doesn't actually change in
-			// absolute world coordinates, just locally.
+	if ( ps->viewheight != ops->viewheight )
+	{
+		if ( !cg.nextFrameTeleport )
+		{//when we crouch/uncrouch in mid-air, our viewhieght doesn't actually change in
+			//absolute world coordinates, just locally.
 			cg.duckChange = ps->viewheight - ops->viewheight;
 			cg.duckTime = cg.time;
 		}
 	}
 }
+

@@ -223,6 +223,10 @@ typedef struct clientConnection_s {
 	int			downloadSize;	// how many bytes we got
 	char		downloadList[MAX_INFO_STRING]; // list of paks we need to download
 	qboolean	downloadRestart;	// if true, we need to do another FS_Restart because we downloaded a pak
+	qboolean	downloadMenuActive;
+	qboolean	downloadWaitingOnUser;
+	qboolean	downloadFinished;
+	int			downloadTime;
 
 	// demo information
 	char		demoName[MAX_QPATH];
@@ -327,6 +331,15 @@ typedef struct clientStatic_s {
 	qhandle_t	whiteShader;
 	qhandle_t	consoleShader;
 	int			consoleFont;
+
+	// Cursor
+	qboolean	cursorActive;
+	qhandle_t	cursorShader;
+	int			cursorX;
+	int			cursorY;
+
+	// Engine menu
+	int			menuFont;
 } clientStatic_t;
 
 #define	CON_TEXTSIZE	0x30000 //was 32768
@@ -470,6 +483,10 @@ int CL_ServerStatus( const char *serverAddress, char *serverStatusString, int ma
 
 qboolean CL_CheckPaused(void);
 
+void CL_DrawEngineMenus( void );
+void CL_UpdateCursorPosition( int dx, int dy );
+void CL_CursorButton( int key );
+
 //
 // cl_input
 //
@@ -502,7 +519,7 @@ void CL_ParseServerMessage( msg_t *msg );
 
 //====================================================================
 
-void	CL_ServerInfoPacket( netadr_t from, msg_t *msg );
+void	CL_ServerInfoPacket( const netadr_t *from, msg_t *msg );
 void	CL_LocalServers_f( void );
 void	CL_GlobalServers_f( void );
 void	CL_FavoriteServers_f( void );

@@ -3740,9 +3740,49 @@ void CG_DrawDataPadForceSelect(void) {
 // actually, these are pretty pointless so far in CHC, since in TA codebase they were used only so init some HUD
 //	function ptrs to allow cinematics in onscreen displays. So far, we don't use those, but here they are anyway...
 //
-/*	These stupid pragmas don't work, they still give the warning. Forget it, REM the lot.
+int CG_MagicFontToReal(int menuFontIndex) {
+	// As the engine supports multiple renderers now we can no longer assume the
+	// order of fontindex values to be the same as it was on vanilla jasp with
+	// vanilla assets. Sadly the code uses magic numbers in various places that
+	// no longer match. This function tries to map these magic numbers to the
+	// fonts the would refer to on vanilla jasp with vanilla assets.
 
+	static int fonthandle_aurabesh;
+	static int fonthandle_ergoec;
+	static int fonthandle_anewhope;
+	static int fonthandle_arialnb;
+
+	static qboolean fontsRegistered = qfalse;
+
+	if (!fontsRegistered) { // Only try registering the fonts once
+		fonthandle_aurabesh = cgi_R_RegisterFont("aurabesh");
+		fonthandle_ergoec = cgi_R_RegisterFont("ergoec");
+		fonthandle_anewhope = cgi_R_RegisterFont("anewhope");
+		fonthandle_arialnb = cgi_R_RegisterFont("arialnb");
+
+		fontsRegistered = qtrue;
+	}
+
+	// Default fonts from a clean installation
+	switch (menuFontIndex) {
+	case 1:
+		return fonthandle_aurabesh;
+	case 2:
+		return fonthandle_ergoec;
+	case 3:
+		return fonthandle_anewhope;
+	case 4:
+		return fonthandle_arialnb;
+
+	default:
+		return cgs.media.qhFontMedium;
+	}
+}
+
+/*	These stupid pragmas don't work, they still give the warning. Forget it, REM the lot.
 #pragma warning ( disable : 4505)		// unreferenced local function has been removed
+#pragma warning ( default : 4505)
+*/
 static int CG_PlayCinematic(const char *name, float x, float y, float w, float h) {
   return trap_CIN_PlayCinematic(name, x, y, w, h, CIN_loop);
 }
@@ -3759,5 +3799,3 @@ static void CG_DrawCinematic(int handle, float x, float y, float w, float h) {
 static void CG_RunCinematicFrame(int handle) {
   trap_CIN_RunCinematic(handle);
 }
-#pragma warning ( default : 4505)
-*/

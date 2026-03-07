@@ -675,7 +675,7 @@ int main(int argc, char *argv[]) {
 	int i;
 	char commandLine[MAX_STRING_CHARS] = {0};
 
-	Sys_PlatformInit();
+	Sys_PlatformInit(argc, argv);
 	CON_Init();
 
 #ifdef __EMSCRIPTEN__

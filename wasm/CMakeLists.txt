@@ -21,14 +21,13 @@ set(GL4ESDir "${OpenJKLibDir}/gl4es")
 # ============================================================================
 # Version header (generate a stub so the build doesn't fail)
 # ============================================================================
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/shared/qcommon/q_version.h")
-    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/shared/qcommon")
-    file(WRITE "${CMAKE_BINARY_DIR}/shared/qcommon/q_version.h"
-        "#pragma once\n"
-        "#define SOURCE_DATE \"Mar 2 2026\"\n"
-        "#define GIT_HASH \"wasm-build\"\n"
-    )
-endif()
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/shared/qcommon")
+file(WRITE "${CMAKE_BINARY_DIR}/shared/qcommon/q_version.h"
+    "#pragma once\n"
+    "#define SOURCE_DATE \"Mar 2 2026\"\n"
+    "#define GIT_HASH \"wasm-build\"\n"
+    "#define GIT_TAG \"wasm-build\"\n"
+)
 
 # ============================================================================
 # Compile definitions
@@ -148,7 +147,7 @@ set(EngineCommonFiles
     "${SPDir}/qcommon/z_memman_pc.cpp"
     "${SPDir}/qcommon/qfiles.h"
     "${SPDir}/qcommon/qcommon.h"
-    "${SPDir}/qcommon/stv_version.h"
+    "${SPDir}/qcommon/game_version.h"
     "${SPDir}/qcommon/timing.h"
     "${SPDir}/qcommon/MiniHeap.h"
     "${SPDir}/qcommon/ojk_i_saved_game.h"

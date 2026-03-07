@@ -638,6 +638,7 @@ set_source_files_properties(
 # Emscripten compile and link flags
 # ============================================================================
 target_compile_options(openjk_wasm PRIVATE
+    -DUSE_OPENAL=1
     -Wno-write-strings
     -Wno-comment
     -Wno-invalid-offsetof
@@ -646,6 +647,7 @@ target_compile_options(openjk_wasm PRIVATE
 )
 
 target_link_options(openjk_wasm PRIVATE
+    -lopenal
     -sUSE_SDL=2
     -sUSE_ZLIB=1
     -sUSE_LIBPNG=1
@@ -667,6 +669,7 @@ target_link_options(openjk_wasm PRIVATE
 
 target_link_libraries(openjk_wasm PRIVATE
     "${GL4ESDir}/lib/libGL.a"
+    "-lopenal"
 )
 
 # Also set compile flags for libraries Emscripten provides

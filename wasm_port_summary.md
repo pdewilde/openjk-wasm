@@ -42,4 +42,4 @@ The objective is to port the OpenJK Jedi Academy single-player engine to WebAsse
 
 With the monolithic binary compiling, rendering, and actively playable in the browser, the next immediate goals are:
 - Setting up persistent file storage (e.g., IndexedDB / IDBFS) for save games and configuration files.
-- Fixing remaining in-game UI and gameplay bugs (e.g., missing crosshairs, choppy menu audio).
+- Fixing remaining in-game UI and gameplay bugs (e.g., save/load corruption in tutorial).

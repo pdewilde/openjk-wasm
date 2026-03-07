@@ -263,11 +263,19 @@ typedef struct {
 	float flDist;
 } REVERBDATA, *LPREVERBDATA;
 
+#ifndef __EMSCRIPTEN__
 typedef struct {
 	GUID FXSlotGuid;
 	ALint lEnvID;
 } FXSLOTINFO, *LPFXSLOTINFO;
+#endif
 
+#ifdef __EMSCRIPTEN__
+#define timeGetTime Sys_Milliseconds
+#define OutputDebugString(x)
+#endif
+
+#ifndef __EMSCRIPTEN__
 ALboolean s_bEAX;						  // Is EAX 4.0 support available
 bool s_bEALFileLoaded;					  // Has an .eal file been loaded for the current level
 bool s_bInWater;						  // Underwater effect currently active
@@ -283,6 +291,7 @@ long s_lNumEnvironments;				  // Number of environment zones
 long s_NumFXSlots;						  // Number of EAX 4.0 FX Slots
 FXSLOTINFO s_FXSlotInfo[EAX_MAX_FXSLOTS]; // Stores information about the EAX 4.0 FX Slots
 
+#ifndef __EMSCRIPTEN__
 static void InitEAXManager();
 static void ReleaseEAXManager();
 static bool LoadEALFile(char *szEALFilename);
@@ -291,6 +300,7 @@ static void UpdateEAXListener();
 static void UpdateEAXBuffer(channel_t *ch);
 static void EALFileInit(const char *level);
 float CalcDistance(EMPOINT A, EMPOINT B);
+#endif
 
 void Normalize(EAXVECTOR *v) {
 	float flMagnitude;
@@ -301,9 +311,11 @@ void Normalize(EAXVECTOR *v) {
 	v->y = v->y / flMagnitude;
 	v->z = v->z / flMagnitude;
 }
+#endif
 
 // EAX 4.0 GUIDS ... confidential information ...
 
+#ifndef __EMSCRIPTEN__
 const GUID EAXPROPERTYID_EAX40_FXSlot0 = {0xc4d79f1e, 0xf1ac, 0x436b, {0xa8, 0x1d, 0xa7, 0x38, 0xe7, 0x4, 0x54, 0x69}};
 
 const GUID EAXPROPERTYID_EAX40_FXSlot1 = {0x8c00e96, 0x74be, 0x4491, {0x93, 0xaa, 0xe8, 0xad, 0x35, 0xa4, 0x91, 0x17}};
@@ -321,6 +333,7 @@ const GUID EAX_NULL_GUID = {0x00000000, 0x0000, 0x0000, {0x00, 0x00, 0x00, 0x00,
 const GUID EAX_PrimaryFXSlotID = {0xf317866d, 0x924c, 0x450c, {0x86, 0x1b, 0xe6, 0xda, 0xa2, 0x5e, 0x7c, 0x20}};
 
 const GUID EAX_REVERB_EFFECT = {0xcf95c8f, 0xa3cc, 0x4849, {0xb0, 0xb6, 0x83, 0x2e, 0xcc, 0x18, 0x22, 0xdf}};
+#endif
 
 /**************************************************************************************************\
 *
@@ -376,10 +389,12 @@ void S_SoundInfo_f(void) {
 	} else {
 #ifdef USE_OPENAL
 		if (s_UseOpenAL) {
+#ifndef __EMSCRIPTEN__
 			Com_Printf("EAX 4.0 %s supported\n", s_bEAX ? "is" : "not");
 			Com_Printf("Eal file %s loaded\n", s_bEALFileLoaded ? "is" : "not");
 			Com_Printf("s_EnvironmentID = %d\n", s_EnvironmentID);
 			Com_Printf("s_bInWater = %s\n", s_bInWater ? "true" : "false");
+#endif
 		} else {
 #endif
 			Com_Printf("%5d stereo\n", dma.channels - 1);
@@ -429,8 +444,16 @@ void S_Init(void) {
 	s_lip_threshold_2 = Cvar_Get("s_threshold2", "4", 0);
 	s_lip_threshold_3 = Cvar_Get("s_threshold3", "6", 0);
 	s_lip_threshold_4 = Cvar_Get("s_threshold4", "8", 0);
+#ifdef __EMSCRIPTEN__
+	// Emscripten runs everything on the main thread, so heavy rendering frames
+	// can starve the audio callback. Use larger mix-ahead values to buffer
+	// more audio and prevent clipping the start of newly triggered sounds.
 	s_mixahead = Cvar_Get("s_mixahead", "0.2", CVAR_ARCHIVE);
-	s_mixPreStep = Cvar_Get("s_mixPreStep", "0.05", CVAR_ARCHIVE);
+	s_mixPreStep = Cvar_Get ("s_mixPreStep", "0.1", CVAR_ARCHIVE);
+#else
+	s_mixahead = Cvar_Get ("s_mixahead", "0.2", CVAR_ARCHIVE);
+	s_mixPreStep = Cvar_Get ("s_mixPreStep", "0.05", CVAR_ARCHIVE);
+#endif
 	s_musicVolume = Cvar_Get("s_musicvolume", "0.25", CVAR_ARCHIVE);
 	s_separation = Cvar_Get("s_separation", "0.5", CVAR_ARCHIVE);
 	s_show = Cvar_Get("s_show", "0", CVAR_CHEAT);
@@ -457,20 +480,29 @@ void S_Init(void) {
 	Cmd_AddCommand("s_dynamic", S_SetDynamicMusic_f);
 
 #ifdef USE_OPENAL
+#ifdef __EMSCRIPTEN__
+	cvar_t *cv = Cvar_Get("s_UseOpenAL", "1", CVAR_ARCHIVE | CVAR_LATCH);
+#else
 	cvar_t *cv = Cvar_Get("s_UseOpenAL", "0", CVAR_ARCHIVE | CVAR_LATCH);
+#endif
 	s_UseOpenAL = !!(cv->integer);
 
 	if (s_UseOpenAL) {
 		int i, j;
 
-		ALCdevice *ALCDevice = alcOpenDevice((ALubyte *)"DirectSound3D");
-		if (!ALCDevice)
+		Com_Printf("[OpenAL] Attempting to initialize hardware audio backend...\n");
+		ALCdevice *ALCDevice = alcOpenDevice(NULL);
+		if (!ALCDevice) {
+			Com_Printf("[OpenAL ERROR] alcOpenDevice(NULL) failed! Falling back.\n");
 			return;
+		}
 
 		// Create context(s)
 		ALCcontext *ALCContext = alcCreateContext(ALCDevice, NULL);
-		if (!ALCContext)
+		if (!ALCContext) {
+			Com_Printf("[OpenAL ERROR] alcCreateContext failed! Falling back.\n");
 			return;
+		}
 
 		// Set active context
 		alcMakeContextCurrent(ALCContext);
@@ -484,6 +516,8 @@ void S_Init(void) {
 		s_rawend = 0;
 
 		S_StopAllSounds();
+		
+		Com_Printf("[OpenAL] Hardware audio backend initialized successfully!\n");
 
 		// S_SoundInfo_f();
 
@@ -495,7 +529,9 @@ void S_Init(void) {
 		alListenerfv(AL_VELOCITY, listenerVel);
 		alListenerfv(AL_ORIENTATION, listenerOri);
 
+#ifndef __EMSCRIPTEN__
 		InitEAXManager();
+#endif
 
 		memset(s_channels, 0, sizeof(s_channels));
 
@@ -516,6 +552,7 @@ void S_Init(void) {
 			// Sources / Channels are not sending to any Slots (other than the Listener / Primary FX Slot)
 			s_channels[i].lSlotID = -1;
 
+#ifndef __EMSCRIPTEN__
 			if (s_bEAX) {
 				// Remove the RoomAuto flag from each Source (to remove Reverb Engine Statistical
 				// model that is assuming units are in metres)
@@ -530,6 +567,7 @@ void S_Init(void) {
 #endif
 				}
 			}
+#endif
 
 			s_numChannels++;
 		}
@@ -574,8 +612,10 @@ void S_Init(void) {
 		// s_init could be called in game, if so there may be an .eal file
 		// for this level
 
+#ifndef __EMSCRIPTEN__
 		const char *mapname = Cvar_VariableString("mapname");
 		EALFileInit(mapname);
+#endif
 
 	} else {
 #endif
@@ -664,7 +704,9 @@ void S_Shutdown(void) {
 		// Close device
 		alcCloseDevice(ALCDevice);
 
+#ifndef __EMSCRIPTEN__
 		ReleaseEAXManager();
+#endif
 
 		s_numChannels = 0;
 
@@ -865,12 +907,16 @@ void S_BeginRegistration(void) {
 #ifdef USE_OPENAL
 	// Find name of level so we can load in the appropriate EAL file
 	if (s_UseOpenAL) {
+#ifndef __EMSCRIPTEN__
 		const char *mapname = Cvar_VariableString("mapname");
 		EALFileInit(mapname);
+#endif
+#ifndef __EMSCRIPTEN__
 		// clear carry crap from previous map
 		for (int i = 0; i < EAX_MAX_FXSLOTS; i++) {
 			s_FXSlotInfo[i].lEnvID = -1;
 		}
+#endif
 	}
 #endif
 
@@ -890,6 +936,7 @@ void S_BeginRegistration(void) {
 	}
 }
 
+#ifndef __EMSCRIPTEN__
 #ifdef USE_OPENAL
 static void EALFileInit(const char *level) {
 	// If an EAL File is already unloaded, remove it
@@ -926,6 +973,7 @@ static void EALFileInit(const char *level) {
 		}
 	}
 }
+#endif
 #endif
 
 /*
@@ -2085,7 +2133,9 @@ void S_UpdateEntityPosition(int entityNum, const vec3_t origin) {
 					pos[2] = -origin[1];
 					alSourcefv(s_channels[i].alSource, AL_POSITION, pos);
 
+#ifndef __EMSCRIPTEN__
 					UpdateEAXBuffer(ch);
+#endif
 				}
 
 				/*				pos[0] = origin[0];
@@ -2096,7 +2146,9 @@ void S_UpdateEntityPosition(int entityNum, const vec3_t origin) {
 								if ((s_bEALFileLoaded) && !( ch->entchannel == CHAN_VOICE || ch->entchannel == CHAN_VOICE_ATTEN || ch->entchannel ==
 				   CHAN_VOICE_GLOBAL ) )
 								{
+#ifndef __EMSCRIPTEN__
 									UpdateEAXBuffer(ch);
+#endif
 								}
 				*/
 			}
@@ -2220,8 +2272,10 @@ Change the volumes of all the playing sounds for changes in their positions
 */
 void S_Respatialize(int entityNum, const vec3_t head, vec3_t axis[3], qboolean inwater) {
 #ifdef USE_OPENAL
+#ifndef __EMSCRIPTEN__
 	EAXOCCLUSIONPROPERTIES eaxOCProp;
 	EAXACTIVEFXSLOTS eaxActiveSlots;
+#endif
 #endif
 	int i;
 	channel_t *ch;
@@ -2246,6 +2300,7 @@ void S_Respatialize(int entityNum, const vec3_t head, vec3_t axis[3], qboolean i
 		alListenerfv(AL_ORIENTATION, listener_ori);
 
 		// Update EAX effects here
+#ifndef __EMSCRIPTEN__
 		if (s_bEALFileLoaded) {
 			// Check if the Listener is underwater
 			if (inwater) {
@@ -2290,17 +2345,24 @@ void S_Respatialize(int entityNum, const vec3_t head, vec3_t axis[3], qboolean i
 					s_bInWater = false;
 
 					// Remove underwater Reverb effect, and reset Occlusion / Obstruction amount on all Sources
+#ifndef __EMSCRIPTEN__
 					UpdateEAXListener();
+#endif
 
 					ch = s_channels + 1;
 					for (i = 1; i < s_numChannels; i++, ch++) {
+#ifndef __EMSCRIPTEN__
 						UpdateEAXBuffer(ch);
+#endif
 					}
 				} else {
+#ifndef __EMSCRIPTEN__
 					UpdateEAXListener();
+#endif
 				}
 			}
 		}
+#endif
 	} else {
 #endif
 		listener_number = entityNum;
@@ -2606,8 +2668,10 @@ void S_Update_(void) {
 				}
 			}
 
+#ifndef __EMSCRIPTEN__
 			if (s_bEALFileLoaded)
 				UpdateEAXBuffer(ch);
+#endif
 
 			int nBytesDecoded = 0;
 			int nTotalBytesDecoded = 0;
@@ -2674,8 +2738,12 @@ void S_Update_(void) {
 				// Clear error state, and check for successful Play call
 				alGetError();
 				alSourcePlay(s_channels[source].alSource);
-				if (alGetError() == AL_NO_ERROR)
+				if (alGetError() == AL_NO_ERROR) {
 					s_channels[source].bPlaying = true;
+					Com_Printf("[OpenAL] Playing streaming source %d (SFX: %s)\n", source, ch->thesfx->sSoundName);
+				} else {
+					Com_Printf("[OpenAL] Error playing streaming source %d\n", source);
+				}
 
 				ch->bStreaming = true;
 
@@ -2707,8 +2775,12 @@ void S_Update_(void) {
 				// Clear error state, and check for successful Play call
 				alGetError();
 				alSourcePlay(s_channels[source].alSource);
-				if (alGetError() == AL_NO_ERROR)
+				if (alGetError() == AL_NO_ERROR) {
 					s_channels[source].bPlaying = true;
+					Com_Printf("[OpenAL] Playing single-shot source %d (SFX: %s)\n", source, ch->thesfx->sSoundName);
+				} else {
+					Com_Printf("[OpenAL] Error playing single-shot source %d\n", source);
+				}
 
 				if (ch->entchannel == CHAN_VOICE || ch->entchannel == CHAN_VOICE_ATTEN || ch->entchannel == CHAN_VOICE_GLOBAL) {
 					if (ch->thesfx->lipSyncData) {
@@ -2787,6 +2859,7 @@ void UpdateSingleShotSounds() {
 			if (s_channels[i].bStreaming == false) {
 				alGetSourcei(s_channels[i].alSource, AL_SOURCE_STATE, &state);
 				if (state == AL_STOPPED) {
+					Com_Printf("[OpenAL] Single-shot source %d STOPPED naturally (SFX: %s)\n", i, s_channels[i].thesfx->sSoundName);
 					s_channels[i].thesfx = NULL;
 					s_channels[i].bPlaying = false;
 				}
@@ -2988,8 +3061,10 @@ void UpdateLoopingSounds() {
 					ch->master_vol = loop->volume;
 					alSourcef(s_channels[i].alSource, AL_GAIN, ((float)(ch->master_vol) * s_volume->value) / 255.f);
 
+#ifndef __EMSCRIPTEN__
 					if (s_bEALFileLoaded)
 						UpdateEAXBuffer(ch);
+#endif
 
 					ch->bProcessed = true;
 					loop->bProcessed = qtrue;
@@ -3057,8 +3132,10 @@ void UpdateLoopingSounds() {
 			} else {
 				alSourcef(s_channels[source].alSource, AL_REFERENCE_DISTANCE, DEFAULT_REF_DISTANCE);
 			}
+#ifndef __EMSCRIPTEN__
 			if (s_bEALFileLoaded)
 				UpdateEAXBuffer(ch);
+#endif
 
 			alGetError();
 			alSourcePlay(s_channels[source].alSource);
@@ -3150,6 +3227,7 @@ void AL_UpdateRawSamples() {
 		// Check that the Source is actually playing
 		alGetSourcei(s_channels[0].alSource, AL_SOURCE_STATE, &state);
 		if (state != AL_PLAYING) {
+			Com_Printf("[OpenAL] WARNING: Background music underrun detected! Restarting.\n");
 			// Stopped playing ... due to buffer underrun
 			// Unqueue any buffers still on the Source (they will be PROCESSED), and restart playback
 			alGetSourcei(s_channels[0].alSource, AL_BUFFERS_PROCESSED, &processed);
@@ -3163,9 +3241,6 @@ void AL_UpdateRawSamples() {
 				s_soundtime += (size >> 2);
 			}
 
-#ifdef _DEBUG
-			OutputDebugString("Restarting / Starting playback of Raw Samples\n");
-#endif
 			alSourcePlay(s_channels[0].alSource);
 		}
 	}
@@ -4670,6 +4745,7 @@ qboolean SND_RegisterAudio_LevelLoadEnd(qboolean bDeleteEverythingNotUsedThisLev
 /*
 	Initialize the EAX Manager
 */
+#ifndef __EMSCRIPTEN__
 void InitEAXManager() {
 #ifdef USE_OPENAL
 	LPEAXMANAGERCREATE lpEAXManagerCreateFn;
@@ -5559,4 +5635,5 @@ static void UpdateEAXBuffer(channel_t *ch) {
 }
 
 float CalcDistance(EMPOINT A, EMPOINT B) { return (float)sqrt(sqr(A.fX - B.fX) + sqr(A.fY - B.fY) + sqr(A.fZ - B.fZ)); }
+#endif
 #endif

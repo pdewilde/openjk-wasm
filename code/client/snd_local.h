@@ -37,10 +37,17 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 // Open AL Specific
 #ifdef USE_OPENAL
+#ifdef __EMSCRIPTEN__
+#include <AL/al.h>
+#include <AL/alc.h>
+#else
 #include "OpenAL/al.h"
 #include "OpenAL/alc.h"
+#endif
+#ifndef __EMSCRIPTEN__
 #include "eax/eax.h"
 #include "eax/EaxMan.h"
+#endif
 /*#elif defined MACOS_X
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>

@@ -173,18 +173,23 @@ qboolean SNDDMA_Init(int sampleFrequencyInKHz) {
 
 	// I dunno if this is the best idea, but I'll give it a try...
 	//  should probably check a cvar for this...
-	if (s_sdlDevSamps->value)
+	if (s_sdlDevSamps->value) {
 		desired.samples = s_sdlDevSamps->value;
-	else {
+	} else {
 		// just pick a sane default.
-		if (desired.freq <= 11025)
+#ifdef __EMSCRIPTEN__
+		desired.samples = 4096;
+#else
+		if (desired.freq <= 11025) {
 			desired.samples = 256;
-		else if (desired.freq <= 22050)
+		} else if (desired.freq <= 22050) {
 			desired.samples = 512;
-		else if (desired.freq <= 44100)
+		} else if (desired.freq <= 44100) {
 			desired.samples = 1024;
-		else
+		} else {
 			desired.samples = 2048; // (*shrug*)
+		}
+#endif
 	}
 
 	desired.channels = (int)s_sdlChannels->value;
@@ -207,8 +212,13 @@ qboolean SNDDMA_Init(int sampleFrequencyInKHz) {
 	//  know if it's a good value overall, but at least we know it's
 	//  reasonable...this is why I let the user override.
 	tmp = s_sdlMixSamps->value;
-	if (!tmp)
+	if (!tmp) {
+#ifdef __EMSCRIPTEN__
+		tmp = 131072; // Huge DMA buffer (1.4s) to survive main-thread WebAudio starvation
+#else
 		tmp = (obtained.samples * obtained.channels) * 10;
+#endif
+	}
 
 	if (tmp & (tmp - 1)) // not a power of two? Seems to confuse something.
 	{
@@ -241,7 +251,9 @@ qboolean SNDDMA_Init(int sampleFrequencyInKHz) {
 SNDDMA_GetDMAPos
 ===============
 */
-int SNDDMA_GetDMAPos(void) { return dmapos; }
+int SNDDMA_GetDMAPos(void) {
+	return dmapos;
+}
 
 /*
 ===============

@@ -42,9 +42,6 @@ The objective is to port the OpenJK Jedi Academy single-player engine to WebAsse
 
 With the monolithic binary compiling, rendering, and actively playable in the browser, the following singleplayer engine integration fixes have also been implemented:
 - **Persistent Filesystem / Saves:** Created a virtual `/saves` directory initialization path inside Emscripten to allow the VFS to natively support writing checkpoint and savegame data.
-- **Savegame Object / ICARUS Restoration:** Patched `g_savegame.cpp` to correctly serialize the full global entity array (`g_entities`) and ICARUS script VM state during autosaves/level transitions across the WASM boundary to prevent script corruption on reload.
-- **TaskID Lifecycle:** Fixed the `Q3_TaskIDSet` function in `Q3_Interface` to prevent task completion calls from stomping the active ID during checkpoint script restoration.
-- **Gender Audio Cvar Initialization:** Modified `G_AddSexToPlayerString` to enforce a fresh lookup of the `g_sex` Engine CVAR upon savegame reload, fixing dialogue audio defaults.
 
 Current ongoing work:
 - Continuing to isolate and debug remaining ICARUS scripting anomalies that manifest specifically after checkpoint restoration (e.g. `tree3` sequenced events failing to run properly).

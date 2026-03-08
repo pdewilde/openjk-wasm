@@ -483,11 +483,6 @@ static void Q3_TaskIDSet(gentity_t *ent, taskID_t taskType, int taskID) {
 		return;
 	}
 
-	// If we're setting the same task ID, then don't do anything (happens during Recall)
-	if (ent->taskID[taskType] == taskID) {
-		return;
-	}
-
 	// Might be stomping an old task, so complete and clear previous task if there was one
 	Q3_TaskIDComplete(ent, taskType);
 
@@ -898,8 +893,6 @@ returns qtrue if changed to ms
 */
 static qboolean G_AddSexToPlayerString(char *string, qboolean qDoBoth) {
 	char *start;
-
-	g_sex = gi.cvar("sex", "f", 0); // Ensure we have the latest value of sex cvar from savegame load before ICARUS processing
 
 	if VALIDSTRING (string) {
 		if (g_sex->string[0] == 'f') {

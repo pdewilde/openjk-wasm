@@ -2740,9 +2740,9 @@ void S_Update_(void) {
 				alSourcePlay(s_channels[source].alSource);
 				if (alGetError() == AL_NO_ERROR) {
 					s_channels[source].bPlaying = true;
-					Com_Printf("[OpenAL] Playing streaming source %d (SFX: %s)\n", source, ch->thesfx->sSoundName);
+//					Com_Printf("[OpenAL] Playing streaming source %d (SFX: %s)\n", source, ch->thesfx->sSoundName);
 				} else {
-					Com_Printf("[OpenAL] Error playing streaming source %d\n", source);
+//					Com_Printf("[OpenAL] Error playing streaming source %d\n", source);
 				}
 
 				ch->bStreaming = true;
@@ -2777,9 +2777,9 @@ void S_Update_(void) {
 				alSourcePlay(s_channels[source].alSource);
 				if (alGetError() == AL_NO_ERROR) {
 					s_channels[source].bPlaying = true;
-					Com_Printf("[OpenAL] Playing single-shot source %d (SFX: %s)\n", source, ch->thesfx->sSoundName);
+//					Com_Printf("[OpenAL] Playing single-shot source %d (SFX: %s)\n", source, ch->thesfx->sSoundName);
 				} else {
-					Com_Printf("[OpenAL] Error playing single-shot source %d\n", source);
+//					Com_Printf("[OpenAL] Error playing single-shot source %d\n", source);
 				}
 
 				if (ch->entchannel == CHAN_VOICE || ch->entchannel == CHAN_VOICE_ATTEN || ch->entchannel == CHAN_VOICE_GLOBAL) {
@@ -2859,7 +2859,7 @@ void UpdateSingleShotSounds() {
 			if (s_channels[i].bStreaming == false) {
 				alGetSourcei(s_channels[i].alSource, AL_SOURCE_STATE, &state);
 				if (state == AL_STOPPED) {
-					Com_Printf("[OpenAL] Single-shot source %d STOPPED naturally (SFX: %s)\n", i, s_channels[i].thesfx->sSoundName);
+//					Com_Printf("[OpenAL] Single-shot source %d STOPPED naturally (SFX: %s)\n", i, s_channels[i].thesfx->sSoundName);
 					s_channels[i].thesfx = NULL;
 					s_channels[i].bPlaying = false;
 				}
@@ -3227,7 +3227,7 @@ void AL_UpdateRawSamples() {
 		// Check that the Source is actually playing
 		alGetSourcei(s_channels[0].alSource, AL_SOURCE_STATE, &state);
 		if (state != AL_PLAYING) {
-			Com_Printf("[OpenAL] WARNING: Background music underrun detected! Restarting.\n");
+//			Com_Printf("[OpenAL] WARNING: Background music underrun detected! Restarting.\n");
 			// Stopped playing ... due to buffer underrun
 			// Unqueue any buffers still on the Source (they will be PROCESSED), and restart playback
 			alGetSourcei(s_channels[0].alSource, AL_BUFFERS_PROCESSED, &processed);

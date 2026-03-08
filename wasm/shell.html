@@ -99,7 +99,12 @@
             monitorRunDependencies: function (left) {
                 this.totalDependencies = Math.max(this.totalDependencies, left);
                 Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')' : 'Running...');
-            }
+            },
+            preRun: [function () {
+                try {
+                    FS.mkdir('/saves');
+                } catch (e) { }
+            }]
         };
         Module.setStatus('Downloading...');
         window.onerror = function () {

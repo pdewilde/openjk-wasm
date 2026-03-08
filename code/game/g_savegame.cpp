@@ -727,7 +727,8 @@ static void WriteGEntities(qboolean qbAutosave) {
 	int iCount = 0;
 	int i;
 
-	for (i = 0; i < (qbAutosave ? 1 : globals.num_entities); i++) {
+	// WASM: Always save all entities, even for autosaves, to avoid checkpoint corruption
+	for (i = 0; i < (/*qbAutosave ? 1 :*/ globals.num_entities); i++) {
 		gentity_t *ent = &g_entities[i];
 
 		if (ent->inuse) {
@@ -739,7 +740,8 @@ static void WriteGEntities(qboolean qbAutosave) {
 
 	saved_game.write_chunk<int32_t>(INT_ID('N', 'M', 'E', 'D'), iCount);
 
-	for (i = 0; i < (qbAutosave ? 1 : globals.num_entities); i++) {
+	// WASM: Always save all entities
+	for (i = 0; i < (/*qbAutosave ? 1 :*/ globals.num_entities); i++) {
 		gentity_t *ent = &g_entities[i];
 
 		if (ent->inuse) {
@@ -789,7 +791,8 @@ static void WriteGEntities(qboolean qbAutosave) {
 	// Write out all entity timers
 	TIMER_Save(); // WriteEntityTimers();
 
-	if (!qbAutosave) {
+	// WASM: Always save ICARUS information
+	if (/* !qbAutosave */ 1) {
 		// Save out ICARUS information
 		IIcarusInterface::GetIcarus()->Save();
 
@@ -801,7 +804,7 @@ static void WriteGEntities(qboolean qbAutosave) {
 
 		saved_game.write_chunk<int32_t>(INT_ID('I', 'C', 'O', 'K'), iBlah);
 	}
-	if (!qbAutosave) // really shouldn't need to write these bits at all, just restore them from the ents...
+	if (/* !qbAutosave */ 1) // really shouldn't need to write these bits at all, just restore them from the ents...
 	{
 		WriteInUseBits();
 	}
@@ -1007,7 +1010,8 @@ static void ReadGEntities(qboolean qbAutosave) {
 	// Read in all the entity timers
 	TIMER_Load(); // ReadEntityTimers();
 
-	if (!qbAutosave) {
+	// WASM: Always load all entities and ICARUS state to avoid checkpoint corruption
+	if (/* !qbAutosave */ 1) {
 		// now zap any g_ents that were inuse when the level was loaded, but are no longer in use in the saved version
 		//	that we've just loaded...
 		//
@@ -1029,13 +1033,13 @@ static void ReadGEntities(qboolean qbAutosave) {
 
 		saved_game.read_chunk<int32_t>(INT_ID('I', 'C', 'O', 'K'), iBlah);
 	}
-	if (!qbAutosave) {
+	if (/* !qbAutosave */ 1) {
 		ReadInUseBits(); // really shouldn't need to read these bits in at all, just restore them from the ents...
 	}
 }
 
 void WriteLevel(qboolean qbAutosave) {
-	if (!qbAutosave) //-always save the client
+	if (/* !qbAutosave */ 1) //-always save the client
 	{
 		// write out one client - us!
 		//
@@ -1097,7 +1101,7 @@ void ReadLevel(qboolean qbAutosave, qboolean qbLoadTransition) {
 		// Read & throw away objective info
 		saved_game.read_chunk(INT_ID('O', 'B', 'J', 'T'));
 	} else {
-		if (!qbAutosave) // always load the client unless it's an autosave
+		if (/* !qbAutosave */ 1) // always load the client unless it's an autosave
 		{
 			assert(level.maxclients == 1); // I'll need to know if this changes, otherwise I'll need to change the way things work
 

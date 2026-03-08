@@ -30,6 +30,8 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 	#include "g_local.h" // for cvars
 #elif defined(_CGAME)
 	#include "cgame/cg_local.h" // for configstrings
+#elif defined(UI_BUILD)
+	#include "ui/ui_local.h"
 #endif
 
 extern qboolean BG_SabersOff( playerState_t *ps );
@@ -355,6 +357,8 @@ void BG_FixSaberMoveData(void) {
 	const char *cs = CG_ConfigString(CS_LEGACY_FIXES);
 	const uint32_t legacyFixes = strtoul(cs, NULL, 0);
 	const qboolean doFix = !!(legacyFixes & (1 << LEGACYFIX_SABERMOVEDATA));
+#elif defined(UI_BUILD)
+	const qboolean doFix = qtrue;
 #endif
 	saberMoveData_t *move;
 
@@ -944,6 +948,8 @@ int PM_SaberLockWinAnim( qboolean victory, qboolean superBreak )
 	extern gentity_t g_entities[];
 #elif defined(_CGAME)
 	#include "cgame/cg_local.h" //ahahahahhahahaha@$!$!
+#elif defined(UI_BUILD)
+	#include "ui/ui_local.h"
 #endif
 
 int PM_SaberLockLoseAnim( playerState_t *genemy, qboolean victory, qboolean superBreak )
@@ -4072,6 +4078,8 @@ saberInfo_t *BG_MySaber( int clientNum, int saberNum )
 		}
 		return &ci->saber[saberNum];
 	}
+#elif defined(UI_BUILD)
+	return NULL;
 #endif
 
 	return NULL;

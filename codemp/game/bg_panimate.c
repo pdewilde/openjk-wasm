@@ -2560,7 +2560,7 @@ int BG_PickAnim(int animIndex, int minAnim, int maxAnim) {
 // of a pmove too so I have ported it to true BGishness.
 // Please do not reference pm in this function or any functions that it calls,
 // or I will cry. -rww
-void BG_SetAnim(playerState_t *ps, animation_t *animations, int setAnimParts, int anim, int setAnimFlags) {
+void BG_SetAnim(playerState_t *ps, animation_t *animations, int setAnimParts, int anim, int setAnimFlags, int blendTime) {
 	if (!animations) {
 		animations = bgAllAnims[0].anims;
 	}
@@ -2604,4 +2604,4 @@ void BG_SetAnim(playerState_t *ps, animation_t *animations, int setAnimParts, in
 	BG_SetAnimFinal(ps, animations, setAnimParts, anim, setAnimFlags);
 }
 
-void PM_SetAnim(int setAnimParts, int anim, int setAnimFlags) { BG_SetAnim(pm->ps, pm->animations, setAnimParts, anim, setAnimFlags); }
+void PM_SetAnim(int setAnimParts, int anim, int setAnimFlags) { BG_SetAnim(pm->ps, pm->animations, setAnimParts, anim, setAnimFlags, 0); }

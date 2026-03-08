@@ -83,6 +83,10 @@ void UIVM_MouseEvent( int dx, int dy ) {
 }
 
 void UIVM_Refresh( int realtime ) {
+	static int refreshCount = 0;
+	if (refreshCount++ % 100 == 0) {
+		Com_Printf("UIVM_Refresh: %i (count %d)\n", realtime, refreshCount);
+	}
 	if ( uivm->isLegacy ) {
 		VM_Call( uivm, UI_REFRESH, realtime );
 		return;
@@ -102,6 +106,7 @@ qboolean UIVM_IsFullscreen( void ) {
 }
 
 void UIVM_SetActiveMenu( uiMenuCommand_t menu ) {
+	Com_Printf("UIVM_SetActiveMenu: %i\n", menu);
 	if ( uivm->isLegacy ) {
 		VM_Call( uivm, UI_SET_ACTIVE_MENU, menu );
 		return;
@@ -120,6 +125,7 @@ qboolean UIVM_ConsoleCommand( int realTime ) {
 	return uie->ConsoleCommand( realTime );
 }
 void UIVM_DrawConnectScreen( qboolean overlay ) {
+	Com_Printf("UIVM_DrawConnectScreen: %i\n", overlay);
 	if ( uivm->isLegacy ) {
 		VM_Call( uivm, UI_DRAW_CONNECT_SCREEN, overlay );
 		return;

@@ -47,9 +47,13 @@ Current ongoing singleplayer work:
 - Continuing to isolate and debug remaining ICARUS scripting anomalies that manifest specifically after checkpoint restoration (e.g. `tree3` sequenced events failing to run properly).
 
 ## Multiplayer Port Context
-For the next AI agent beginning the Multiplayer WebAssembly port:
+The Multiplayer WebAssembly port is currently underway. Key achievements and ongoing challenges include:
+
 1. **Directory Structure:** Singleplayer code resides in `code/`, but the Multiplayer source tree resides in `codemp/`.
-2. **Build Strategy:** You will need to configure the build (e.g., adapting `wasm/CMakeLists.txt` or creating a new one) to statically link the core engine, renderer (`rd-vanilla` / `rd-rend2`), `cgame`, `ui`, and `qagame` seamlessly into a monolithic binary, just like the singleplayer target.
-3. **Dynamic Library Interception:** Multiplayer uses similar dynamic module loading (`Sys_LoadDll`). You must stub these out using `#ifdef __EMSCRIPTEN__` blocks and wire them directly to the statically linked APIs (`GetRefAPI`, `GetGameAPI`, `CG_vmMain`, `UI_vmMain`), mirroring the singleplayer approach found in `code/sys/sys_main.cpp`.
-4. **Main Loop & Graphics:** Emscripten's `emscripten_set_main_loop` must be used to prevent thread blocking in the engine's infinite loop. OpenGL legacy translation via `GL4ES` and Web Audio `OpenAL` emulation will apply identically.
-5. **Symbol Conflicts:** Be prepared to rename or wrap global variables and crossover hooks that collide when the `cgame`, `ui`, and `qagame` subsystems are merged into a single global namespace.
+2. **Build Strategy:** The build has been configured in `wasm/CMakeLists.txt` to statically link the core engine, renderer (`rd-vanilla`), `cgame`, `ui`, and `qagame` seamlessly into a monolithic binary (`openjk_mp.wasm`).
+3. **Dynamic Library Interception:** Dynamic module loading (`Sys_LoadDll`) has been stubbed out using `#ifdef __EMSCRIPTEN__` blocks, wiring them directly to the statically linked APIs (`GetRefAPI`, `GetGameAPI`, `CG_vmMain`, `UI_vmMain`).
+4. **Main Loop & Graphics:** Emscripten's `emscripten_set_main_loop` is used to prevent thread blocking. OpenGL legacy translation via `GL4ES` and Web Audio `OpenAL` emulation are applied.
+5. **Symbol Conflicts & State Collisions:**
+   - **Issue:** The `cgame` and `ui` modules both relied on a shared file (`ui_shared.c`) which contained core menu system logic, including global variables like the `Menus` array and `menuCount`. In a monolithic build, they shared the exact same memory space, causing `cgame` to wipe out the UI menus upon initialization.
+   - **Resolution:** `ui_shared.c` was added to the `mp_cgame` build target so it has its own copy. A Python script (`gen_renames.py`) was used to extract all global symbols from `ui_shared.c` and add them to `ui_rename.h` and `cg_rename.h`. This ensures the `ui` module uses `ui_Menus` and the `cgame` module uses `cg_Menus`, completely isolating their state.
+6. **Memory Allocation:** The initial memory allocation for the WASM build was increased from 64MB to 128MB (`-sINITIAL_MEMORY=134217728`) to accommodate the duplicated state and prevent linking errors.

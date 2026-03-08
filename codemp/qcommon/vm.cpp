@@ -147,6 +147,12 @@ vm_t *VM_CreateLegacy(vmSlots_t vmSlot, intptr_t (*systemCalls)(intptr_t *)) {
 	return NULL;
 }
 
+#ifdef __EMSCRIPTEN__
+extern "C" void *g_GetGameAPI( int apiVersion, ... );
+extern "C" void *cg_GetCGameAPI( int apiVersion, ... );
+extern "C" void *ui_GetUIAPI( int apiVersion, ... );
+#endif
+
 vm_t *VM_Create(vmSlots_t vmSlot) {
 	vm_t *vm = NULL;
 
@@ -170,7 +176,20 @@ vm_t *VM_Create(vmSlots_t vmSlot) {
 
 	// find the module api
 	FS_FindPureDLL(vm->name);
+#ifdef __EMSCRIPTEN__
+	if (vmSlot == VM_GAME) {
+		vm->GetModuleAPI = (void *(*)(int, ...))g_GetGameAPI;
+		vm->dllHandle = (void *)1; // dummy handle
+	} else if (vmSlot == VM_CGAME) {
+		vm->GetModuleAPI = (void *(*)(int, ...))cg_GetCGameAPI;
+		vm->dllHandle = (void *)1;
+	} else if (vmSlot == VM_UI) {
+		vm->GetModuleAPI = (void *(*)(int, ...))ui_GetUIAPI;
+		vm->dllHandle = (void *)1;
+	}
+#else
 	vm->dllHandle = Sys_LoadGameDll(vm->name, &vm->GetModuleAPI);
+#endif
 
 	Com_Printf("VM_Create: %s" ARCH_STRING DLL_EXT, vm->name);
 	if (vm->dllHandle) {

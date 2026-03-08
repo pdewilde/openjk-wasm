@@ -71,6 +71,9 @@ void GL_Bind(image_t *image) {
 		image->frameUsed = tr.frameCount;
 		glState.currenttextures[glState.currenttmu] = texnum;
 		qglBindTexture(GL_TEXTURE_2D, texnum);
+		if (backEnd.projection2D) {
+			qglEnable(GL_TEXTURE_2D);
+		}
 	}
 }
 
@@ -78,32 +81,20 @@ void GL_Bind(image_t *image) {
 ** GL_SelectTexture
 */
 void GL_SelectTexture(int unit) {
+	if (unit < 0 || unit >= glConfig.maxActiveTextures) {
+		return;
+	}
+
 	if (glState.currenttmu == unit) {
 		return;
 	}
 
-	if (unit == 0) {
-		qglActiveTextureARB(GL_TEXTURE0_ARB);
-		GLimp_LogComment("glActiveTextureARB( GL_TEXTURE0_ARB )\n");
-		qglClientActiveTextureARB(GL_TEXTURE0_ARB);
-		GLimp_LogComment("glClientActiveTextureARB( GL_TEXTURE0_ARB )\n");
-	} else if (unit == 1) {
-		qglActiveTextureARB(GL_TEXTURE1_ARB);
-		GLimp_LogComment("glActiveTextureARB( GL_TEXTURE1_ARB )\n");
-		qglClientActiveTextureARB(GL_TEXTURE1_ARB);
-		GLimp_LogComment("glClientActiveTextureARB( GL_TEXTURE1_ARB )\n");
-	} else if (unit == 2) {
-		qglActiveTextureARB(GL_TEXTURE2_ARB);
-		GLimp_LogComment("glActiveTextureARB( GL_TEXTURE2_ARB )\n");
-		qglClientActiveTextureARB(GL_TEXTURE2_ARB);
-		GLimp_LogComment("glClientActiveTextureARB( GL_TEXTURE2_ARB )\n");
-	} else if (unit == 3) {
-		qglActiveTextureARB(GL_TEXTURE3_ARB);
-		GLimp_LogComment("glActiveTextureARB( GL_TEXTURE3_ARB )\n");
-		qglClientActiveTextureARB(GL_TEXTURE3_ARB);
-		GLimp_LogComment("glClientActiveTextureARB( GL_TEXTURE3_ARB )\n");
-	} else {
-		Com_Error(ERR_DROP, "GL_SelectTexture: unit = %i", unit);
+	if (qglActiveTextureARB) {
+		qglActiveTextureARB(GL_TEXTURE0 + unit);
+	}
+
+	if (qglClientActiveTextureARB) {
+		qglClientActiveTextureARB(GL_TEXTURE0 + unit);
 	}
 
 	glState.currenttmu = unit;
@@ -1088,6 +1079,9 @@ void RB_SetGL2D(void) {
 	qglDisable(GL_CULL_FACE);
 	qglDisable(GL_CLIP_PLANE0);
 
+	qglEnable(GL_TEXTURE_2D);
+	qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
 	// set time for 2D shaders
 	backEnd.refdef.time = ri.Milliseconds() * ri.Cvar_VariableValue("timescale");
 	backEnd.refdef.floatTime = backEnd.refdef.time * 0.001f;
@@ -1859,6 +1853,9 @@ void RB_ExecuteRenderCommands(const void *data) {
 			break;
 		case RC_END_OF_LIST:
 		default:
+			if (tess.numIndexes) {
+				RB_EndSurface();
+			}
 			// stop rendering
 			t2 = ri.Milliseconds() * ri.Cvar_VariableValue("timescale");
 			backEnd.pc.msec = t2 - t1;

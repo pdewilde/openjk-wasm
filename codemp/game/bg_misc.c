@@ -328,7 +328,10 @@ void BG_FixWeaponAttackAnim(void) {
 	const uint32_t legacyFixes = strtoul(cs, NULL, 0);
 	const qboolean doFix = !!(legacyFixes & (1 << LEGACYFIX_WEAPONATTACKANIM));
 #elif defined(UI_BUILD)
-	const qboolean doFix = qtrue; // no chance of prediction error from UI code
+	char buff[MAX_STRING_CHARS];
+	trap->GetConfigString(CS_LEGACY_FIXES, buff, sizeof(buff));
+	const uint32_t legacyFixes = strtoul(buff, NULL, 0);
+	const qboolean doFix = !!(legacyFixes & (1 << LEGACYFIX_WEAPONATTACKANIM));
 #endif
 	int *move;
 

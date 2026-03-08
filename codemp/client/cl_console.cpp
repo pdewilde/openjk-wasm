@@ -74,7 +74,9 @@ void Con_ToggleConsole_f (void) {
 	g_consoleField.widthInChars = g_console_field_width;
 
 	Con_ClearNotify ();
-	Key_SetCatcher( Key_GetCatcher( ) ^ KEYCATCH_CONSOLE );
+	int oldCatcher = Key_GetCatcher();
+	Key_SetCatcher( oldCatcher ^ KEYCATCH_CONSOLE );
+	Com_Printf("Con_ToggleConsole_f: catcher %i -> %i\n", oldCatcher, Key_GetCatcher());
 }
 
 /*
@@ -731,8 +733,7 @@ void Con_DrawNotify (void)
 	int		currentColor;
 	const char* chattext;
 
-	currentColor = 7;
-	re->SetColor( g_color_table[currentColor] );
+	currentColor = -1;
 
 	int iFontIndex = cls.consoleFont;
 	float fFontScale = 1.0f;
@@ -869,6 +870,8 @@ void Con_DrawSolidConsole( float frac ) {
 	if (lines <= 0)
 		return;
 
+	Com_Printf("Con_DrawSolidConsole: frac=%f, lines=%i\n", frac, lines);
+
 	if (lines > cls.glconfig.vidHeight )
 		lines = cls.glconfig.vidHeight;
 
@@ -930,8 +933,7 @@ void Con_DrawSolidConsole( float frac ) {
 		row--;
 	}
 
-	currentColor = 7;
-	re->SetColor( g_color_table[currentColor] );
+	currentColor = -1;
 
 	int iFontIndex = cls.consoleFont;
 	float fFontScale = 1.0f;
@@ -1088,14 +1090,12 @@ void Con_Bottom( void ) {
 	con.display = con.current;
 }
 
-
 void Con_Close( void ) {
 	if ( !com_cl_running->integer ) {
 		return;
 	}
-	Field_Clear( &g_consoleField );
-	Con_ClearNotify ();
-	Key_SetCatcher( Key_GetCatcher( ) & ~KEYCATCH_CONSOLE );
+	Cvar_Set( "con_display", "0" );
+	Key_SetCatcher( Key_GetCatcher() & ~KEYCATCH_CONSOLE );
 	con.finalFrac = 0;				// none visible
 	con.displayFrac = 0;
 }

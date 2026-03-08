@@ -124,6 +124,18 @@ void SCR_DrawSmallChar(int x, int y, int ch) {
 
 	ch &= 255;
 
+	if (ch == 25) { // CONSOLE_PROMPT_CHAR
+		static int promptCount = 0;
+		if (promptCount++ % 10 == 0) {
+			Com_Printf("SCR_DrawSmallChar: prompt at %i, %i (count %d)\n", x, y, promptCount);
+		}
+	} else {
+		static int charCount = 0;
+		if (charCount++ % 1000 == 0) {
+			Com_Printf("SCR_DrawSmallChar: char %i at %i, %i (total chars %d)\n", ch, x, y, charCount);
+		}
+	}
+
 	if (ch == ' ') {
 		return;
 	}
@@ -140,12 +152,9 @@ void SCR_DrawSmallChar(int x, int y, int ch) {
 	frow = row * 0.0625;
 	fcol = col * 0.0625;
 
-	size = 0.03125;
-	//	size = 0.0625;
+	size = 0.0625;
 
-	size2 = 0.0625;
-
-	re->DrawStretchPic(x * con.xadjust, y * con.yadjust, con.charWidth * con.xadjust, con.charHeight * con.yadjust, fcol, frow, fcol + size, frow + size2,
+	re->DrawStretchPic(x * con.xadjust, y * con.yadjust, con.charWidth * con.xadjust, con.charHeight * con.yadjust, fcol, frow, fcol + size, frow + size,
 					   cls.charSetShader);
 }
 

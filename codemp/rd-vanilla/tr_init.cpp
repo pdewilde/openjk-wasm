@@ -209,7 +209,7 @@ cvar_t *broadsword_dircap = 0;
 Ghoul2 Insert End
 */
 
-cvar_t *se_language;
+static cvar_t *se_language;
 
 cvar_t *r_aviMotionJpegQuality;
 cvar_t *r_screenshotJpegQuality;
@@ -458,23 +458,32 @@ static void GLimp_InitExtensions(void) {
 	qglMultiTexCoord2fARB = NULL;
 	qglActiveTextureARB = NULL;
 	qglClientActiveTextureARB = NULL;
-	if (ri.GL_ExtensionSupported("GL_ARB_multitexture")) {
-		if (r_ext_multitexture->integer) {
-			qglMultiTexCoord2fARB = (PFNGLMULTITEXCOORD2FARBPROC)ri.GL_GetProcAddress("glMultiTexCoord2fARB");
-			qglActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC)ri.GL_GetProcAddress("glActiveTextureARB");
-			qglClientActiveTextureARB = (PFNGLCLIENTACTIVETEXTUREARBPROC)ri.GL_GetProcAddress("glClientActiveTextureARB");
+
+	bool hasMultitexture = ri.GL_ExtensionSupported("GL_ARB_multitexture");
+
+	if (hasMultitexture || r_ext_multitexture->integer) {
+		qglMultiTexCoord2fARB = (PFNGLMULTITEXCOORD2FARBPROC)ri.GL_GetProcAddress("glMultiTexCoord2fARB");
+		qglActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC)ri.GL_GetProcAddress("glActiveTextureARB");
+		if (!qglActiveTextureARB) {
+			qglActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC)ri.GL_GetProcAddress("glActiveTexture");
+		}
+		qglClientActiveTextureARB = (PFNGLCLIENTACTIVETEXTUREARBPROC)ri.GL_GetProcAddress("glClientActiveTextureARB");
+		if (!qglClientActiveTextureARB) {
+			qglClientActiveTextureARB = (PFNGLCLIENTACTIVETEXTUREARBPROC)ri.GL_GetProcAddress("glClientActiveTexture");
+		}
 
 			if (qglActiveTextureARB) {
 				qglGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &glConfig.maxActiveTextures);
 
+				glConfig.maxActiveTextures = 1;
+
 				if (glConfig.maxActiveTextures > 1) {
-					Com_Printf("...using GL_ARB_multitexture\n");
-				} else {
-					qglMultiTexCoord2fARB = NULL;
-					qglActiveTextureARB = NULL;
-					qglClientActiveTextureARB = NULL;
-					Com_Printf("...not using GL_ARB_multitexture, < 2 texture units\n");
-				}
+				Com_Printf("...using GL_ARB_multitexture\n");
+			} else {
+				qglMultiTexCoord2fARB = NULL;
+				qglActiveTextureARB = NULL;
+				qglClientActiveTextureARB = NULL;
+				Com_Printf("...not using GL_ARB_multitexture, < 2 texture units\n");
 			}
 		} else {
 			Com_Printf("...ignoring GL_ARB_multitexture\n");

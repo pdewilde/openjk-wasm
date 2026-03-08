@@ -5168,6 +5168,8 @@ static qboolean BG_AreRunWalkAnimsFixed(void) {
 	const char *cs = CG_ConfigString(CS_LEGACY_FIXES);
 	const uint32_t legacyFixes = strtoul(cs, NULL, 0);
 	return !!(legacyFixes & (1 << LEGACYFIX_RUNWALKANIMS));
+#elif defined(UI_BUILD)
+	return qtrue; // no chance of prediction error from UI code
 #endif
 }
 
@@ -11127,9 +11129,9 @@ void PmoveSingle (pmove_t *pmove) {
 	PM_WaterEvents();
 
 	// snap velocity to integer coordinates to save network bandwidth
-	if ( !pm->pmove_float )
-		trap->SnapVector( pm->ps->velocity );
-
+#if !defined(UI_BUILD)
+	trap->SnapVector( pm->ps->velocity );
+#endif
  	if (pm->ps->pm_type == PM_JETPACK || gPMDoSlowFall )
 	{
 		pm->ps->gravity = savedGravity;

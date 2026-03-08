@@ -127,6 +127,8 @@ void PM_VehicleImpact(bgEntity_t *pEnt, trace_t *trace) {
 	} else if ((fabs(pm->ps->velocity[0]) + fabs(pm->ps->velocity[1])) < 100.0f && pm->ps->velocity[2] > -100.0f)
 #elif defined(_CGAME)
 	if ((fabs(pm->ps->velocity[0]) + fabs(pm->ps->velocity[1])) < 100.0f && pm->ps->velocity[2] > -100.0f)
+#elif defined(UI_BUILD)
+	#include "ui/ui_local.h"
 #endif
 	/*
 if ( (pSelfVeh->m_ulFlags&VEH_GEARSOPEN)
@@ -163,7 +165,7 @@ if ( (pSelfVeh->m_ulFlags&VEH_GEARSOPEN)
 			// FIXME: impact sound and effect should be gotten from g_vehicleInfo...?
 			// FIXME: should pass in trace.endpos and trace.plane.normal
 			vec3_t vehUp;
-#ifdef _CGAME
+#if defined(_CGAME) || defined(UI_BUILD)
 			bgEntity_t *hitEnt;
 #endif
 
@@ -171,7 +173,7 @@ if ( (pSelfVeh->m_ulFlags&VEH_GEARSOPEN)
 				qboolean turnFromImpact = qfalse, turnHitEnt = qfalse;
 				float l = pm->ps->speed * 0.5f;
 				vec3_t bounceDir;
-#ifdef _CGAME
+#if defined(_CGAME) || defined(UI_BUILD)
 				bgEntity_t *hitEnt = PM_BGEntForNum(trace->entityNum);
 #endif
 				if ((trace->entityNum == ENTITYNUM_WORLD || hitEnt->s.solid == SOLID_BMODEL) // bounce off any brush
@@ -191,7 +193,7 @@ if ( (pSelfVeh->m_ulFlags&VEH_GEARSOPEN)
 						VectorCopy(trace->plane.normal, bounceDir);
 					}
 				} else if (pSelfVeh->m_pVehicleInfo->type == VH_FIGHTER) { // check for impact with another fighter
-#ifdef _CGAME
+#if defined(_CGAME) || defined(UI_BUILD)
 					bgEntity_t *hitEnt = PM_BGEntForNum(trace->entityNum);
 #endif
 					if (hitEnt->s.NPC_class == CLASS_VEHICLE && hitEnt->m_pVehicle && hitEnt->m_pVehicle->m_pVehicleInfo &&
@@ -463,7 +465,9 @@ if ( (pSelfVeh->m_ulFlags&VEH_GEARSOPEN)
 			if (!hitEnt || hitEnt->s.owner != pEnt->s.number) { // don't hit your own missiles!
 				AngleVectors(pSelfVeh->m_vOrientation, NULL, NULL, vehUp);
 				pEnt->m_pVehicle->m_iHitDebounce = pm->cmd.serverTime + 200;
+#if !defined(UI_BUILD)
 				trap->FX_PlayEffectID(pSelfVeh->m_pVehicleInfo->iImpactFX, pm->ps->origin, vehUp, -1, -1, qfalse);
+#endif
 
 				pSelfVeh->m_ulFlags |= VEH_CRASHING;
 			}

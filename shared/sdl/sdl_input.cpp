@@ -1086,27 +1086,52 @@ static void IN_ProcessEvents(void) {
 	while (SDL_PollEvent(&e)) {
 		switch (e.type) {
 		case SDL_KEYDOWN:
-			key = IN_TranslateSDLToJKKey(&e.key.keysym, qtrue);
-			if (key != A_NULL)
-				Sys_QueEvent(0, SE_KEY, key, qtrue, 0, NULL);
+			// Handle special key remappings/actions based on scancode before translation
+			if (e.key.keysym.scancode == SDL_SCANCODE_HOME) {
+				Com_Printf("REMAPPING HOME TO ESCAPE\n");
+				e.key.keysym.sym = SDLK_ESCAPE; // Remap the symbol for translation
+			}
+			if (e.key.keysym.scancode == SDL_SCANCODE_END) {
+				Com_Printf("TOGGLING CONSOLE VIA END\n");
+				extern void Con_ToggleConsole_f(void);
+				Con_ToggleConsole_f();
+				return; // Consume the event and exit
+			}
 
-			if (key == A_BACKSPACE)
+			key = IN_TranslateSDLToJKKey(&e.key.keysym, qtrue);
+			Com_Printf("SDL_KEYDOWN: keysym=0x%x, translated=0x%x\n", e.key.keysym.sym, key);
+			if (key != A_NULL) {
+				Com_Printf("Sys_QueEvent(SE_KEY, %i, down=qtrue)\n", key);
+				Sys_QueEvent(0, SE_KEY, key, qtrue, 0, NULL);
+			}
+
+			if (key == A_BACKSPACE) {
+				Com_Printf("Sys_QueEvent(SE_CHAR, BACKSPACE)\n");
 				Sys_QueEvent(0, SE_CHAR, CTRL('h'), qfalse, 0, NULL);
-			else if (kg.keys[A_CTRL].down && key >= A_CAP_A && key <= A_CAP_Z)
+			} else if (kg.keys[A_CTRL].down && key >= A_CAP_A && key <= A_CAP_Z) {
+				Com_Printf("Sys_QueEvent(SE_CHAR, CTRL-%c)\n", tolower(key));
 				Sys_QueEvent(0, SE_CHAR, CTRL(tolower(key)), qfalse, 0, NULL);
+			}
 
 			lastKeyDown = key;
 			break;
 
 		case SDL_KEYUP:
 			key = IN_TranslateSDLToJKKey(&e.key.keysym, qfalse);
-			if (key != A_NULL)
+			Com_Printf("SDL_KEYUP: keysym=0x%x, translated=0x%x\n", e.key.keysym.sym, key);
+			if (key == A_BACKSLASH) {
+				key = A_ESCAPE;
+			}
+			if (key != A_NULL) {
+				Com_Printf("Sys_QueEvent(SE_KEY, %i, down=qfalse)\n", key);
 				Sys_QueEvent(0, SE_KEY, key, qfalse, 0, NULL);
+			}
 
 			lastKeyDown = A_NULL;
 			break;
 
 		case SDL_TEXTINPUT:
+			Com_Printf("SDL_TEXTINPUT: %s\n", e.text.text);
 			if (lastKeyDown != A_CONSOLE) {
 				char *c = e.text.text;
 

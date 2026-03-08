@@ -31,6 +31,8 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 	#include "g_local.h"
 #elif defined(_CGAME)
 	#include "cgame/cg_local.h"
+#elif defined(UI_BUILD)
+	#include "ui/ui_local.h"
 #endif
 
 void BG_AttachToRancor( void *ghoul2, float rancYaw, vec3_t rancOrigin, int time, qhandle_t *modelList, vec3_t modelScale, qboolean inMouth, vec3_t out_origin, vec3_t out_angles, matrix3_t out_axis )
@@ -100,6 +102,10 @@ void BG_AttachToRancor( void *ghoul2, float rancYaw, vec3_t rancOrigin, int time
 #define	MAX_VARIANTS 8
 qboolean BG_GetRootSurfNameWithVariant( void *ghoul2, const char *rootSurfName, char *returnSurfName, int returnSize )
 {
+#if defined(UI_BUILD)
+	Q_strncpyz( returnSurfName, rootSurfName, returnSize );
+	return qfalse;
+#else
 	if ( !ghoul2 || !trap->G2API_GetSurfaceRenderStatus( ghoul2, 0, rootSurfName ) )
 	{//see if the basic name without variants is on
 		Q_strncpyz( returnSurfName, rootSurfName, returnSize );
@@ -119,5 +125,6 @@ qboolean BG_GetRootSurfNameWithVariant( void *ghoul2, const char *rootSurfName, 
 	}
 	Q_strncpyz( returnSurfName, rootSurfName, returnSize );
 	return qfalse;
+#endif
 }
 

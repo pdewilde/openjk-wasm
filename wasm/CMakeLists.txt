@@ -43,18 +43,13 @@ add_compile_definitions(
 )
 
 # ============================================================================
-# Include directories
+# Include directories (Global common ones only)
 # ============================================================================
 include_directories(
     ${SharedDir}
     ${CMAKE_BINARY_DIR}/shared
-    ${SPDir}
-    "${SPDir}/game"
-    "${SPDir}/rd-common"
-    "${SPDir}/rd-vanilla"
     "${GSLIncludeDirectory}"
     "${OpenJKLibDir}"
-    # Bundled minizip
     "${OpenJKLibDir}/minizip/include"
     "${OpenJKLibDir}/minizip/include/minizip"
     "${GL4ESDir}/include"
@@ -318,7 +313,7 @@ set(RendererMainFiles
     "${SPDir}/rd-vanilla/tr_sky.cpp"
     "${SPDir}/rd-vanilla/tr_stl.cpp"
     "${SPDir}/rd-vanilla/tr_stl.h"
-    "${SPDir}/rd-vanilla/tr_subs.cpp"
+    #"${SPDir}/rd-vanilla/tr_subs.cpp"
     "${SPDir}/rd-vanilla/tr_surface.cpp"
     "${SPDir}/rd-vanilla/tr_surfacesprites.cpp"
     "${SPDir}/rd-vanilla/tr_world.cpp"
@@ -614,6 +609,13 @@ set(ALL_SOURCES
 # ============================================================================
 add_executable(openjk_wasm ${ALL_SOURCES})
 
+target_include_directories(openjk_wasm PRIVATE
+    ${SPDir}
+    "${SPDir}/game"
+    "${SPDir}/rd-common"
+    "${SPDir}/rd-vanilla"
+)
+
 # Mark header files so CMake doesn't try to compile them
 foreach(_src ${ALL_SOURCES})
     get_filename_component(_ext "${_src}" EXT)
@@ -673,13 +675,447 @@ target_link_libraries(openjk_wasm PRIVATE
 
 # Also set compile flags for libraries Emscripten provides
 target_compile_options(openjk_wasm PRIVATE
-    "SHELL:-sUSE_SDL=2"
-    "SHELL:-sUSE_ZLIB=1"
-    "SHELL:-sUSE_LIBPNG=1"
-    "SHELL:-sUSE_LIBJPEG=1"
+    -sUSE_SDL=2
+    -sUSE_ZLIB=1
+    -sUSE_LIBPNG=1
+    -sUSE_LIBJPEG=1
 )
 
 set_target_properties(openjk_wasm PROPERTIES
     SUFFIX ".html"
     OUTPUT_NAME "openjk"
 )
+# ============================================================================
+# MULTIPLAYER
+# ============================================================================
+set(MPDir "${ProjectRoot}/codemp")
+
+# MP Engine files
+set(MPEngineCommonFiles
+    "${MPDir}/qcommon/cm_load.cpp"
+    "${MPDir}/qcommon/cm_patch.cpp"
+    "${MPDir}/qcommon/cm_polylib.cpp"
+    "${MPDir}/qcommon/cm_test.cpp"
+    "${MPDir}/qcommon/cm_trace.cpp"
+    "${MPDir}/qcommon/cmd.cpp"
+    "${MPDir}/qcommon/common.cpp"
+    "${MPDir}/qcommon/cvar.cpp"
+    "${MPDir}/qcommon/files.cpp"
+    "${MPDir}/qcommon/GenericParser2.cpp"
+    "${MPDir}/qcommon/huffman.cpp"
+    "${MPDir}/qcommon/md4.cpp"
+    "${MPDir}/qcommon/md5.cpp"
+    "${MPDir}/qcommon/msg.cpp"
+    "${MPDir}/qcommon/matcomp.cpp"
+    "${MPDir}/qcommon/net_chan.cpp"
+    "${MPDir}/qcommon/net_ip.cpp"
+    "${MPDir}/qcommon/persistence.cpp"
+    "${MPDir}/qcommon/q_shared.cpp"
+    "${MPDir}/qcommon/RoffSystem.cpp"
+    "${MPDir}/qcommon/stringed_ingame.cpp"
+    "${MPDir}/qcommon/stringed_interface.cpp"
+    "${MPDir}/qcommon/vm.cpp"
+    "${MPDir}/qcommon/z_memman_pc.cpp"
+    "${MPDir}/ghoul2/G2_gore.cpp"
+    ${SharedCommonFiles}
+)
+
+set(MPEngineClientFiles
+    "${MPDir}/client/cl_avi.cpp"
+    "${MPDir}/client/cl_cgame.cpp"
+    "${MPDir}/client/cl_cgameapi.cpp"
+    "${MPDir}/client/cl_cin.cpp"
+    "${MPDir}/client/cl_console.cpp"
+    "${MPDir}/client/cl_input.cpp"
+    "${MPDir}/client/cl_keys.cpp"
+    "${MPDir}/client/cl_lan.cpp"
+    "${MPDir}/client/cl_main.cpp"
+    "${MPDir}/client/cl_net_chan.cpp"
+    "${MPDir}/client/cl_parse.cpp"
+    "${MPDir}/client/cl_scrn.cpp"
+    "${MPDir}/client/cl_ui.cpp"
+    "${MPDir}/client/cl_uiapi.cpp"
+    "${MPDir}/client/FXExport.cpp"
+    "${MPDir}/client/FxPrimitives.cpp"
+    "${MPDir}/client/FxScheduler.cpp"
+    "${MPDir}/client/FxSystem.cpp"
+    "${MPDir}/client/FxTemplate.cpp"
+    "${MPDir}/client/FxUtil.cpp"
+    "${MPDir}/client/snd_ambient.cpp"
+    "${MPDir}/client/snd_dma.cpp"
+    "${MPDir}/client/snd_mem.cpp"
+    "${MPDir}/client/snd_mix.cpp"
+    "${MPDir}/client/snd_mp3.cpp"
+    "${MPDir}/client/snd_music.cpp"
+)
+
+set(MPEngineServerFiles
+    "${MPDir}/server/NPCNav/navigator.cpp"
+    "${MPDir}/server/sv_bot.cpp"
+    "${MPDir}/server/sv_ccmds.cpp"
+    "${MPDir}/server/sv_challenge.cpp"
+    "${MPDir}/server/sv_client.cpp"
+    "${MPDir}/server/sv_game.cpp"
+    "${MPDir}/server/sv_init.cpp"
+    "${MPDir}/server/sv_main.cpp"
+    "${MPDir}/server/sv_net_chan.cpp"
+    "${MPDir}/server/sv_snapshot.cpp"
+    "${MPDir}/server/sv_world.cpp"
+    "${MPDir}/server/sv_gameapi.cpp"
+)
+
+set(MPIcarusFiles
+    "${MPDir}/icarus/BlockStream.cpp"
+    "${MPDir}/icarus/GameInterface.cpp"
+    "${MPDir}/icarus/Instance.cpp"
+    "${MPDir}/icarus/Interface.cpp"
+    "${MPDir}/icarus/Memory.cpp"
+    "${MPDir}/icarus/Q3_Interface.cpp"
+    "${MPDir}/icarus/Q3_Registers.cpp"
+    "${MPDir}/icarus/Sequence.cpp"
+    "${MPDir}/icarus/Sequencer.cpp"
+    "${MPDir}/icarus/TaskManager.cpp"
+)
+
+set(MPEngineSysFiles
+    "${SharedDir}/sys/sys_main.cpp"
+    "${SharedDir}/sys/sys_event.cpp"
+    "${SharedDir}/sys/con_log.cpp"
+    "${SharedDir}/sys/sys_unix.cpp"
+    "${SharedDir}/sys/con_tty.cpp"
+    "${SharedDir}/sys/snapvector.cpp"
+    "${SharedDir}/sdl/sdl_sound.cpp"
+    "${SharedDir}/sdl/sdl_input.cpp"
+    "${SharedDir}/sdl/sdl_window.cpp"
+)
+
+# MP Redirected/Stub Renderer (Monolithic monolithic)
+set(MPRendererFiles
+    "${MPDir}/rd-vanilla/G2_API.cpp"
+    "${MPDir}/rd-vanilla/G2_bolts.cpp"
+    "${MPDir}/rd-vanilla/G2_bones.cpp"
+    "${MPDir}/rd-vanilla/G2_misc.cpp"
+    "${MPDir}/rd-vanilla/G2_surfaces.cpp"
+    "${MPDir}/rd-vanilla/tr_arb.cpp"
+    "${MPDir}/rd-vanilla/tr_backend.cpp"
+    "${MPDir}/rd-vanilla/tr_bsp.cpp"
+    "${MPDir}/rd-vanilla/tr_cmds.cpp"
+    "${MPDir}/rd-vanilla/tr_curve.cpp"
+    "${MPDir}/rd-vanilla/tr_decals.cpp"
+    "${MPDir}/rd-vanilla/tr_ghoul2.cpp"
+    "${MPDir}/rd-vanilla/tr_image.cpp"
+    "${MPDir}/rd-vanilla/tr_init.cpp"
+    "${MPDir}/rd-vanilla/tr_light.cpp"
+    "${MPDir}/rd-vanilla/tr_main.cpp"
+    "${MPDir}/rd-vanilla/tr_marks.cpp"
+    "${MPDir}/rd-vanilla/tr_mesh.cpp"
+    "${MPDir}/rd-vanilla/tr_model.cpp"
+    "${MPDir}/rd-vanilla/tr_quicksprite.cpp"
+    "${MPDir}/rd-vanilla/tr_scene.cpp"
+    "${MPDir}/rd-vanilla/tr_shade.cpp"
+    "${MPDir}/rd-vanilla/tr_shade_calc.cpp"
+    "${MPDir}/rd-vanilla/tr_shader.cpp"
+    "${MPDir}/rd-vanilla/tr_shadows.cpp"
+    "${MPDir}/rd-vanilla/tr_skin.cpp"
+    "${MPDir}/rd-vanilla/tr_sky.cpp"
+    #"${MPDir}/rd-vanilla/tr_subs.cpp"
+    "${MPDir}/rd-vanilla/tr_surface.cpp"
+    "${MPDir}/rd-vanilla/tr_surfacesprites.cpp"
+    "${MPDir}/rd-vanilla/tr_world.cpp"
+    "${MPDir}/rd-vanilla/tr_WorldEffects.cpp"
+    "${MPDir}/rd-common/tr_font.cpp"
+    "${MPDir}/rd-common/tr_image_load.cpp"
+    "${MPDir}/rd-common/tr_image_jpg.cpp"
+    "${MPDir}/rd-common/tr_image_tga.cpp"
+    "${MPDir}/rd-common/tr_image_png.cpp"
+    "${MPDir}/rd-common/tr_noise.cpp"
+)
+
+# Static Libraries for MP Modules (to use -include headers)
+add_library(mp_cgame STATIC
+    "${MPDir}/cgame/cg_consolecmds.c"
+    "${MPDir}/cgame/cg_cvar.c"
+    "${MPDir}/cgame/cg_draw.c"
+    "${MPDir}/cgame/cg_drawtools.c"
+    "${MPDir}/cgame/cg_effects.c"
+    "${MPDir}/cgame/cg_ents.c"
+    "${MPDir}/cgame/cg_event.c"
+    "${MPDir}/cgame/cg_info.c"
+    "${MPDir}/cgame/cg_light.c"
+    "${MPDir}/cgame/cg_localents.c"
+    "${MPDir}/cgame/cg_main.c"
+    "${MPDir}/cgame/cg_marks.c"
+    "${MPDir}/cgame/cg_newDraw.c"
+    "${MPDir}/cgame/cg_players.c"
+    "${MPDir}/cgame/cg_playerstate.c"
+    "${MPDir}/cgame/cg_predict.c"
+    "${MPDir}/cgame/cg_saga.c"
+    "${MPDir}/cgame/cg_scoreboard.c"
+    "${MPDir}/cgame/cg_servercmds.c"
+    "${MPDir}/cgame/cg_snapshot.c"
+    "${MPDir}/cgame/cg_spawn.c"
+    "${MPDir}/cgame/cg_syscalls.c"
+    "${MPDir}/cgame/cg_turret.c"
+    "${MPDir}/cgame/cg_view.c"
+    "${MPDir}/ui/ui_shared.c"
+    "${MPDir}/cgame/cg_weaponinit.c"
+    "${MPDir}/cgame/cg_weapons.c"
+    "${MPDir}/cgame/fx_blaster.c"
+    "${MPDir}/cgame/fx_bowcaster.c"
+    "${MPDir}/cgame/fx_bryarpistol.c"
+    "${MPDir}/cgame/fx_demp2.c"
+    "${MPDir}/cgame/fx_disruptor.c"
+    "${MPDir}/cgame/fx_flechette.c"
+    "${MPDir}/cgame/fx_force.c"
+    "${MPDir}/cgame/fx_heavyrepeater.c"
+    "${MPDir}/cgame/fx_rocketlauncher.c"
+    "${MPDir}/game/bg_g2_utils.c"
+    "${MPDir}/game/bg_misc.c"
+    "${MPDir}/game/bg_panimate.c"
+    "${MPDir}/game/bg_pmove.c"
+    "${MPDir}/game/bg_saber.c"
+    "${MPDir}/game/bg_saberLoad.c"
+    "${MPDir}/game/bg_saga.c"
+    "${MPDir}/game/bg_slidemove.c"
+    "${MPDir}/game/bg_vehicleLoad.c"
+    "${MPDir}/game/bg_weapons.c"
+    "${MPDir}/game/FighterNPC.c"
+    "${MPDir}/game/SpeederNPC.c"
+    "${MPDir}/game/WalkerNPC.c"
+    "${MPDir}/game/AnimalNPC.c"
+)
+target_include_directories(mp_cgame PRIVATE ${MPDir} ${SharedDir} ${CMAKE_BINARY_DIR}/shared)
+target_compile_definitions(mp_cgame PRIVATE __EMSCRIPTEN__ MP_GAME _CGAME)
+target_compile_options(mp_cgame PRIVATE -O2 -sUSE_SDL=2 "-include" "${MPDir}/cgame/cg_rename.h")
+
+add_library(mp_game STATIC
+    "${MPDir}/game/ai_main.c"
+    "${MPDir}/game/ai_util.c"
+    "${MPDir}/game/ai_wpnav.c"
+    "${MPDir}/game/AnimalNPC.c"
+    "${MPDir}/game/bg_g2_utils.c"
+    "${MPDir}/game/bg_misc.c"
+    "${MPDir}/game/bg_panimate.c"
+    "${MPDir}/game/bg_pmove.c"
+    "${MPDir}/game/bg_saber.c"
+    "${MPDir}/game/bg_saberLoad.c"
+    "${MPDir}/game/bg_saga.c"
+    "${MPDir}/game/bg_slidemove.c"
+    "${MPDir}/game/bg_vehicleLoad.c"
+    "${MPDir}/game/bg_weapons.c"
+    "${MPDir}/game/FighterNPC.c"
+    "${MPDir}/game/g_active.c"
+    "${MPDir}/game/g_bot.c"
+    "${MPDir}/game/g_client.c"
+    "${MPDir}/game/g_cmds.c"
+    "${MPDir}/game/g_combat.c"
+    "${MPDir}/game/g_cvar.c"
+    "${MPDir}/game/g_exphysics.c"
+    "${MPDir}/game/g_ICARUScb.c"
+    "${MPDir}/game/g_items.c"
+    "${MPDir}/game/g_log.c"
+    "${MPDir}/game/g_main.c"
+    "${MPDir}/game/g_mem.c"
+    "${MPDir}/game/g_misc.c"
+    "${MPDir}/game/g_missile.c"
+    "${MPDir}/game/g_mover.c"
+    "${MPDir}/game/g_nav.c"
+    "${MPDir}/game/g_navnew.c"
+    "${MPDir}/game/g_object.c"
+    "${MPDir}/game/g_saga.c"
+    "${MPDir}/game/g_session.c"
+    "${MPDir}/game/g_spawn.c"
+    "${MPDir}/game/g_svcmds.c"
+    "${MPDir}/game/g_syscalls.c"
+    "${MPDir}/game/g_target.c"
+    "${MPDir}/game/g_team.c"
+    "${MPDir}/game/g_timer.c"
+    "${MPDir}/game/g_trigger.c"
+    "${MPDir}/game/g_turret.c"
+    "${MPDir}/game/g_turret_G2.c"
+    "${MPDir}/game/g_utils.c"
+    "${MPDir}/game/g_vehicles.c"
+    "${MPDir}/game/g_vehicleTurret.c"
+    "${MPDir}/game/g_weapon.c"
+    "${MPDir}/game/NPC.c"
+    "${MPDir}/game/NPC_AI_Atst.c"
+    "${MPDir}/game/NPC_AI_Default.c"
+    "${MPDir}/game/NPC_AI_Droid.c"
+    "${MPDir}/game/NPC_AI_GalakMech.c"
+    "${MPDir}/game/NPC_AI_Grenadier.c"
+    "${MPDir}/game/NPC_AI_Howler.c"
+    "${MPDir}/game/NPC_AI_ImperialProbe.c"
+    "${MPDir}/game/NPC_AI_Interrogator.c"
+    "${MPDir}/game/NPC_AI_Jedi.c"
+    "${MPDir}/game/NPC_AI_Mark1.c"
+    "${MPDir}/game/NPC_AI_Mark2.c"
+    "${MPDir}/game/NPC_AI_MineMonster.c"
+    "${MPDir}/game/NPC_AI_Rancor.c"
+    "${MPDir}/game/NPC_AI_Remote.c"
+    "${MPDir}/game/NPC_AI_Seeker.c"
+    "${MPDir}/game/NPC_AI_Sentry.c"
+    "${MPDir}/game/NPC_AI_Sniper.c"
+    "${MPDir}/game/NPC_AI_Stormtrooper.c"
+    "${MPDir}/game/NPC_AI_Utils.c"
+    "${MPDir}/game/NPC_AI_Wampa.c"
+    "${MPDir}/game/NPC_behavior.c"
+    "${MPDir}/game/NPC_combat.c"
+    "${MPDir}/game/NPC_goal.c"
+    "${MPDir}/game/NPC_misc.c"
+    "${MPDir}/game/NPC_move.c"
+    "${MPDir}/game/NPC_reactions.c"
+    "${MPDir}/game/NPC_senses.c"
+    "${MPDir}/game/NPC_sounds.c"
+    "${MPDir}/game/NPC_spawn.c"
+    "${MPDir}/game/NPC_stats.c"
+    "${MPDir}/game/NPC_utils.c"
+    "${MPDir}/game/SpeederNPC.c"
+    "${MPDir}/game/tri_coll_test.c"
+    "${MPDir}/game/w_force.c"
+    "${MPDir}/game/w_saber.c"
+    "${MPDir}/game/WalkerNPC.c"
+)
+target_include_directories(mp_game PRIVATE ${MPDir} ${SharedDir} ${CMAKE_BINARY_DIR}/shared)
+target_compile_definitions(mp_game PRIVATE __EMSCRIPTEN__ MP_GAME _GAME)
+target_compile_options(mp_game PRIVATE -O2 -sUSE_SDL=2 "-include" "${MPDir}/game/g_rename.h")
+
+add_library(mp_ui STATIC
+    "${MPDir}/ui/ui_atoms.c"
+    "${MPDir}/ui/ui_cvar.c"
+    "${MPDir}/ui/ui_force.c"
+    "${MPDir}/ui/ui_gameinfo.c"
+    "${MPDir}/ui/ui_main.c"
+    "${MPDir}/ui/ui_saber.c"
+    "${MPDir}/ui/ui_shared.c"
+    "${MPDir}/ui/ui_syscalls.c"
+    "${MPDir}/game/bg_g2_utils.c"
+    "${MPDir}/game/bg_misc.c"
+    "${MPDir}/game/bg_panimate.c"
+    "${MPDir}/game/bg_pmove.c"
+    "${MPDir}/game/bg_saber.c"
+    "${MPDir}/game/bg_saberLoad.c"
+    "${MPDir}/game/bg_saga.c"
+    "${MPDir}/game/bg_slidemove.c"
+    "${MPDir}/game/bg_vehicleLoad.c"
+    "${MPDir}/game/bg_weapons.c"
+)
+target_include_directories(mp_ui PRIVATE ${MPDir} ${SharedDir} ${CMAKE_BINARY_DIR}/shared)
+target_compile_definitions(mp_ui PRIVATE __EMSCRIPTEN__ MP_GAME UI_BUILD)
+target_compile_options(mp_ui PRIVATE -O2 -sUSE_SDL=2 "-include" "${MPDir}/ui/ui_rename.h")
+
+# Botlib
+add_library(mp_botlib STATIC
+    "${MPDir}/botlib/be_aas_bspq3.cpp"
+    "${MPDir}/botlib/be_aas_cluster.cpp"
+    "${MPDir}/botlib/be_aas_debug.cpp"
+    "${MPDir}/botlib/be_aas_entity.cpp"
+    "${MPDir}/botlib/be_aas_file.cpp"
+    "${MPDir}/botlib/be_aas_main.cpp"
+    "${MPDir}/botlib/be_aas_move.cpp"
+    "${MPDir}/botlib/be_aas_optimize.cpp"
+    "${MPDir}/botlib/be_aas_reach.cpp"
+    "${MPDir}/botlib/be_aas_route.cpp"
+    "${MPDir}/botlib/be_aas_routealt.cpp"
+    "${MPDir}/botlib/be_aas_sample.cpp"
+    "${MPDir}/botlib/be_ai_char.cpp"
+    "${MPDir}/botlib/be_ai_chat.cpp"
+    "${MPDir}/botlib/be_ai_gen.cpp"
+    "${MPDir}/botlib/be_ai_goal.cpp"
+    "${MPDir}/botlib/be_ai_move.cpp"
+    "${MPDir}/botlib/be_ai_weap.cpp"
+    "${MPDir}/botlib/be_ai_weight.cpp"
+    "${MPDir}/botlib/be_ea.cpp"
+    "${MPDir}/botlib/be_interface.cpp"
+    "${MPDir}/botlib/l_crc.cpp"
+    "${MPDir}/botlib/l_libvar.cpp"
+    "${MPDir}/botlib/l_log.cpp"
+    "${MPDir}/botlib/l_memory.cpp"
+    "${MPDir}/botlib/l_precomp.cpp"
+    "${MPDir}/botlib/l_script.cpp"
+    "${MPDir}/botlib/l_struct.cpp"
+)
+target_include_directories(mp_botlib PRIVATE ${MPDir} ${SharedDir} ${CMAKE_BINARY_DIR}/shared)
+target_compile_definitions(mp_botlib PRIVATE __EMSCRIPTEN__ MP_GAME BOTLIB)
+target_compile_options(mp_botlib PRIVATE -O2 -sUSE_SDL=2 "-include" "${MPDir}/botlib/bot_rename.h")
+
+# MONOLITHIC MP EXECUTABLE
+set(MP_ALL_SOURCES
+    ${MPEngineCommonFiles}
+    ${MPEngineClientFiles}
+    ${MPEngineServerFiles}
+    ${MPEngineSysFiles}
+    ${MPRendererFiles}
+    ${EngineMP3Files}
+    ${MinizipFiles}
+    ${MPIcarusFiles}
+)
+
+add_executable(openjk_mp_wasm ${MP_ALL_SOURCES})
+target_include_directories(openjk_mp_wasm PRIVATE
+    ${SharedDir}
+    ${CMAKE_BINARY_DIR}/shared
+    ${MPDir}
+    "${MPDir}/rd-common"
+    "${MPDir}/rd-vanilla"
+    "${GSLIncludeDirectory}"
+    "${OpenJKLibDir}"
+    "${GL4ESDir}/include"
+)
+target_compile_definitions(openjk_mp_wasm PRIVATE
+    _JK2EXE
+    MP_GAME
+    __EMSCRIPTEN__
+    __linux__
+    ARCH_STRING="wasm32"
+    RENDERER          # needed for rd-vanilla sources
+    DEFAULT_ES=2
+)
+target_compile_options(openjk_mp_wasm PRIVATE
+    -DUSE_OPENAL=1
+    -sUSE_SDL=2
+    -Wno-write-strings
+    -Wno-comment
+    -Wno-invalid-offsetof
+    -fsigned-char
+    -O2
+)
+
+target_link_libraries(openjk_mp_wasm PRIVATE
+    mp_cgame
+    mp_game
+    mp_ui
+    mp_botlib
+    "${GL4ESDir}/lib/libGL.a"
+    "-lopenal"
+)
+
+target_link_options(openjk_mp_wasm PRIVATE
+    -lopenal
+    -sUSE_SDL=2
+    -sUSE_ZLIB=1
+    -sUSE_LIBPNG=1
+    -sUSE_LIBJPEG=1
+    -sALLOW_MEMORY_GROWTH=1
+    -sINITIAL_MEMORY=134217728
+    -sFORCE_FILESYSTEM=1
+    -sWASM=1
+    -sFULL_ES2=1
+    -sSTACK_SIZE=8388608
+    -sERROR_ON_UNDEFINED_SYMBOLS=0
+    -O2
+    # Preload game assets (base)
+    --preload-file "${ProjectRoot}/GameData/base@base"
+    # Output HTML page
+    --shell-file "${CMAKE_SOURCE_DIR}/shell.html"
+)
+
+set_target_properties(openjk_mp_wasm PROPERTIES
+    SUFFIX ".html"
+    OUTPUT_NAME "openjk_mp"
+)
+
+# Force common.cpp to recompile on every build to update __DATE__ and __TIME__
+add_custom_target(ForceUpdateVersion_MP ALL
+    COMMAND ${CMAKE_COMMAND} -E touch "${MPDir}/qcommon/common.cpp"
+)
+add_dependencies(openjk_mp_wasm ForceUpdateVersion_MP)

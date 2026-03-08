@@ -2414,10 +2414,14 @@ static IHeapAllocator *GetG2VertSpaceServer( void ) {
 
 #define DEFAULT_RENDER_LIBRARY "rd-vanilla"
 
+#ifdef __EMSCRIPTEN__
+extern "C" void *GetRefAPI( int apiVersion, void *import );
+#endif
+
 void CL_InitRef( void ) {
 	static refimport_t ri;
 	refexport_t	*ret;
-	GetRefAPI_t	GetRefAPI;
+	GetRefAPI_t	local_GetRefAPI; // renamed from GetRefAPI to avoid clash with extern "C" name
 	char		dllName[MAX_OSPATH];
 
 	Com_Printf( "----- Initializing Renderer ----\n" );
@@ -2426,6 +2430,9 @@ void CL_InitRef( void ) {
 
 	Com_sprintf( dllName, sizeof( dllName ), "%s_" ARCH_STRING DLL_EXT, cl_renderer->string );
 
+#ifdef __EMSCRIPTEN__
+	rendererLib = (void *)1; // dummy handle
+#else
 	if( !(rendererLib = Sys_LoadDll( dllName, qfalse )) && strcmp( cl_renderer->string, cl_renderer->resetString ) )
 	{
 		Com_Printf( "failed: trying to load fallback renderer\n" );
@@ -2434,15 +2441,18 @@ void CL_InitRef( void ) {
 		Com_sprintf( dllName, sizeof( dllName ), DEFAULT_RENDER_LIBRARY "_" ARCH_STRING DLL_EXT );
 		rendererLib = Sys_LoadDll( dllName, qfalse );
 	}
+#endif
 
 	if ( !rendererLib ) {
 		Com_Error( ERR_FATAL, "Failed to load renderer\n" );
 	}
 
-	memset( &ri, 0, sizeof( ri ) );
-
-	GetRefAPI = (GetRefAPI_t)Sys_LoadFunction( rendererLib, "GetRefAPI" );
-	if ( !GetRefAPI )
+#ifdef __EMSCRIPTEN__
+	local_GetRefAPI = (GetRefAPI_t)GetRefAPI;
+#else
+	local_GetRefAPI = (GetRefAPI_t)Sys_LoadFunction( rendererLib, "GetRefAPI" );
+#endif
+	if ( !local_GetRefAPI )
 		Com_Error( ERR_FATAL, "Can't load symbol GetRefAPI: '%s'", Sys_LibraryError() );
 
 	//set up the import table
@@ -2529,7 +2539,7 @@ void CL_InitRef( void ) {
 	ri.PD_Store = PD_Store;
 	ri.PD_Load = PD_Load;
 
-	ret = GetRefAPI( REF_API_VERSION, &ri );
+	ret = local_GetRefAPI( REF_API_VERSION, &ri );
 
 //	Com_Printf( "-------------------------------\n");
 

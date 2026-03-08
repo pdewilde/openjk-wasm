@@ -1,0 +1,724 @@
+--- SHELL VERSION: 2026-03-08 11:13 --- openjk_mp.html:1:1037
+GET
+http://localhost:8080/favicon.ico
+[HTTP/1 404 File not found 0ms]
+
+tty console mode disabled for Emscripten openjk_mp.html:1:1700
+LIBGL: Initialising gl4es openjk_mp.html:1:1489
+LIBGL: v1.1.7 built on Mar  6 2026 21:58:18 openjk_mp.html:1:1489
+LIBGL: Using GLES 2.0 backend openjk_mp.html:1:1489
+LIBGL: Hardware test disabled, nothing activated... openjk_mp.html:1:1489
+LIBGL: Targeting OpenGL 2.1 openjk_mp.html:1:1489
+LIBGL: Not forcing NPOT support openjk_mp.html:1:1489
+LIBGL: Not trying to batch small subsequent glDrawXXXX openjk_mp.html:1:1489
+LIBGL: Trying to use VBO openjk_mp.html:1:1489
+LIBGL: Force texture for Attachment color0 on FBO openjk_mp.html:1:1489
+LIBGL: Hack to trigger a SwapBuffers when a Full Framebuffer Blit on default FBO is done openjk_mp.html:1:1489
+LIBGL: Current folder is:/ openjk_mp.html:1:1489
+LIBGL: Not using PSA (prgbin_n=0, notexarray=0) openjk_mp.html:1:1489
+OpenJK-MP: wasm-build linux-wasm32 Mar 2 2026 openjk_mp.html:1:1700
+--- OpenJK Build: Mar  8 2026 14:34:47 --- openjk_mp.html:1:1700
+Hostname: emscripten openjk_mp.html:1:1700
+Alias: emscripten openjk_mp.html:1:1700
+IP: 172.29.1.0 openjk_mp.html:1:1700
+Opening IP socket: localhost:29070 openjk_mp.html:1:1700
+WARNING: NET_IPSocket: setsockopt SO_BROADCAST: Protocol not available openjk_mp.html:1:1700
+----- FS_Startup ----- openjk_mp.html:1:1700
+Current search path: openjk_mp.html:1:1700
+/home/web_user/.local/share/openjk/base openjk_mp.html:1:1700
+./base/assets3.pk3 (16 files) openjk_mp.html:1:1700
+./base/assets2.pk3 (62 files) openjk_mp.html:1:1700
+./base/assets1.pk3 (8320 files) openjk_mp.html:1:1700
+./base/assets0.pk3 (15346 files) openjk_mp.html:1:1700
+./base openjk_mp.html:1:1700
+<empty string> openjk_mp.html:1:1700
+---------------------- openjk_mp.html:1:1700
+23744 files in pk3 files openjk_mp.html:1:1700
+execing mpdefault.cfg openjk_mp.html:1:1700
+couldn't exec openjk.cfg openjk_mp.html:1:1700
+couldn't exec autoexec.cfg openjk_mp.html:1:1700
+2026-03-08 15:00:17 ----- Initializing Renderer ---- openjk_mp.html:1:1700
+2026-03-08 15:00:17 QKEY building random string openjk_mp.html:1:1700
+2026-03-08 15:00:17 QKEY generated openjk_mp.html:1:1700
+2026-03-08 15:00:17 SDL using driver "emscripten" openjk_mp.html:1:1700
+2026-03-08 15:00:17 Initializing display openjk_mp.html:1:1700
+2026-03-08 15:00:17 Display aspect: 1.778 openjk_mp.html:1:1700
+2026-03-08 15:00:17 ...setting mode 4: 800 600 openjk_mp.html:1:1700
+2026-03-08 15:00:17 Using 24 color bits, 24 depth, 8 stencil display. openjk_mp.html:1:1700
+2026-03-08 15:00:17 Available modes: '1920x1080' openjk_mp.html:1:1700
+2026-03-08 15:00:17 GL_RENDERER: GL4ES using an unknown renderer openjk_mp.html:1:1700
+2026-03-08 15:00:17 Initializing OpenGL extensions openjk_mp.html:1:1700
+2026-03-08 15:00:17 ...no supported texture compression method found openjk_mp.html:1:1700
+2026-03-08 15:00:17 .....ignoring texture compression openjk_mp.html:1:1700
+2026-03-08 15:00:17 ...GL_EXT_texture_env_add not found openjk_mp.html:1:1700
+2026-03-08 15:00:17 ...GL_EXT_texture_filter_anisotropic available openjk_mp.html:1:1700
+2026-03-08 15:00:17 ...using GL_EXT_texture_filter_anisotropic openjk_mp.html:1:1700
+2026-03-08 15:00:17 ...using GL_EXT_texture_edge_clamp openjk_mp.html:1:1700
+2026-03-08 15:00:17 ...not using GL_ARB_multitexture, < 2 texture units openjk_mp.html:1:1700
+2026-03-08 15:00:17 ...GL_EXT_compiled_vertex_array not found openjk_mp.html:1:1700
+2026-03-08 15:00:17 ...GL_NV_register_combiners not found openjk_mp.html:1:1700
+2026-03-08 15:00:17 ...GL_ARB_vertex_program not found openjk_mp.html:1:1700
+2026-03-08 15:00:17 ...GL_ARB_fragment_program not found openjk_mp.html:1:1700
+2026-03-08 15:00:18 openjk_mp.html:1:1700
+2026-03-08 15:00:18 GL_VENDOR: GL4ES wrapping an unknown hardware openjk_mp.html:1:1700
+2026-03-08 15:00:18 GL_RENDERER: GL4ES using an unknown renderer openjk_mp.html:1:1700
+2026-03-08 15:00:18 GL_VERSION: 2.1 gl4es wrapper 1.1.7 openjk_mp.html:1:1700
+2026-03-08 15:00:18 GL_EXT_abgr GL_EXT_packed_pixels GL_EXT_compiled_vertex_array GL_EXT_compiled_vertex_arrays GL_ARB_vertex_buffer_object GL_ARB_vertex_array_object GL_ARB_vertex_buffer GL_EXT_vertex_array GL_EXT_secondary_color GL_ARB_multitexture GL_ARB_texture_border_clamp GL_ARB_texture_env_add GL_EXT_texture_env_add GL_ARB_texture_env_combine GL_EXT_texture_env_combine GL_ARB_texture_env_crossbar GL_EXT_texture_env_crossbar GL_ARB_texture_env_dot3 GL_EXT_texture_env_dot3 GL_SGIS_generate_mipmap GL_EXT_draw_range_elements GL_EXT_bgra GL_ARB_texture_compression GL_EXT_texture_compression_s3tc GL_OES_texture_compression_S3TC GL_EXT_texture_compression_dxt1 GL_EXT_texture_compression_dxt3 GL_EXT_texture_compression_dxt5 GL_ARB_point_parameters GL_EXT_point_parameters GL_EXT_stencil_wrap GL_SGIS_texture_edge_clamp GL_EXT_texture_edge_clamp GL_EXT_direct_state_access GL_EXT_multi_draw_arrays GL_SUN_multi_draw_arrays GL_ARB_multisample GL_EXT_texture_object GL_EXT_polygon_offset GL_GL4ES_hint GL_ARB_draw_elements_base_vertex GL_EXT_draw_elements_base_vertex GL_ARB_map_buffer_range GL_NV_blend_square GL_ARB_texture_rectangle GL_APPLE_texture_2D_limited_npot GL_EXT_blend_color GL_EXT_blend_equation_separate GL_EXT_blend_func_separate GL_EXT_blend_subtract GL_ARB_texture_mirrored_repeat GL_ARB_framebuffer_object GL_EXT_framebuffer_object GL_EXT_packed_depth_stencil GL_EXT_framebuffer_blit GL_ARB_draw_buffers GL_EXT_draw_buffers2 GL_ARB_point_sprite GL_ARB_texture_cube_map GL_EXT_texture_cube_map GL_EXT_fog_coord GL_EXT_separate_specular_color GL_EXT_rescale_normal GL_ARB_ES2_compatibility GL_ARB_fragment_shader GL_ARB_vertex_shader GL_ARB_shader_objects GL_ARB_shading_language_100 GL_ATI_texture_env_combine3 GL_ATIX_texture_env_route GL_NV_texture_env_combine4 GL_NV_fog_distance GL_ARB_draw_instanced GL_ARB_instanced_arrays GL_ARB_vertex_program GL_ARB_fragment_program GL_EXT_program_parameters openjk_mp.html:1:1700
+2026-03-08 15:00:18 GL_MAX_TEXTURE_SIZE: 2048 openjk_mp.html:1:1700
+2026-03-08 15:00:18 GL_MAX_TEXTURE_UNITS_ARB: 1 openjk_mp.html:1:1700
+2026-03-08 15:00:18 openjk_mp.html:1:1700
+2026-03-08 15:00:18 PIXELFORMAT: color(24-bits) Z(24-bit) stencil(8-bits) openjk_mp.html:1:1700
+2026-03-08 15:00:18 MODE: 4, 800 x 600 windowed hz:N/A openjk_mp.html:1:1700
+2026-03-08 15:00:18 GAMMA: software w/ 0 overbright bits openjk_mp.html:1:1700
+2026-03-08 15:00:18 rendering primitives: multiple glArrayElement openjk_mp.html:1:1700
+2026-03-08 15:00:18 texturemode: GL_LINEAR_MIPMAP_NEAREST openjk_mp.html:1:1700
+2026-03-08 15:00:18 picmip: 0 openjk_mp.html:1:1700
+2026-03-08 15:00:18 texture bits: 0 openjk_mp.html:1:1700
+2026-03-08 15:00:18 multitexture: disabled openjk_mp.html:1:1700
+2026-03-08 15:00:18 compiled vertex arrays: disabled openjk_mp.html:1:1700
+2026-03-08 15:00:18 texenv add: disabled openjk_mp.html:1:1700
+2026-03-08 15:00:18 compressed textures: disabled openjk_mp.html:1:1700
+2026-03-08 15:00:18 compressed lightmaps: disabled openjk_mp.html:1:1700
+2026-03-08 15:00:18 texture compression method: None openjk_mp.html:1:1700
+2026-03-08 15:00:18 anisotropic filtering: disabled  Dynamic Glow: disabled openjk_mp.html:1:1700
+2026-03-08 15:00:18 openjk_mp.html:1:1700
+2026-03-08 15:00:18 ------- sound initialization ------- openjk_mp.html:1:1700
+2026-03-08 15:00:18 SDL_Init( SDL_INIT_AUDIO )... OK openjk_mp.html:1:1700
+2026-03-08 15:00:18 SDL audio driver is "emscripten". openjk_mp.html:1:1700
+An AudioContext was prevented from starting automatically. It must be created or resumed after a user gesture on the page. openjk_mp.js:1:222415
+2026-03-08 15:00:18 SDL_AudioSpec: openjk_mp.html:1:1700
+2026-03-08 15:00:18   Format:   AUDIO_S16LSB openjk_mp.html:1:1700
+2026-03-08 15:00:18   Freq:     44100 openjk_mp.html:1:1700
+2026-03-08 15:00:18   Samples:  4096 openjk_mp.html:1:1700
+2026-03-08 15:00:18   Channels: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:18 Starting SDL audio callback... openjk_mp.html:1:1700
+2026-03-08 15:00:18 SDL audio initialized. openjk_mp.html:1:1700
+2026-03-08 15:00:18 ----- Sound Info ----- openjk_mp.html:1:1700
+2026-03-08 15:00:18     1 stereo openjk_mp.html:1:1700
+2026-03-08 15:00:18 131072 samples openjk_mp.html:1:1700
+2026-03-08 15:00:18    16 samplebits openjk_mp.html:1:1700
+2026-03-08 15:00:18     1 submission_chunk openjk_mp.html:1:1700
+2026-03-08 15:00:18 44100 speed openjk_mp.html:1:1700
+2026-03-08 15:00:18 0x440e250 dma buffer openjk_mp.html:1:1700
+2026-03-08 15:00:18 No background file. openjk_mp.html:1:1700
+2026-03-08 15:00:18 ---------------------- openjk_mp.html:1:1700
+2026-03-08 15:00:18 ------------------------------------ openjk_mp.html:1:1700
+2026-03-08 15:00:18 openjk_mp.html:1:1700
+2026-03-08 15:00:18 --- ambient sound initialization --- openjk_mp.html:1:1700
+2026-03-08 15:00:18 Sound memory manager started openjk_mp.html:1:1700
+2026-03-08 15:00:18 VM_Create: uiwasm32.so succeeded openjk_mp.html:1:1700
+2026-03-08 15:00:19 Extended player name field using cvar ui_Name to 32 characters openjk_mp.html:1:1700
+2026-03-08 15:00:20 Extended sound quality field to contain very high setting. openjk_mp.html:1:1700
+2026-03-08 15:00:20 Disabling eax field because current platform does not support EAX. openjk_mp.html:1:1700
+2026-03-08 15:00:20 Hiding eax_icon object because current platform does not support EAX. openjk_mp.html:1:1700
+2026-03-08 15:00:20 Extended player name field using cvar ui_findplayer to 32 characters openjk_mp.html:1:1700
+2026-03-08 15:00:20 Extended create favorite address edit field length to hold an IPv6 address openjk_mp.html:1:1700
+2026-03-08 15:00:21 --- Common Initialization Complete --- openjk_mp.html:1:1700
+2026-03-08 15:00:21 SDL Version Compiled: 2.32.10 openjk_mp.html:1:1700
+2026-03-08 15:00:21 SDL Version Linked: 2.32.10 openjk_mp.html:1:1700
+2026-03-08 15:00:21 Cmd_AddCommand: net_restart already defined openjk_mp.html:1:1700
+2026-03-08 15:00:21 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:21 CL_KeyDownEvent: 141 (MOUSE1), cls.state=1, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:21 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:21 UIVM_SetActiveMenu: 0 openjk_mp.html:1:1700
+2026-03-08 15:00:22 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:22 CL_KeyDownEvent: 141 (MOUSE1), cls.state=9, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:22 UIVM_SetActiveMenu: 1 openjk_mp.html:1:1700
+2026-03-08 15:00:22 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:22 UIVM_Refresh: 4607 (count 1) openjk_mp.html:1:1700
+2026-03-08 15:00:22 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:24 UIVM_Refresh: 6288 (count 101) openjk_mp.html:1:1700
+2026-03-08 15:00:24 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:24 CL_KeyDownEvent: 141 (MOUSE1), cls.state=1, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:24 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:25 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:25 CL_KeyDownEvent: 141 (MOUSE1), cls.state=1, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:25 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:25 UIVM_Refresh: 7990 (count 201) openjk_mp.html:1:1700
+2026-03-08 15:00:26 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:26 CL_KeyDownEvent: 141 (MOUSE1), cls.state=1, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:26 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:26 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:26 CL_KeyDownEvent: 141 (MOUSE1), cls.state=1, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:26 UIVM_SetActiveMenu: 1 openjk_mp.html:1:1700
+2026-03-08 15:00:26 ------ Server Initialization ------ openjk_mp.html:1:1700
+2026-03-08 15:00:26 Server: mp/ffa1 openjk_mp.html:1:1700
+2026-03-08 15:00:26 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:26 UIVM_SetActiveMenu: 0 openjk_mp.html:1:1700
+2026-03-08 15:00:26 UIVM_DrawConnectScreen: 0 openjk_mp.html:1:1700
+2026-03-08 15:00:26 ----- FS_Startup ----- openjk_mp.html:1:1700
+2026-03-08 15:00:27 Current search path: openjk_mp.html:1:1700
+2026-03-08 15:00:27 /home/web_user/.local/share/openjk/base openjk_mp.html:1:1700
+2026-03-08 15:00:27 ./base/assets3.pk3 (16 files) openjk_mp.html:1:1700
+2026-03-08 15:00:27 ./base/assets2.pk3 (62 files) openjk_mp.html:1:1700
+2026-03-08 15:00:27 ./base/assets1.pk3 (8320 files) openjk_mp.html:1:1700
+2026-03-08 15:00:27 ./base/assets0.pk3 (15346 files) openjk_mp.html:1:1700
+2026-03-08 15:00:27 ./base openjk_mp.html:1:1700
+2026-03-08 15:00:27 openjk_mp.html:1:1700
+2026-03-08 15:00:27 ---------------------- openjk_mp.html:1:1700
+2026-03-08 15:00:27 23744 files in pk3 files openjk_mp.html:1:1700
+2026-03-08 15:00:27 VM_Create: jampgamewasm32.so succeeded openjk_mp.html:1:1700
+2026-03-08 15:00:27 ------- Game Initialization ------- openjk_mp.html:1:1700
+2026-03-08 15:00:27 gamename: OpenJK-MP: wasm-build openjk_mp.html:1:1700
+2026-03-08 15:00:27 gamedate: Mar 2 2026 openjk_mp.html:1:1700
+2026-03-08 15:00:27 Logging to games.log openjk_mp.html:1:1700
+2026-03-08 15:00:27 Logging to security.log openjk_mp.html:1:1700
+ICARUS Instance successfully created openjk_mp.html:1:1489
+2026-03-08 15:00:27 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:27 openjk_mp.html:1:1700
+2026-03-08 15:00:27 GL_VENDOR: GL4ES wrapping an unknown hardware openjk_mp.html:1:1700
+2026-03-08 15:00:27 GL_RENDERER: GL4ES using an unknown renderer openjk_mp.html:1:1700
+2026-03-08 15:00:27 GL_VERSION: 2.1 gl4es wrapper 1.1.7 openjk_mp.html:1:1700
+2026-03-08 15:00:27 GL_EXT_abgr GL_EXT_packed_pixels GL_EXT_compiled_vertex_array GL_EXT_compiled_vertex_arrays GL_ARB_vertex_buffer_object GL_ARB_vertex_array_object GL_ARB_vertex_buffer GL_EXT_vertex_array GL_EXT_secondary_color GL_ARB_multitexture GL_ARB_texture_border_clamp GL_ARB_texture_env_add GL_EXT_texture_env_add GL_ARB_texture_env_combine GL_EXT_texture_env_combine GL_ARB_texture_env_crossbar GL_EXT_texture_env_crossbar GL_ARB_texture_env_dot3 GL_EXT_texture_env_dot3 GL_SGIS_generate_mipmap GL_EXT_draw_range_elements GL_EXT_bgra GL_ARB_texture_compression GL_EXT_texture_compression_s3tc GL_OES_texture_compression_S3TC GL_EXT_texture_compression_dxt1 GL_EXT_texture_compression_dxt3 GL_EXT_texture_compression_dxt5 GL_ARB_point_parameters GL_EXT_point_parameters GL_EXT_stencil_wrap GL_SGIS_texture_edge_clamp GL_EXT_texture_edge_clamp GL_EXT_direct_state_access GL_EXT_multi_draw_arrays GL_SUN_multi_draw_arrays GL_ARB_multisample GL_EXT_texture_object GL_EXT_polygon_offset GL_GL4ES_hint GL_ARB_draw_elements_base_vertex GL_EXT_draw_elements_base_vertex GL_ARB_map_buffer_range GL_NV_blend_square GL_ARB_texture_rectangle GL_APPLE_texture_2D_limited_npot GL_EXT_blend_color GL_EXT_blend_equation_separate GL_EXT_blend_func_separate GL_EXT_blend_subtract GL_ARB_texture_mirrored_repeat GL_ARB_framebuffer_object GL_EXT_framebuffer_object GL_EXT_packed_depth_stencil GL_EXT_framebuffer_blit GL_ARB_draw_buffers GL_EXT_draw_buffers2 GL_ARB_point_sprite GL_ARB_texture_cube_map GL_EXT_texture_cube_map GL_EXT_fog_coord GL_EXT_separate_specular_color GL_EXT_rescale_normal GL_ARB_ES2_compatibility GL_ARB_fragment_shader GL_ARB_vertex_shader GL_ARB_shader_objects GL_ARB_shading_language_100 GL_ATI_texture_env_combine3 GL_ATIX_texture_env_route GL_NV_texture_env_combine4 GL_NV_fog_distance GL_ARB_draw_instanced GL_ARB_instanced_arrays GL_ARB_vertex_program GL_ARB_fragment_program GL_EXT_program_parameters openjk_mp.html:1:1700
+2026-03-08 15:00:27 GL_MAX_TEXTURE_SIZE: 2048 openjk_mp.html:1:1700
+2026-03-08 15:00:27 GL_MAX_TEXTURE_UNITS_ARB: 1 openjk_mp.html:1:1700
+2026-03-08 15:00:27 openjk_mp.html:1:1700
+2026-03-08 15:00:27 PIXELFORMAT: color(24-bits) Z(24-bit) stencil(8-bits) openjk_mp.html:1:1700
+2026-03-08 15:00:27 MODE: 4, 800 x 600 windowed hz:N/A openjk_mp.html:1:1700
+2026-03-08 15:00:27 GAMMA: software w/ 0 overbright bits openjk_mp.html:1:1700
+2026-03-08 15:00:27 rendering primitives: multiple glArrayElement openjk_mp.html:1:1700
+2026-03-08 15:00:27 texturemode: GL_LINEAR_MIPMAP_NEAREST openjk_mp.html:1:1700
+2026-03-08 15:00:27 picmip: 0 openjk_mp.html:1:1700
+2026-03-08 15:00:27 texture bits: 0 openjk_mp.html:1:1700
+2026-03-08 15:00:27 multitexture: disabled openjk_mp.html:1:1700
+2026-03-08 15:00:27 compiled vertex arrays: disabled openjk_mp.html:1:1700
+2026-03-08 15:00:27 texenv add: disabled openjk_mp.html:1:1700
+2026-03-08 15:00:27 compressed textures: disabled openjk_mp.html:1:1700
+2026-03-08 15:00:27 compressed lightmaps: disabled openjk_mp.html:1:1700
+2026-03-08 15:00:27 texture compression method: None openjk_mp.html:1:1700
+2026-03-08 15:00:27 anisotropic filtering: disabled  Dynamic Glow: disabled openjk_mp.html:1:1700
+2026-03-08 15:00:27 VM_Create: uiwasm32.so succeeded openjk_mp.html:1:1700
+2026-03-08 15:00:28 Extended player name field using cvar ui_Name to 32 characters openjk_mp.html:1:1700
+2026-03-08 15:00:28 Extended sound quality field to contain very high setting. openjk_mp.html:1:1700
+2026-03-08 15:00:28 Disabling eax field because current platform does not support EAX. openjk_mp.html:1:1700
+2026-03-08 15:00:28 Hiding eax_icon object because current platform does not support EAX. openjk_mp.html:1:1700
+2026-03-08 15:00:29 VM_Create: cgamewasm32.so succeeded openjk_mp.html:1:1700
+2026-03-08 15:00:31 UIVM_DrawConnectScreen: 1 openjk_mp.html:1:1700
+2026-03-08 15:00:32 ^1Lightmap requested but none available for shader models/map_objects/vjun/prong openjk_mp.html:1:1700
+2026-03-08 15:00:32 ^1Lightmap requested but none available for shader models/map_objects/wedge/clamp openjk_mp.html:1:1700
+2026-03-08 15:00:37 ...loaded 3334 faces, 67 meshes, 28 trisurfs, 0 flares openjk_mp.html:1:1700
+2026-03-08 15:00:38 UIVM_DrawConnectScreen: 1 8 openjk_mp.html:1:1700
+2026-03-08 15:00:39 UIVM_DrawConnectScreen: 1 3 openjk_mp.html:1:1700
+2026-03-08 15:00:40 UIVM_DrawConnectScreen: 1 3 openjk_mp.html:1:1700
+2026-03-08 15:00:41 UIVM_DrawConnectScreen: 1 7 openjk_mp.html:1:1700
+2026-03-08 15:00:41 UIVM_DrawConnectScreen: 1 openjk_mp.html:1:1700
+2026-03-08 15:00:42 UIVM_DrawConnectScreen: 1 openjk_mp.html:1:1700
+2026-03-08 15:00:42 CL_InitCGame: 13.18 seconds openjk_mp.html:1:1700
+2026-03-08 15:00:42 UIVM_DrawConnectScreen: 1 openjk_mp.html:1:1700
+2026-03-08 15:00:42 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:42 CL_KeyDownEvent: 141 (MOUSE1), cls.state=7, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:42 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:42 CL_KeyEvent: 139, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:42 CL_KeyDownEvent: 139 (MWHEELDOWN), cls.state=7, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:42 CL_KeyEvent: 139, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:42 CL_KeyEvent: 139, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:42 CL_KeyDownEvent: 139 (MWHEELDOWN), cls.state=7, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:42 CL_KeyEvent: 139, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:42 UIVM_DrawConnectScreen: 1 openjk_mp.html:1:1700
+2026-03-08 15:00:42 ^3WARNING: File sound/weapons/force/rageloop.wav not precached openjk_mp.html:1:1700
+2026-03-08 15:00:42 ^3WARNING: File sound/weapons/force/absorbloop.wav not precached openjk_mp.html:1:1700
+2026-03-08 15:00:42 ^3WARNING: File sound/weapons/force/protectloop.wav not precached openjk_mp.html:1:1700
+2026-03-08 15:00:42 ^3WARNING: File sound/weapons/force/seeloop.wav not precached openjk_mp.html:1:1700
+2026-03-08 15:00:42 ^3WARNING: File sound/player/nullifyloop.wav not precached openjk_mp.html:1:1700
+2026-03-08 15:00:42 UIVM_SetActiveMenu: 3 openjk_mp.html:1:1700
+2026-03-08 15:00:43 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:43 CL_KeyDownEvent: 141 (MOUSE1), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:43 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:43 SCR_DrawSmallChar: char 67 at 8, 0 (total chars 1) openjk_mp.html:1:1700
+2026-03-08 15:00:43 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:43 SCR_DrawSmallChar: char 97 at 128, 16 (total chars 1001) openjk_mp.html:1:1700
+2026-03-08 15:00:43 SCR_DrawSmallChar: char 109 at 80, 0 (total chars 2001) openjk_mp.html:1:1700
+2026-03-08 15:00:44 SDL_KEYDOWN: keysym=0x77, translated=0x57 openjk_mp.html:1:1700
+2026-03-08 15:00:44 Sys_QueEvent(SE_KEY, 87, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:44 SDL_TEXTINPUT: w openjk_mp.html:1:1700
+2026-03-08 15:00:44 CL_KeyEvent: 87, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:44 CL_KeyDownEvent: 87 (null), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:44 SCR_DrawSmallChar: char 121 at 48, 16 (total chars 3001) openjk_mp.html:1:1700
+2026-03-08 15:00:44 SDL_KEYUP: keysym=0x77, translated=0x57 openjk_mp.html:1:1700
+2026-03-08 15:00:44 Sys_QueEvent(SE_KEY, 87, down=qfalse) openjk_mp.html:1:1700
+2026-03-08 15:00:44 CL_KeyEvent: 87, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:44 SCR_DrawSmallChar: char 100 at 208, 16 (total chars 4001) openjk_mp.html:1:1700
+2026-03-08 15:00:44 SCR_DrawSmallChar: char 97 at 232, 32 (total chars 5001) openjk_mp.html:1:1700
+2026-03-08 15:00:44 SCR_DrawSmallChar: char 111 at 328, 32 (total chars 6001) openjk_mp.html:1:1700
+2026-03-08 15:00:45 SCR_DrawSmallChar: char 97 at 128, 16 (total chars 7001) openjk_mp.html:1:1700
+2026-03-08 15:00:45 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:45 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:45 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:45 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:45 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:45 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:45 SDL_KEYUP: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:45 Sys_QueEvent(SE_KEY, 27, down=qfalse) openjk_mp.html:1:1700
+2026-03-08 15:00:45 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:45 SCR_DrawSmallChar: char 49 at 304, 0 (total chars 8001) openjk_mp.html:1:1700
+2026-03-08 15:00:45 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:45 CL_KeyDownEvent: 141 (MOUSE1), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:45 SCR_DrawSmallChar: char 56 at 408, 0 (total chars 9001) openjk_mp.html:1:1700
+2026-03-08 15:00:45 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:46 SCR_DrawSmallChar: char 95 at 32, 16 (total chars 10001) openjk_mp.html:1:1700
+2026-03-08 15:00:46 SCR_DrawSmallChar: char 83 at 8, 32 (total chars 11001) openjk_mp.html:1:1700
+2026-03-08 15:00:46 SCR_DrawSmallChar: char 58 at 144, 32 (total chars 12001) openjk_mp.html:1:1700
+2026-03-08 15:00:46 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:46 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:46 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:46 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:46 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:46 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:46 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:46 UIVM_Refresh: 13605 (count 301) openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 SCR_DrawSmallChar: char 99 at 352, 16 (total chars 13001) openjk_mp.html:1:1700
+2026-03-08 15:00:47 SDL_KEYUP: keysym=0x4000004a, translated=0x90 openjk_mp.html:1:1700
+2026-03-08 15:00:47 Sys_QueEvent(SE_KEY, 144, down=qfalse) openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 144, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:47 CL_KeyDownEvent: 141 (MOUSE1), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:48 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:48 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:48 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:48 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyDownEvent: 141 (MOUSE1), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:48 SCR_DrawSmallChar: char 101 at 72, 32 (total chars 14001) openjk_mp.html:1:1700
+2026-03-08 15:00:48 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:48 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:48 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:48 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:48 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:48 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:48 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:48 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:48 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:48 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:48 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:48 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 141 (MOUSE1), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 141 (MOUSE1), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 141 (MOUSE1), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 141 (MOUSE1), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:49 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:49 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 141 (MOUSE1), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:49 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:49 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 SCR_DrawSmallChar: char 69 at 88, 16 (total chars 15001) openjk_mp.html:1:1700
+2026-03-08 15:00:50 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 141 (MOUSE1), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 141 (MOUSE1), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 141 (MOUSE1), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 141, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 141 (MOUSE1), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 REMAPPING HOME TO ESCAPE openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:50 SDL_KEYUP: keysym=0x4000004a, translated=0x90 openjk_mp.html:1:1700
+2026-03-08 15:00:50 Sys_QueEvent(SE_KEY, 144, down=qfalse) openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=2 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 144, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 CL_KeyEvent: 141, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:50 SCR_DrawSmallChar: char 44 at 128, 0 (total chars 16001) openjk_mp.html:1:1700
+2026-03-08 15:00:51 SCR_DrawSmallChar: char 40 at 304, 32 (total chars 17001) openjk_mp.html:1:1700
+2026-03-08 15:00:51 SCR_DrawSmallChar: char 111 at 328, 32 (total chars 18001) openjk_mp.html:1:1700
+2026-03-08 15:00:51 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:51 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:51 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:51 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:51 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:51 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:51 SDL_KEYUP: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:51 Sys_QueEvent(SE_KEY, 27, down=qfalse) openjk_mp.html:1:1700
+2026-03-08 15:00:51 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:51 SCR_DrawSmallChar: char 50 at 176, 16 (total chars 19001) openjk_mp.html:1:1700
+2026-03-08 15:00:51 SCR_DrawSmallChar: char 53 at 200, 32 (total chars 20001) openjk_mp.html:1:1700
+2026-03-08 15:00:52 SCR_DrawSmallChar: char 97 at 224, 32 (total chars 21001) openjk_mp.html:1:1700
+2026-03-08 15:00:52 SDL_KEYDOWN: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:52 Sys_QueEvent(SE_KEY, 27, down=qtrue) openjk_mp.html:1:1700
+2026-03-08 15:00:52 CL_KeyEvent: 27, down=1 openjk_mp.html:1:1700
+2026-03-08 15:00:52 CL_KeyDownEvent: 27 (ESCAPE), cls.state=8, catcher=0 openjk_mp.html:1:1700
+2026-03-08 15:00:52 UIVM_SetActiveMenu: 2 openjk_mp.html:1:1700
+2026-03-08 15:00:52 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:52 SDL_KEYUP: keysym=0x1b, translated=0x1b openjk_mp.html:1:1700
+2026-03-08 15:00:52 Sys_QueEvent(SE_KEY, 27, down=qfalse) openjk_mp.html:1:1700
+2026-03-08 15:00:52 CL_KeyEvent: 27, down=0 openjk_mp.html:1:1700
+2026-03-08 15:00:52 SCR_DrawSmallChar: char 114 at 208, 0 (total chars 22001) openjk_mp.html:1:1700
+2026-03-08 15:00:52 SCR_DrawSmallChar: char 110 at 80, 16 (total chars 23001) openjk_mp.html:1:1700
+2026-03-08 15:00:52 SCR_DrawSmallChar: char 104 at 376, 16 (total chars 24001) openjk_mp.html:1:1700
+2026-03-08 15:00:52 SCR_DrawSmallChar: char 119 at 64, 0 (total chars 25001) openjk_mp.html:1:1700
+2026-03-08 15:00:52 SCR_DrawSmallChar: char 54 at 272, 16 (total chars 26001) openjk_mp.html:1:1700
+2026-03-08 15:00:52 SCR_DrawSmallChar: char 95 at 32, 0 (total chars 27001) openjk_mp.html:1:1700
+2026-03-08 15:00:53 SCR_DrawSmallChar: char 115 at 400, 16 (total chars 28001) openjk_mp.html:1:1700
+2026-03-08 15:00:53 SCR_DrawSmallChar: char 97 at 224, 0 (total chars 29001) openjk_mp.html:1:1700
+2026-03-08 15:00:53 SCR_DrawSmallChar: char 97 at 88, 32 (total chars 30001) openjk_mp.html:1:1700
+2026-03-08 15:00:53 SCR_DrawSmallChar: char 104 at 384, 0 (total chars 31001) openjk_mp.html:1:1700
+2026-03-08 15:00:53 SCR_DrawSmallChar: char 51 at 256, 32 (total chars 32001) openjk_mp.html:1:1700
+2026-03-08 15:00:53 SCR_DrawSmallChar: char 83 at 72, 16 (total chars 33001) openjk_mp.html:1:1700
+2026-03-08 15:00:53 SCR_DrawSmallChar: char 108 at 344, 32 (total chars 34001) openjk_mp.html:1:1700

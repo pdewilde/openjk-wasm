@@ -40,7 +40,7 @@ extern void G_VehicleTrace(trace_t *results, const vec3_t start, const vec3_t tM
 #endif
 
 extern qboolean BG_UnrestrainedPitchRoll(playerState_t *ps, Vehicle_t *pVeh);
-extern void BG_SetAnim(playerState_t *ps, animation_t *animations, int setAnimParts, int anim, int setAnimFlags);
+extern void BG_SetAnim(playerState_t *ps, animation_t *animations, int setAnimParts, int anim, int setAnimFlags, int blendTime);
 extern int BG_GetTime(void);
 
 // this stuff has got to be predicted, so..
@@ -1375,7 +1375,7 @@ static void AnimateVehicle(Vehicle_t *pVeh) {
 	}
 
 	if (Anim != -1) {
-		BG_SetAnim(pVeh->m_pParentEntity->playerState, bgAllAnims[pVeh->m_pParentEntity->localAnimIndex].anims, SETANIM_BOTH, Anim, iFlags);
+		BG_SetAnim(pVeh->m_pParentEntity->playerState, bgAllAnims[pVeh->m_pParentEntity->localAnimIndex].anims, SETANIM_BOTH, Anim, iFlags, 0);
 	}
 }
 

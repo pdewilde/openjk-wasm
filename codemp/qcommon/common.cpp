@@ -1156,6 +1156,7 @@ void Com_Init( char *commandLine ) {
 	int		qport;
 
 	Com_Printf( "%s %s %s\n", JK_VERSION, PLATFORM_STRING, SOURCE_DATE );
+	Com_Printf( "--- OpenJK Build: " __DATE__ " " __TIME__ " ---\n" );
 
 	try
 	{

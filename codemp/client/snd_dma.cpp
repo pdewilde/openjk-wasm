@@ -250,7 +250,7 @@ void AL_UpdateRawSamples();
 void S_SetLipSyncs();
 
 // EAX Related
-
+#ifndef __EMSCRIPTEN__
 typedef struct ENVTABLE_s {
 	ALuint ulNumApertures;
 	ALint lFXSlotID;
@@ -311,22 +311,60 @@ void Normalize(EAXVECTOR *v) {
 // EAX 4.0 GUIDS ... confidential information ...
 
 const GUID EAXPROPERTYID_EAX40_FXSlot0 = {0xc4d79f1e, 0xf1ac, 0x436b, {0xa8, 0x1d, 0xa7, 0x38, 0xe7, 0x4, 0x54, 0x69}};
-
 const GUID EAXPROPERTYID_EAX40_FXSlot1 = {0x8c00e96, 0x74be, 0x4491, {0x93, 0xaa, 0xe8, 0xad, 0x35, 0xa4, 0x91, 0x17}};
-
 const GUID EAXPROPERTYID_EAX40_FXSlot2 = {0x1d433b88, 0xf0f6, 0x4637, {0x91, 0x9f, 0x60, 0xe7, 0xe0, 0x6b, 0x5e, 0xdd}};
-
 const GUID EAXPROPERTYID_EAX40_FXSlot3 = {0xefff08ea, 0xc7d8, 0x44ab, {0x93, 0xad, 0x6d, 0xbd, 0x5f, 0x91, 0x0, 0x64}};
-
 const GUID EAXPROPERTYID_EAX40_Context = {0x1d4870ad, 0xdef, 0x43c0, {0xa4, 0xc, 0x52, 0x36, 0x32, 0x29, 0x63, 0x42}};
-
 const GUID EAXPROPERTYID_EAX40_Source = {0x1b86b823, 0x22df, 0x4eae, {0x8b, 0x3c, 0x12, 0x78, 0xce, 0x54, 0x42, 0x27}};
-
 const GUID EAX_NULL_GUID = {0x00000000, 0x0000, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
-
 const GUID EAX_PrimaryFXSlotID = {0xf317866d, 0x924c, 0x450c, {0x86, 0x1b, 0xe6, 0xda, 0xa2, 0x5e, 0x7c, 0x20}};
-
 const GUID EAX_REVERB_EFFECT = {0xcf95c8f, 0xa3cc, 0x4849, {0xb0, 0xb6, 0x83, 0x2e, 0xcc, 0x18, 0x22, 0xdf}};
+#else
+typedef struct { unsigned long a; unsigned short b, c; unsigned char d[8]; } GUID;
+static GUID EAX_NULL_GUID = {0,0,0,{0}};
+static GUID EAX_PrimaryFXSlotID = {0,0,0,{0}};
+static GUID EAX_REVERB_EFFECT = {0,0,0,{0}};
+static GUID EAXPROPERTYID_EAX40_FXSlot0 = {0,0,0,{0}};
+static GUID EAXPROPERTYID_EAX40_FXSlot1 = {0,0,0,{0}};
+static GUID EAXPROPERTYID_EAX40_FXSlot2 = {0,0,0,{0}};
+static GUID EAXPROPERTYID_EAX40_FXSlot3 = {0,0,0,{0}};
+static GUID EAXPROPERTYID_EAX40_Context = {0,0,0,{0}};
+static GUID EAXPROPERTYID_EAX40_Source = {0,0,0,{0}};
+
+static ALboolean s_bEAX = qfalse;
+static bool s_bEALFileLoaded = false;
+static bool s_bInWater = false;
+static int s_EnvironmentID = 0;
+#define EAX_MAX_FXSLOTS 4
+
+typedef struct { GUID FXSlotGuid; ALint lEnvID; } FXSLOTINFO;
+static FXSLOTINFO s_FXSlotInfo[EAX_MAX_FXSLOTS];
+static long s_NumFXSlots = 0;
+static long s_lLastEnvUpdate = 0;
+
+typedef struct { long lOcclusion; float flOcclusionLFRatio; float flOcclusionRoomRatio; float flOcclusionDirectRatio; } EAXOCCLUSIONPROPERTIES;
+typedef struct { long lObstruction; float flObstructionLFRatio; } EAXOBSTRUCTIONPROPERTIES;
+typedef struct { GUID guidActiveFXSlots[4]; } EAXACTIVEFXSLOTS;
+
+#define EAX_ENVIRONMENT_UNDERWATER 0
+#define EAXCONTEXT_PRIMARYFXSLOTID 0
+#define EAXREVERB_ENVIRONMENT 0
+#define EAXREVERB_ROOM 0
+#define EAXSOURCE_OCCLUSIONPARAMETERS 0
+#define EAXSOURCE_ACTIVEFXSLOTID 0
+#define EAXSOURCE_OBSTRUCTIONPARAMETERS 0
+#define EAXSOURCE_FLAGS 0
+
+static ALenum (*s_eaxSet)(const GUID*, ALuint, ALuint, ALvoid*, ALuint) = NULL;
+
+#define timeGetTime Sys_Milliseconds
+
+inline void InitEAXManager(void) {}
+inline void ReleaseEAXManager(void) {}
+inline void UpdateEAXListener(void) {}
+inline void UpdateEAXBuffer(channel_t *ch) {}
+inline void EALFileInit(const char *level) {}
+#endif
 
 /**************************************************************************************************\
 *
@@ -469,7 +507,7 @@ void S_Init(void) {
 	if (s_UseOpenAL) {
 		int i, j;
 
-		ALCdevice *ALCDevice = alcOpenDevice((ALubyte *)"DirectSound3D");
+		ALCdevice *ALCDevice = alcOpenDevice(NULL);
 		if (!ALCDevice)
 			return;
 
@@ -891,6 +929,7 @@ void S_BeginRegistration(void) {
 }
 
 #ifdef USE_OPENAL
+#ifndef __EMSCRIPTEN__
 void EALFileInit(const char *level) {
 	// If an EAL File is already unloaded, remove it
 	if (s_bEALFileLoaded) {
@@ -919,12 +958,11 @@ void EALFileInit(const char *level) {
 		// Mute reverbs if no EAL file is found
 		if ((s_bEAX) && (s_eaxSet)) {
 			long lRoom = -10000;
-			for (int i = 0; i < s_NumFXSlots; i++) {
-				s_eaxSet(&s_FXSlotInfo[i].FXSlotGuid, EAXREVERB_ROOM, NULL, &lRoom, sizeof(long));
 			}
 		}
 	}
 }
+#endif
 #endif
 
 /*
@@ -4685,6 +4723,7 @@ qboolean SND_RegisterAudio_LevelLoadEnd(qboolean bDeleteEverythingNotUsedThisLev
 *
 \****************************************************************************************************/
 
+#ifndef __EMSCRIPTEN__
 /*
 	Initialize the EAX Manager
 */
@@ -5565,4 +5604,5 @@ void UpdateEAXBuffer(channel_t *ch) {
 }
 
 float CalcDistance(EMPOINT A, EMPOINT B) { return (float)sqrt(sqr(A.fX - B.fX) + sqr(A.fY - B.fY) + sqr(A.fZ - B.fZ)); }
+#endif
 #endif

@@ -141,6 +141,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "qcommon/q_platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef union fileBuffer_u {
 	void *v;
 	char *c;
@@ -1904,3 +1908,6 @@ typedef int( *cmpFunc_t )(const void *a, const void *b);
 
 void *Q_LinearSearch( const void *key, const void *ptr, size_t count,
 	size_t size, cmpFunc_t cmp );
+#ifdef __cplusplus
+}
+#endif

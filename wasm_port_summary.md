@@ -43,5 +43,13 @@ The objective is to port the OpenJK Jedi Academy single-player engine to WebAsse
 With the monolithic binary compiling, rendering, and actively playable in the browser, the following singleplayer engine integration fixes have also been implemented:
 - **Persistent Filesystem / Saves:** Created a virtual `/saves` directory initialization path inside Emscripten to allow the VFS to natively support writing checkpoint and savegame data.
 
-Current ongoing work:
+Current ongoing singleplayer work:
 - Continuing to isolate and debug remaining ICARUS scripting anomalies that manifest specifically after checkpoint restoration (e.g. `tree3` sequenced events failing to run properly).
+
+## Multiplayer Port Context
+For the next AI agent beginning the Multiplayer WebAssembly port:
+1. **Directory Structure:** Singleplayer code resides in `code/`, but the Multiplayer source tree resides in `codemp/`.
+2. **Build Strategy:** You will need to configure the build (e.g., adapting `wasm/CMakeLists.txt` or creating a new one) to statically link the core engine, renderer (`rd-vanilla` / `rd-rend2`), `cgame`, `ui`, and `qagame` seamlessly into a monolithic binary, just like the singleplayer target.
+3. **Dynamic Library Interception:** Multiplayer uses similar dynamic module loading (`Sys_LoadDll`). You must stub these out using `#ifdef __EMSCRIPTEN__` blocks and wire them directly to the statically linked APIs (`GetRefAPI`, `GetGameAPI`, `CG_vmMain`, `UI_vmMain`), mirroring the singleplayer approach found in `code/sys/sys_main.cpp`.
+4. **Main Loop & Graphics:** Emscripten's `emscripten_set_main_loop` must be used to prevent thread blocking in the engine's infinite loop. OpenGL legacy translation via `GL4ES` and Web Audio `OpenAL` emulation will apply identically.
+5. **Symbol Conflicts:** Be prepared to rename or wrap global variables and crossover hooks that collide when the `cgame`, `ui`, and `qagame` subsystems are merged into a single global namespace.

@@ -684,6 +684,7 @@ target_compile_options(openjk_wasm PRIVATE
 set_target_properties(openjk_wasm PROPERTIES
     SUFFIX ".html"
     OUTPUT_NAME "openjk"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/dist"
 )
 # ============================================================================
 # MULTIPLAYER
@@ -1112,6 +1113,7 @@ target_link_options(openjk_mp_wasm PRIVATE
 set_target_properties(openjk_mp_wasm PROPERTIES
     SUFFIX ".html"
     OUTPUT_NAME "openjk_mp"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/dist"
 )
 
 # Force common.cpp to recompile on every build to update __DATE__ and __TIME__
@@ -1119,3 +1121,19 @@ add_custom_target(ForceUpdateVersion_MP ALL
     COMMAND ${CMAKE_COMMAND} -E touch "${MPDir}/qcommon/common.cpp"
 )
 add_dependencies(openjk_mp_wasm ForceUpdateVersion_MP)
+
+# ============================================================================
+# WebTransport Tunnel Server (Golang)
+# ============================================================================
+add_custom_target(wtunnel ALL
+    COMMAND ${CMAKE_COMMAND} -E env CGO_ENABLED=0 go build -o "${CMAKE_BINARY_DIR}/wtunnel"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/wtunnel"
+    COMMENT "Building WebTransport Tunnel Server"
+)
+
+add_custom_target(serve
+    COMMAND "${CMAKE_BINARY_DIR}/wtunnel" -dir "${CMAKE_BINARY_DIR}/dist"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+    DEPENDS wtunnel openjk_mp_wasm openjk_wasm
+    COMMENT "Running WebTransport Tunnel Server"
+)

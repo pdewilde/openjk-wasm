@@ -62,11 +62,11 @@ This will produce several files in your `build-wasm` directory, including:
 
 ## Running Locally
 
-Because browsers restrict loading local files via `file://` protocols for security (CORS), you must serve the files over a local HTTP server.
+Because browsers restrict loading local files via `file://` protocols for security (CORS), you must serve the files over a local HTTP server. We have a built-in Go server that handles this and also provides WebTransport tunneling for multiplayer.
 
 ```bash
 # From within your build-wasm directory:
-python3 -m http.server 8080
+emmake make serve
 ```
 
 1.  Open your web browser (Chrome or Firefox recommended).

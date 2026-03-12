@@ -1,0 +1,45 @@
+package router
+
+import (
+	"encoding/binary"
+	"io"
+	"log"
+	"sync"
+)
+
+var maxIP = binary.BigEndian.Uint32([4]byte{100, 127, 255, 255})
+var minIP = binary.BigEndian.Uint32([4]byte{100, 64, 0, 0})
+
+// Router assigns ip addresses to WebTransport clients.
+// Currently just assigns sequential IP addresses with
+// no expiraiton. Rolls back to zero after exhausing block.
+// I'm using the CGNAT ip block 10.64.0.0/10.
+// This is ~4 million addresses from 100.64.0.0 to 100.127.255.255.
+type Router struct {
+	rLock    sync.RWMutex
+	nextAddr uint32
+	routes map[uint32]io.Writer
+}
+
+
+func (r *Router) Send(sender uint32, p *Packet) {
+	dest := p.DestIp.As4()
+}
+
+// TODO: make this less dumb
+// TODO: probably don't want to lock, as this will be called within other functions
+func (r *Router) assignIP() uint32 {
+	r.rLock.Lock()
+	defer r.rLock.Unlock()
+	if r.nextAddr < minIP {
+		r.nextAddr = minIP
+	}
+	ip := r.nextAddr
+	if r.nextAddr >= maxIP {
+		log.Printf("WARNING: Rolling back to minIP: %d", minIP)
+		r.nextAddr = minIP
+	} else {
+		r.nextAddr++
+	}
+	return ip
+}

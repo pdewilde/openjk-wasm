@@ -47,7 +47,7 @@ to the new value before sending out any replies.
 
 #include "qcommon/qcommon.h"
 
-#define	MAX_PACKETLEN			1400		// max size of a network packet
+#define	MAX_PACKETLEN			1150		// max size of a network packet (reduced from 1400 for WebTransport MTU)
 #define	FRAGMENT_SIZE			(MAX_PACKETLEN - 100)
 #define	PACKET_HEADER			10			// two ints and a short
 

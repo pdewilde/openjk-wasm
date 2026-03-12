@@ -198,3 +198,4 @@ cmake-build-*
 build-native
 build-wasm
 GameData
+wasm/wtunnel/wtunnel

@@ -1127,13 +1127,17 @@ add_dependencies(openjk_mp_wasm ForceUpdateVersion_MP)
 # ============================================================================
 add_custom_target(wtunnel ALL
     COMMAND ${CMAKE_COMMAND} -E env CGO_ENABLED=0 go build -o "${CMAKE_BINARY_DIR}/wtunnel"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/wtunnel/test_wt.html" "${CMAKE_BINARY_DIR}/dist/test_wt.html"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/wtunnel"
     COMMENT "Building WebTransport Tunnel Server"
 )
 
 add_custom_target(serve
+    COMMAND python3 -c "import subprocess; r = int(subprocess.check_output(['sysctl', '-n', 'net.core.rmem_max'])); subprocess.check_call(['sudo', 'sysctl', '-w', 'net.core.rmem_max=7500000']) if r < 7500000 else None"
+    COMMAND python3 -c "import subprocess; r = int(subprocess.check_output(['sysctl', '-n', 'net.core.wmem_max'])); subprocess.check_call(['sudo', 'sysctl', '-w', 'net.core.wmem_max=7500000']) if r < 7500000 else None"
     COMMAND "${CMAKE_BINARY_DIR}/wtunnel" -dir "${CMAKE_BINARY_DIR}/dist"
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
     DEPENDS wtunnel openjk_mp_wasm openjk_wasm
     COMMENT "Running WebTransport Tunnel Server"
+    VERBATIM
 )

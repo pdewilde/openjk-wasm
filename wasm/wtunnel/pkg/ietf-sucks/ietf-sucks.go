@@ -6,8 +6,9 @@ package ietfsucks
 
 import (
 	"crypto/tls"
-	"time"
+	"log"
 	"sync"
+	"time"
 )
 
 // CertManager manages short-lived self-signed certificates for WebTransport connections.
@@ -18,48 +19,52 @@ type CertManager struct {
 	activeCert *tls.Certificate
 	activeHash string
 	activeExp  time.Time
-	
+
 	nextCert *tls.Certificate
 	nextHash string
 	nextExp  time.Time
 }
 
+// Don't call unless you hold cm.mu.RLock
 func (cm *CertManager) shouldUpdate() bool {
-	cm.mu.RLock()
-	defer cm.mu.RUnlock()
-
 	if cm.activeCert == nil {
 		return true
 	}
 
-	if cm.activeExp.Before(time.Now().Add(2 * time.Hour)) && cm.nextCert == nil {
+	if cm.activeExp.Before(time.Now().Add(2*time.Hour)) && cm.nextCert == nil {
 		return true
 	}
-	
-	if cm.activeExp.Before(time.Now().Add(1 * time.Hour)) && cm.nextCert != nil {
+
+	if cm.activeExp.Before(time.Now().Add(1*time.Hour)) && cm.nextCert != nil {
 		return true
 	}
 	return false
 }
 
 func (cm *CertManager) update() {
+	cm.mu.RLock()
+	if !cm.shouldUpdate() {
+		cm.mu.RUnlock()
+		return
+	}
+	cm.mu.RUnlock()
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
 	if !cm.shouldUpdate() {
 		return
 	}
-	cm.mu.Lock()
-	defer cm.mu.Unlock()
 	// Initial state
 	if cm.activeCert == nil {
 		cm.activeCert, cm.activeHash, cm.activeExp = generateWebTransportCert()
 	}
 
 	// Active cert is expiring soon. Lets create next cert.
-	if cm.activeExp.Before(time.Now().Add(2 * time.Hour)) && cm.nextCert == nil {
+	if cm.activeExp.Before(time.Now().Add(2*time.Hour)) && cm.nextCert == nil {
 		cm.nextCert, cm.nextHash, cm.nextExp = generateWebTransportCert()
 	}
 
 	// Expiration is imminent, its time to swap certs. Only do so if we haven't already!
-	if cm.activeExp.Before(time.Now().Add(1 * time.Hour)) && cm.nextCert != nil {
+	if cm.activeExp.Before(time.Now().Add(1*time.Hour)) && cm.nextCert != nil {
 		cm.activeCert = cm.nextCert
 		cm.activeHash = cm.nextHash
 		cm.activeExp = cm.nextExp
@@ -71,7 +76,8 @@ func (cm *CertManager) update() {
 
 // GetCert retuns active cert. Never returns error. Will update cert before returning
 // if active cert is nil or expiring.
-func (cm *CertManager) GetCert(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
+func (cm *CertManager) GetCert(hi *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	log.Printf("TLS GetCert called for SNI: %s", hi.ServerName)
 	cm.update()
 	cm.mu.RLock()
 	defer cm.mu.RUnlock()

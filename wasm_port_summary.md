@@ -61,3 +61,16 @@ The Multiplayer WebAssembly port is currently underway. Key achievements and ong
    - **Issue:** Browsers do not support raw UDP sockets. We use a Go-based WebTransport tunnel (`wasm/wtunnel`) to proxy traffic. However, WebTransport Datagrams have a strict ~1200 byte MTU, while the engine's default `MAX_PACKETLEN` is 1400 bytes.
    - **Current Resolution:** We reduced `MAX_PACKETLEN` to 1150 bytes in `codemp/qcommon/net_chan.cpp`. This forces the WASM client to fragment messages earlier, allowing them to fit inside WebTransport Datagrams.
    - **Future Implementation:** This "easy way" breaks compatibility with standard (non-WASM) servers, which will still send 1400-byte packets that the tunnel will drop. To support standard servers in the future, the Go tunnel must be updated to inspect incoming UDP packet sizes. Packets < 1200 bytes can be sent as Datagrams, while packets >= 1200 bytes must be sent over reliable WebTransport Unidirectional Streams (which the browser will automatically fragment and reassemble), bypassing the MTU limit without modifying the standard server.
+
+8. **WebTransport Client Implementation:**
+   - **Action:** Implemented the WebTransport client directly in `codemp/qcommon/net_ip.cpp` using Emscripten's `EM_JS` macro. This bypasses the standard BSD socket calls (`socket`, `sendto`, `recvfrom`) for the WASM build.
+   - **Action:** The client connects to the Go-based WebTransport tunnel (`wasm/wtunnel`) using a relative URL (`/wt-server-certificate-hashes`) to fetch certificate hashes, ensuring compatibility with both HTTP and HTTPS.
+   - **Action:** It reads a 4-byte Virtual IP (VIP) from the server's incoming unidirectional stream.
+   - **Action:** Outgoing packets are prepended with a custom 10-byte `youdp` header (DestIP, SrcIP=VIP, DestPort) and sent as WebTransport datagrams. Incoming datagrams have this header stripped before being passed to the game engine.
+
+9. **WebTransport Tunnel Server (Go):**
+   - **Action:** Fixed critical session management bugs by correctly calling `webtransport.ConfigureHTTP3Server` and using `wtServer.ListenAndServe()`.
+   - **Action:** Switched the server to use HTTPS (TLS) for both the static file server and the WebTransport endpoint. This provides the **Secure Context** required by modern browsers to enable the `WebTransport` API.
+   - **Action:** Integrated mDNS support via `github.com/hashicorp/mdns` to advertise the server as `openjk.local`, allowing direct connections to the WSL IP and bypassing unreliable UDP port-forwarding on `localhost`.
+   - **Action:** Fixed a potential panic by ensuring the internal routing table is properly initialized on startup.
+   - **Action:** Optimized the build system (`wasm/CMakeLists.txt`) to ensure the WebTransport test page is updated in the distribution directory on every build.

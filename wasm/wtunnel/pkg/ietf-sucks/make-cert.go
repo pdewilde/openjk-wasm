@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"net"
 	"time"
 )
 
@@ -25,7 +26,8 @@ func generateWebTransportCert() (*tls.Certificate, string, time.Time) {
 	}
 
 	// 2. Set strict expiration windows (< 14 days)
-	notBefore := time.Now()
+	// Subtract 1 hour from notBefore to account for clock skew between server and client
+	notBefore := time.Now().Add(-1 * time.Hour)
 	notAfter := notBefore.Add(13 * 24 * time.Hour)
 
 	// 3. Generate a secure random serial number
@@ -41,12 +43,15 @@ func generateWebTransportCert() (*tls.Certificate, string, time.Time) {
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			Organization: []string{"In-Memory WebTransport Auto-Cert"},
+			CommonName:   "localhost",
 		},
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
 		KeyUsage:              x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
+		DNSNames:              []string{"localhost", "openjk.local"},
+		IPAddresses:           []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("::1")},
 	}
 
 	// 5. Create the raw certificate (DER format)
@@ -61,9 +66,11 @@ func generateWebTransportCert() (*tls.Certificate, string, time.Time) {
 	hashHex := hex.EncodeToString(hash[:])
 
 	// 7. Package it into a tls.Certificate (No PEM encoding/decoding needed!)
+	leaf, _ := x509.ParseCertificate(derBytes)
 	tlsCert := &tls.Certificate{
 		Certificate: [][]byte{derBytes},
 		PrivateKey:  privKey,
+		Leaf:        leaf,
 	}
 
 	return tlsCert, hashHex, notAfter

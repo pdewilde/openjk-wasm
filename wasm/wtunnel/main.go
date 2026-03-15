@@ -4,11 +4,15 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"os"
 
+	"github.com/hashicorp/mdns"
 	ietfsucks "github.com/pdewilde/openjk-wasm/wasm/wtunnel/pkg/ietf-sucks"
+	"github.com/pdewilde/openjk-wasm/wasm/wtunnel/pkg/router"
+	"github.com/pdewilde/openjk-wasm/wasm/wtunnel/pkg/util"
 	"github.com/pdewilde/openjk-wasm/wasm/wtunnel/pkg/youdp"
 
 	"github.com/quic-go/quic-go"
@@ -25,6 +29,21 @@ import (
 // These do not persist across reboots.
 // You must add them to /etc/sysctl.conf to make them permanent.
 
+func getLocalIP() net.IP {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return nil
+	}
+	for _, address := range addrs {
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP
+			}
+		}
+	}
+	return nil
+}
+
 func main() {
 	dir := flag.String("dir", "../../build-wasm/dist", "directory to serve static files from")
 	flag.Parse()
@@ -38,12 +57,16 @@ func serve(dir string) {
 		GetCertificate: cm.GetCert,
 	}
 	ht3Server := http3.Server{
-		Handler: mux,
-		Addr:    "0.0.0.0:8443",
-		// TLSConfig: http3.ConfigureTLS TODO
-		TLSConfig:  http3.ConfigureTLSConfig(tlsConfig),
-		QUICConfig: &quic.Config{EnableDatagrams: true},
+		Handler:         mux,
+		Addr:            ":8443",
+		TLSConfig:       http3.ConfigureTLSConfig(tlsConfig),
+		EnableDatagrams: true,
+		QUICConfig: &quic.Config{
+			EnableDatagrams:                  true,
+			EnableStreamResetPartialDelivery: true,
+		},
 	}
+	webtransport.ConfigureHTTP3Server(&ht3Server)
 
 	wtServer := webtransport.Server{
 		H3: &ht3Server,
@@ -53,11 +76,37 @@ func serve(dir string) {
 	}
 
 	httpServer := &http.Server{
-		Addr:    "0.0.0.0:8080",
-		Handler: mux,
+		Addr:      ":8080",
+		Handler:   mux,
+		TLSConfig: tlsConfig,
+	}
+
+	virtualRouter := router.NewRouter()
+
+	// Register mDNS service for openjk.local
+	localIP := getLocalIP()
+	if localIP != nil {
+		host, _ := os.Hostname()
+		info := []string{"OpenJK WebTransport Relay"}
+		service, err := mdns.NewMDNSService(host, "_http._tcp", "local.", "openjk.local.", 8080, []net.IP{localIP}, info)
+		if err != nil {
+			log.Printf("Failed to create mDNS service: %v", err)
+		} else {
+			server, err := mdns.NewServer(&mdns.Config{Zone: service})
+			if err != nil {
+				log.Printf("Failed to start mDNS server: %v", err)
+			} else {
+				defer server.Shutdown()
+				log.Printf("Registered mDNS service openjk.local at %v", localIP)
+				log.Printf("You can access the test page at: https://%v:8080/test_wt.html", localIP)
+			}
+		}
+	} else {
+		log.Printf("You can access the test page at: https://localhost:8080/test_wt.html")
 	}
 
 	// Serve static files
+	log.Printf("Serving static files from: %s", dir)
 	fs := http.FileServer(http.Dir(dir))
 	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
@@ -74,8 +123,12 @@ func serve(dir string) {
 		// to have.
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
 
-		json.NewEncoder(w).Encode(map[string][]string{"hashes": cm.GetHashes()})
+		hashes := cm.GetHashes()
+		json.NewEncoder(w).Encode(map[string][]string{"hashes": hashes})
 	})
 
 	// Handle WebTransport connections from wasm JKJA clients.
@@ -83,18 +136,40 @@ func serve(dir string) {
 		// No need for CORS, WebTransport handles differently using CheckOrigin.
 		sess, err := wtServer.Upgrade(w, r)
 		if err != nil {
-			err := fmt.Errorf("failed to upgrade to webtransport connection: %w", err)
-			log.Printf(err.Error())
-			http.Error(w, err.Error(), http.StatusUpgradeRequired)
+			log.Printf("WebTransport upgrade failed for %s: %v", r.RemoteAddr, err)
+			http.Error(w, "failed to upgrade to webtransport connection", http.StatusUpgradeRequired)
 			return
 		}
-		log.Print(fmt.Sprintf("sess: %v\n", sess))
-		
-		// TODO: two goroutines, one to send one to receive
+		log.Printf("WebTransport session established for %s", r.RemoteAddr)
 
-		// go func() {
-			
-		// }
+		// Give client their ip address
+		// TODO: should I be using r.context here?
+		stream, err := sess.OpenUniStreamSync(r.Context())
+		if err != nil {
+			log.Printf("Error opening stream to connect : %v", err)
+			// TODO: do I need to close session or handle?
+			return
+		}
+
+		datagramWriterFn := func(b []byte) (int, error) {
+			err := sess.SendDatagram(b)
+			if err != nil {
+				return 0, err
+			}
+			return len(b), nil
+		}
+
+		datagramWriter := util.WriterFunc(util.AsyncDropOldPacketsWriter(datagramWriterFn, 16, false))
+
+		vip := virtualRouter.GetRoute(datagramWriter)
+		defer virtualRouter.RemoveRoute(vip)
+		vipBytes := vip.As4()
+		if _, err = stream.Write(vipBytes[:]); err != nil {
+			log.Printf("Error writing vip to stream: %v", err)
+			// TODO; do I need to close session or handle?
+			return
+		}
+		stream.Close()
 
 		for {
 			content, err := sess.ReceiveDatagram(sess.Context())
@@ -103,30 +178,29 @@ func serve(dir string) {
 				// TODO -- are there errors I want to continue for?
 				break
 			}
-			log.Printf("Received datagram: %v", content)
-			packet, err := youdp.DeseralizePacket(content)
+			packet, err := youdp.DeserializePacket(content)
 			if err != nil {
 				// TODO handle error
 				log.Printf("Invalid packet: %v", err.Error())
 				continue
 			}
-			log.Printf("received packet: %#v", packet)
-			
+			// Forward packet on
+			virtualRouter.Send(vip, packet)
 		}
 	})
 
-	// Start http3 server in go routine
+	// Start WebTransport server in go routine
 	go func() {
-		log.Println("Starting UDP WebTransport 0.0.0.0:8443")
-		if err := ht3Server.ListenAndServe(); err != nil {
-			log.Fatalf("QUIC server failed: %v", err)
+		log.Println("Starting UDP WebTransport :8443")
+		if err := wtServer.ListenAndServe(); err != nil {
+			log.Fatalf("WebTransport server failed: %v", err)
 		}
 	}()
 
 	// Start normal http server in main thread
-	log.Println("Starting HTTP 0.0.0.0:8080")
-	if err := httpServer.ListenAndServe(); err != nil {
-		log.Fatalf("HTTP server failed: %v", err)
+	log.Println("Starting HTTPS :8080")
+	if err := httpServer.ListenAndServeTLS("", ""); err != nil {
+		log.Fatalf("HTTPS server failed: %v", err)
 	}
 }
 

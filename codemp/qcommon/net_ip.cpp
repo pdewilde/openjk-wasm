@@ -80,6 +80,117 @@ typedef int SOCKET;
 
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+
+// Initialize WebTransport and start listening for the VIP and datagrams
+EM_JS(void, WT_Init, (), {
+    const hostname = window.location.hostname;
+    const urlStr = "https://" + hostname + ":8443/jamp";
+    Module.wtQueue = [];
+    Module.wtVIP = new Uint8Array(4);
+    
+    const hashUrl = "/wt-server-certificate-hashes?t=" + Date.now();
+    
+    fetch(hashUrl)
+        .then(response => response.json())
+        .then(data => {
+                const hashes = data.hashes.map(hex => {
+                    const bytes = new Uint8Array(hex.length / 2);
+                    for (let i = 0; i < hex.length; i += 2) {
+                        bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+                    }
+                    return { algorithm: "sha-256", value: bytes.buffer };
+                });
+            
+            try {
+                Module.wt = new WebTransport(urlStr, { serverCertificateHashes: hashes });
+                Module.wt.ready.then(() => {
+                    // 1. Read VIP from incoming unidirectional stream
+                    async function readVIP() {
+                        const reader = Module.wt.incomingUnidirectionalStreams.getReader();
+                        const { value: stream } = await reader.read();
+                        const streamReader = stream.getReader();
+                        const { value: vipBytes } = await streamReader.read();
+                        Module.wtVIP.set(vipBytes.slice(0, 4));
+                    }
+                    readVIP();
+
+                    // 2. Read incoming datagrams
+                    async function readDatagrams() {
+                        const reader = Module.wt.datagrams.readable.getReader();
+                        while (true) {
+                            const { value, done } = await reader.read();
+                            if (done) break;
+                            
+                            // value is a Uint8Array containing the youdp packet
+                            // Strip the 10-byte header and push to queue
+                            if (value.length >= 10) {
+                                const srcIp = value.slice(4, 8);
+                                const srcPort = (value[8] << 8) | value[9];
+                                const payload = value.slice(10);
+                                Module.wtQueue.push({ srcIp, srcPort, payload });
+                            }
+                        }
+                    }
+                    readDatagrams();
+                }).catch(err => {
+                    console.error("WebTransport connection failed (async):", err);
+                    // Log more details if available
+                    if (err instanceof Error) {
+                        console.error("Error name:", err.name);
+                        console.error("Error message:", err.message);
+                    }
+                });
+            } catch (e) {
+                console.error("WebTransport constructor failed (sync):", e);
+            }
+        })
+        .catch(err => console.error("Failed to fetch cert hashes:", err));
+});
+
+// Send a packet via WebTransport
+EM_JS(void, WT_SendPacket, (int length, const void *data, int destIp0, int destIp1, int destIp2, int destIp3, int destPort), {
+    if (!Module.wt || !Module.wtVIP) return;
+    
+    const payload = HEAPU8.subarray(data, data + length);
+    const packet = new Uint8Array(10 + length);
+    
+    // Dest IP
+    packet[0] = destIp0; packet[1] = destIp1; packet[2] = destIp2; packet[3] = destIp3;
+    // Src IP (VIP)
+    packet.set(Module.wtVIP, 4);
+    // Dest Port
+    packet[8] = (destPort >> 8) & 0xFF;
+    packet[9] = destPort & 0xFF;
+    // Payload
+    packet.set(payload, 10);
+    
+    const writer = Module.wt.datagrams.writable.getWriter();
+    writer.write(packet);
+    writer.releaseLock();
+});
+
+// Poll for received packets
+EM_JS(int, WT_GetPacket, (void *buffer, int bufferSize, void *fromIpBuffer, void *fromPortBuffer), {
+    if (!Module.wtQueue || Module.wtQueue.length === 0) return -1; // EAGAIN
+    
+    const packet = Module.wtQueue.shift();
+    if (packet.payload.length > bufferSize) return -1; // Too big
+    
+    // Copy payload to C++ buffer
+    HEAPU8.set(packet.payload, buffer);
+    
+    // Copy source IP to C++ buffer
+    HEAPU8.set(packet.srcIp, fromIpBuffer);
+    
+    // Copy source port to C++ buffer (assuming 16-bit int pointer)
+    HEAPU16[fromPortBuffer >> 1] = packet.srcPort;
+    
+    return packet.payload.length;
+});
+#endif
+
 static qboolean usingSocks = qfalse;
 static qboolean networkingEnabled = qfalse;
 
@@ -252,6 +363,19 @@ qboolean NET_GetPacket( netadr_t *net_from, msg_t *net_message, fd_set *fdr ) {
 	socklen_t fromlen;
 	struct sockaddr_in from;
 
+#ifdef __EMSCRIPTEN__
+	uint16_t fromPort;
+	ret = WT_GetPacket(net_message->data, net_message->maxsize, net_from->ip, &fromPort);
+	if (ret != -1) {
+		net_from->type = NA_IP;
+		net_from->port = htons(fromPort);
+		net_message->readcount = 0;
+		net_message->cursize = ret;
+		return qtrue;
+	}
+	return qfalse;
+#endif
+
 	if ( ip_socket == INVALID_SOCKET || !FD_ISSET(ip_socket, fdr) ) {
 		return qfalse;
 	}
@@ -317,6 +441,15 @@ void Sys_SendPacket( int length, const void *data, const netadr_t *to ) {
 		Com_Error( ERR_FATAL, "Sys_SendPacket: bad address type" );
 		return;
 	}
+
+#ifdef __EMSCRIPTEN__
+	if (to->type == NA_BROADCAST) {
+		WT_SendPacket(length, data, 255, 255, 255, 255, ntohs(to->port));
+	} else {
+		WT_SendPacket(length, data, to->ip[0], to->ip[1], to->ip[2], to->ip[3], ntohs(to->port));
+	}
+	return;
+#endif
 
 	if ( ip_socket == INVALID_SOCKET ) {
 		return;
@@ -425,6 +558,13 @@ static SOCKET NET_IPSocket( const char *net_interface, int port, int *err ) {
 	int					i = 1;
 
 	*err = 0;
+
+#ifdef __EMSCRIPTEN__
+	// TODO: Make this configurable via cvar or command line
+	WT_Init();
+	ip_socket = 1; // Fake socket handle so the rest of the code thinks we're connected
+	return ip_socket;
+#endif
 
 	if( net_interface ) {
 		Com_Printf( "Opening IP socket: %s:%i\n", net_interface, port );

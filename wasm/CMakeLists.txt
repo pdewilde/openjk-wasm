@@ -605,16 +605,13 @@ set(ALL_SOURCES
 )
 
 # ============================================================================
-# Create the executable
+# Create the executables (SP)
 # ============================================================================
-add_executable(openjk_wasm ${ALL_SOURCES})
+add_executable(openjk_bundled ${ALL_SOURCES})
+add_executable(openjk_upload ${ALL_SOURCES})
 
-target_include_directories(openjk_wasm PRIVATE
-    ${SPDir}
-    "${SPDir}/game"
-    "${SPDir}/rd-common"
-    "${SPDir}/rd-vanilla"
-)
+target_include_directories(openjk_bundled PRIVATE ${SPDir} "${SPDir}/game" "${SPDir}/rd-common" "${SPDir}/rd-vanilla")
+target_include_directories(openjk_upload PRIVATE ${SPDir} "${SPDir}/game" "${SPDir}/rd-common" "${SPDir}/rd-vanilla")
 
 # Mark header files so CMake doesn't try to compile them
 foreach(_src ${ALL_SOURCES})
@@ -636,18 +633,22 @@ set_source_files_properties(
 )
 
 # ============================================================================
-# Emscripten compile and link flags
+# Emscripten compile and link flags (SP)
 # ============================================================================
-target_compile_options(openjk_wasm PRIVATE
+set(SP_COMPILE_OPTIONS
     -DUSE_OPENAL=1
     -Wno-write-strings
     -Wno-comment
     -Wno-invalid-offsetof
     -fsigned-char
     -O2
+    -sUSE_SDL=2
+    -sUSE_ZLIB=1
+    -sUSE_LIBPNG=1
+    -sUSE_LIBJPEG=1
 )
 
-target_link_options(openjk_wasm PRIVATE
+set(SP_LINK_OPTIONS
     -lopenal
     -sUSE_SDL=2
     -sUSE_ZLIB=1
@@ -656,36 +657,33 @@ target_link_options(openjk_wasm PRIVATE
     -sALLOW_MEMORY_GROWTH=1
     -sINITIAL_MEMORY=67108864
     -sFORCE_FILESYSTEM=1
+    -sEXPORTED_RUNTIME_METHODS=['FS','run','callMain']
     -sWASM=1
     -sFULL_ES2=1
     -sSTACK_SIZE=8388608
     -sERROR_ON_UNDEFINED_SYMBOLS=0
-    -O0 -g
-    -sASSERTIONS=1
-    # Preload game assets
+    -O2
+)
+
+target_compile_options(openjk_bundled PRIVATE ${SP_COMPILE_OPTIONS})
+target_compile_options(openjk_upload PRIVATE ${SP_COMPILE_OPTIONS})
+
+target_link_libraries(openjk_bundled PRIVATE "${GL4ESDir}/lib/libGL.a" "-lopenal")
+target_link_libraries(openjk_upload PRIVATE "${GL4ESDir}/lib/libGL.a" "-lopenal")
+
+# Bundled SP
+target_link_options(openjk_bundled PRIVATE ${SP_LINK_OPTIONS}
     --preload-file "${ProjectRoot}/GameData/base@base"
-    # Output HTML page
     --shell-file "${CMAKE_SOURCE_DIR}/shell.html"
 )
+set_target_properties(openjk_bundled PROPERTIES SUFFIX ".html" OUTPUT_NAME "openjk_bundled" RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/dist")
 
-target_link_libraries(openjk_wasm PRIVATE
-    "${GL4ESDir}/lib/libGL.a"
-    "-lopenal"
+# Upload SP
+target_link_options(openjk_upload PRIVATE ${SP_LINK_OPTIONS}
+    --shell-file "${CMAKE_SOURCE_DIR}/shell_upload.html"
 )
+set_target_properties(openjk_upload PROPERTIES SUFFIX ".html" OUTPUT_NAME "openjk_upload" RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/dist")
 
-# Also set compile flags for libraries Emscripten provides
-target_compile_options(openjk_wasm PRIVATE
-    -sUSE_SDL=2
-    -sUSE_ZLIB=1
-    -sUSE_LIBPNG=1
-    -sUSE_LIBJPEG=1
-)
-
-set_target_properties(openjk_wasm PROPERTIES
-    SUFFIX ".html"
-    OUTPUT_NAME "openjk"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/dist"
-)
 # ============================================================================
 # MULTIPLAYER
 # ============================================================================
@@ -1039,7 +1037,7 @@ target_include_directories(mp_botlib PRIVATE ${MPDir} ${SharedDir} ${CMAKE_BINAR
 target_compile_definitions(mp_botlib PRIVATE __EMSCRIPTEN__ MP_GAME BOTLIB)
 target_compile_options(mp_botlib PRIVATE -O2 -sUSE_SDL=2 "-include" "${MPDir}/botlib/bot_rename.h")
 
-# MONOLITHIC MP EXECUTABLE
+# MONOLITHIC MP EXECUTABLES
 set(MP_ALL_SOURCES
     ${MPEngineCommonFiles}
     ${MPEngineClientFiles}
@@ -1051,8 +1049,10 @@ set(MP_ALL_SOURCES
     ${MPIcarusFiles}
 )
 
-add_executable(openjk_mp_wasm ${MP_ALL_SOURCES})
-target_include_directories(openjk_mp_wasm PRIVATE
+add_executable(openjk_mp_bundled ${MP_ALL_SOURCES})
+add_executable(openjk_mp_upload ${MP_ALL_SOURCES})
+
+set(MP_INCLUDE_DIRS
     ${SharedDir}
     ${CMAKE_BINARY_DIR}/shared
     ${MPDir}
@@ -1062,7 +1062,10 @@ target_include_directories(openjk_mp_wasm PRIVATE
     "${OpenJKLibDir}"
     "${GL4ESDir}/include"
 )
-target_compile_definitions(openjk_mp_wasm PRIVATE
+target_include_directories(openjk_mp_bundled PRIVATE ${MP_INCLUDE_DIRS})
+target_include_directories(openjk_mp_upload PRIVATE ${MP_INCLUDE_DIRS})
+
+set(MP_COMPILE_DEFS
     _JK2EXE
     MP_GAME
     __EMSCRIPTEN__
@@ -1071,7 +1074,10 @@ target_compile_definitions(openjk_mp_wasm PRIVATE
     RENDERER          # needed for rd-vanilla sources
     DEFAULT_ES=2
 )
-target_compile_options(openjk_mp_wasm PRIVATE
+target_compile_definitions(openjk_mp_bundled PRIVATE ${MP_COMPILE_DEFS})
+target_compile_definitions(openjk_mp_upload PRIVATE ${MP_COMPILE_DEFS})
+
+set(MP_COMPILE_OPTIONS
     -DUSE_OPENAL=1
     -sUSE_SDL=2
     -Wno-write-strings
@@ -1080,8 +1086,10 @@ target_compile_options(openjk_mp_wasm PRIVATE
     -fsigned-char
     -O2
 )
+target_compile_options(openjk_mp_bundled PRIVATE ${MP_COMPILE_OPTIONS})
+target_compile_options(openjk_mp_upload PRIVATE ${MP_COMPILE_OPTIONS})
 
-target_link_libraries(openjk_mp_wasm PRIVATE
+set(MP_LINK_LIBS
     mp_cgame
     mp_game
     mp_ui
@@ -1089,8 +1097,10 @@ target_link_libraries(openjk_mp_wasm PRIVATE
     "${GL4ESDir}/lib/libGL.a"
     "-lopenal"
 )
+target_link_libraries(openjk_mp_bundled PRIVATE ${MP_LINK_LIBS})
+target_link_libraries(openjk_mp_upload PRIVATE ${MP_LINK_LIBS})
 
-target_link_options(openjk_mp_wasm PRIVATE
+set(MP_LINK_OPTIONS
     -lopenal
     -sUSE_SDL=2
     -sUSE_ZLIB=1
@@ -1099,28 +1109,34 @@ target_link_options(openjk_mp_wasm PRIVATE
     -sALLOW_MEMORY_GROWTH=1
     -sINITIAL_MEMORY=134217728
     -sFORCE_FILESYSTEM=1
+    "-sEXPORTED_RUNTIME_METHODS=['FS','run','callMain']"
     -sWASM=1
     -sFULL_ES2=1
     -sSTACK_SIZE=8388608
     -sERROR_ON_UNDEFINED_SYMBOLS=0
     -O2
-    # Preload game assets (base)
-    --preload-file "${ProjectRoot}/GameData/base@base"
-    # Output HTML page
-    --shell-file "${CMAKE_SOURCE_DIR}/shell.html"
 )
 
-set_target_properties(openjk_mp_wasm PROPERTIES
-    SUFFIX ".html"
-    OUTPUT_NAME "openjk_mp"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/dist"
+# Bundled MP
+target_link_options(openjk_mp_bundled PRIVATE ${MP_LINK_OPTIONS}
+    --preload-file "${ProjectRoot}/GameData/base@base"
+    --shell-file "${CMAKE_SOURCE_DIR}/shell.html"
 )
+set_target_properties(openjk_mp_bundled PROPERTIES SUFFIX ".html" OUTPUT_NAME "openjk_mp_bundled" RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/dist")
+
+# Upload MP
+target_link_options(openjk_mp_upload PRIVATE ${MP_LINK_OPTIONS}
+    --shell-file "${CMAKE_SOURCE_DIR}/shell_upload.html"
+)
+set_target_properties(openjk_mp_upload PROPERTIES SUFFIX ".html" OUTPUT_NAME "openjk_mp_upload" RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/dist")
 
 # Force common.cpp to recompile on every build to update __DATE__ and __TIME__
 add_custom_target(ForceUpdateVersion_MP ALL
     COMMAND ${CMAKE_COMMAND} -E touch "${MPDir}/qcommon/common.cpp"
 )
-add_dependencies(openjk_mp_wasm ForceUpdateVersion_MP)
+add_dependencies(openjk_mp_bundled ForceUpdateVersion_MP)
+add_dependencies(openjk_mp_upload ForceUpdateVersion_MP)
+
 
 # ============================================================================
 # WebTransport Tunnel Server (Golang)
@@ -1137,7 +1153,7 @@ add_custom_target(serve
     COMMAND python3 -c "import subprocess; r = int(subprocess.check_output(['sysctl', '-n', 'net.core.wmem_max'])); subprocess.check_call(['sudo', 'sysctl', '-w', 'net.core.wmem_max=7500000']) if r < 7500000 else None"
     COMMAND "${CMAKE_BINARY_DIR}/wtunnel" -dir "${CMAKE_BINARY_DIR}/dist"
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-    DEPENDS wtunnel openjk_mp_wasm openjk_wasm
+    DEPENDS wtunnel openjk_mp_bundled openjk_mp_upload openjk_bundled openjk_upload
     COMMENT "Running WebTransport Tunnel Server"
     VERBATIM
 )

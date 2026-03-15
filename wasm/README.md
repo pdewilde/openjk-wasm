@@ -52,13 +52,12 @@ emcmake cmake ../wasm
 emmake make -j4
 ```
 
-This will produce several files in your `build-wasm` directory, including:
-*   `openjk.html` (The web page)
-*   `openjk.js` (The emscripten loader and bindings)
-*   `openjk.wasm` (The compiled C++ engine)
-*   `openjk.data` (The packaged game assets from your `GameData/base` folder)
+This will produce several files in your `build-wasm/dist` directory, including:
+*   `openjk_bundled.html` / `openjk_mp_bundled.html` (Bundled versions with preloaded assets)
+*   `openjk_upload.html` / `openjk_mp_upload.html` (Lightweight versions requiring manual asset upload)
+*   `*.js`, `*.wasm`, and `*.data` files for the respective targets.
 
-*Note: Packaging `openjk.data` can take a few minutes and will result in a very large file (1GB+ depending on mods).*
+*Note: Packaging the `.data` files for the bundled versions can take a few minutes and will result in very large files (1GB+ depending on mods).*
 
 ## Running Locally
 
@@ -70,7 +69,9 @@ emmake make serve
 ```
 
 1.  Open your web browser (Chrome or Firefox recommended).
-2.  Navigate to `http://localhost:8080/openjk.html`.
+2.  Navigate to `https://localhost:8080/openjk_upload.html` (or `openjk_bundled.html`).
+    *   *Note: The server uses HTTPS to satisfy WebTransport secure context requirements. You may need to accept the self-signed certificate warning.*
+    *   *Note: The bundled versions are protected by Basic Auth. Use username `jedi` and password `academy`.*
 3.  Click anywhere on the cinematic or menu to grant the browser permission to play audio and capture your mouse (pointer lock).
 4.  To release your mouse cursor, press the `Escape` key (or whatever key your browser binds to exiting pointer lock).
 

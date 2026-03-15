@@ -74,3 +74,10 @@ The Multiplayer WebAssembly port is currently underway. Key achievements and ong
    - **Action:** Integrated mDNS support via `github.com/hashicorp/mdns` to advertise the server as `openjk.local`, allowing direct connections to the WSL IP and bypassing unreliable UDP port-forwarding on `localhost`.
    - **Action:** Fixed a potential panic by ensuring the internal routing table is properly initialized on startup.
    - **Action:** Optimized the build system (`wasm/CMakeLists.txt`) to ensure the WebTransport test page is updated in the distribution directory on every build.
+
+10. **Asset Loading Strategies:**
+    - **Action:** Created two distinct build targets for both Singleplayer and Multiplayer:
+        - **Bundled Version:** Includes the full `base/` directory using `--preload-file`. Access is restricted via **Basic Auth** (`jedi` / `academy`) in the Go server to protect copyrighted assets.
+        - **Upload Version:** Does not include assets. Instead, it features a custom HTML shell (`wasm/shell_upload.html`) with a file picker that allows users to select their local `base/` folder. The files are then mounted into the WASM virtual filesystem at runtime using the Emscripten `FS` API.
+    - **Action:** Fixed Emscripten filesystem initialization issues in the Upload Version by explicitly exporting `callMain` and `FS` methods (`-sEXPORTED_RUNTIME_METHODS=['FS','run','callMain']`). The shell now reads uploaded files into memory, mounts them directly into the virtual filesystem, and invokes `Module.callMain()` to start the engine without re-initializing the runtime and losing the mounted assets.
+    - **Action:** Updated `wasm/CMakeLists.txt` to produce `openjk_bundled.html`, `openjk_upload.html`, `openjk_mp_bundled.html`, and `openjk_mp_upload.html`.

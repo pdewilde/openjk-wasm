@@ -109,6 +109,21 @@ func serve(dir string) {
 	log.Printf("Serving static files from: %s", dir)
 	fs := http.FileServer(http.Dir(dir))
 	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Gate bundled files behind basic auth
+		path := r.URL.Path
+		if path == "/openjk_bundled.html" || path == "/openjk_mp_bundled.html" ||
+			path == "/openjk_bundled.js" || path == "/openjk_mp_bundled.js" ||
+			path == "/openjk_bundled.wasm" || path == "/openjk_mp_bundled.wasm" ||
+			path == "/openjk_bundled.data" || path == "/openjk_mp_bundled.data" {
+
+			user, pass, ok := r.BasicAuth()
+			if !ok || user != "jedi" || pass != "academy" {
+				w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+		}
+
 		w.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
 		w.Header().Set("Cross-Origin-Embedder-Policy", "require-corp")
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")

@@ -18,6 +18,7 @@ import (
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
 	"github.com/quic-go/webtransport-go"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // If you get this error:
@@ -46,19 +47,41 @@ func getLocalIP() net.IP {
 
 func main() {
 	dir := flag.String("dir", "../../build-wasm/dist", "directory to serve static files from")
+	domain := flag.String("domain", "", "domain name for Let's Encrypt (if empty, uses self-signed cert)")
 	flag.Parse()
-	serve(*dir)
+	serve(*dir, *domain)
 }
 
-func serve(dir string) {
+func serve(dir string, domain string) {
 	mux := http.NewServeMux()
-	cm := &ietfsucks.CertManager{}
-	tlsConfig := &tls.Config{
-		GetCertificate: cm.GetCert,
+
+	var tlsConfig *tls.Config
+	var getHashes func() []string
+
+	httpsPort := ":8080"
+	quicPort := ":8443"
+
+	if domain != "" {
+		httpsPort = ":443"
+		quicPort = ":443"
+		m := &autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(domain),
+			Cache:      autocert.DirCache("certs"), // Cache certs in a local directory
+		}
+		tlsConfig = m.TLSConfig()
+		getHashes = func() []string { return []string{} } // No hashes needed for real certs
+	} else {
+		cm := &ietfsucks.CertManager{}
+		tlsConfig = &tls.Config{
+			GetCertificate: cm.GetCert,
+		}
+		getHashes = cm.GetHashes
 	}
+
 	ht3Server := http3.Server{
 		Handler:         mux,
-		Addr:            ":8443",
+		Addr:            quicPort,
 		TLSConfig:       http3.ConfigureTLSConfig(tlsConfig),
 		EnableDatagrams: true,
 		QUICConfig: &quic.Config{
@@ -76,7 +99,7 @@ func serve(dir string) {
 	}
 
 	httpServer := &http.Server{
-		Addr:      ":8080",
+		Addr:      httpsPort,
 		Handler:   mux,
 		TLSConfig: tlsConfig,
 	}
@@ -142,7 +165,7 @@ func serve(dir string) {
 		w.Header().Set("Pragma", "no-cache")
 		w.Header().Set("Expires", "0")
 
-		hashes := cm.GetHashes()
+		hashes := getHashes()
 		json.NewEncoder(w).Encode(map[string][]string{"hashes": hashes})
 	})
 

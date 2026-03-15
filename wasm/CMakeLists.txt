@@ -1144,6 +1144,8 @@ add_dependencies(openjk_mp_upload ForceUpdateVersion_MP)
 add_custom_target(wtunnel ALL
     COMMAND ${CMAKE_COMMAND} -E env CGO_ENABLED=0 go build -o "${CMAKE_BINARY_DIR}/wtunnel"
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/wtunnel/test_wt.html" "${CMAKE_BINARY_DIR}/dist/test_wt.html"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/index.html" "${CMAKE_BINARY_DIR}/dist/index.html"
+    COMMAND ${CMAKE_COMMAND} -E copy "${ProjectRoot}/codeJK2/win32/starwars.ico" "${CMAKE_BINARY_DIR}/dist/favicon.ico"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/wtunnel"
     COMMENT "Building WebTransport Tunnel Server"
 )

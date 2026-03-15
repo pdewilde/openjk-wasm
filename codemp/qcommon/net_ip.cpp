@@ -86,7 +86,9 @@ typedef int SOCKET;
 // Initialize WebTransport and start listening for the VIP and datagrams
 EM_JS(void, WT_Init, (), {
     const hostname = window.location.hostname;
-    const urlStr = "https://" + hostname + ":8443/jamp";
+    const port = window.location.port;
+    const quicPort = port === "8080" ? "8443" : (port || "443");
+    const urlStr = "https://" + hostname + ":" + quicPort + "/jamp";
     Module.wtQueue = [];
     Module.wtVIP = new Uint8Array(4);
     
@@ -104,7 +106,11 @@ EM_JS(void, WT_Init, (), {
                 });
             
             try {
-                Module.wt = new WebTransport(urlStr, { serverCertificateHashes: hashes });
+                const wtOptions = {};
+                if (hashes.length > 0) {
+                    wtOptions.serverCertificateHashes = hashes;
+                }
+                Module.wt = new WebTransport(urlStr, wtOptions);
                 Module.wt.ready.then(() => {
                     // 1. Read VIP from incoming unidirectional stream
                     async function readVIP() {

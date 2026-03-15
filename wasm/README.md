@@ -68,9 +68,14 @@ Because browsers restrict loading local files via `file://` protocols for securi
 emmake make serve
 ```
 
+To run the server in production with a real Let's Encrypt certificate, you can pass the `-domain` flag to the `wtunnel` binary. This will automatically provision a certificate and bind the server to port 443:
+```bash
+./wtunnel -dir ./dist -domain play.yourdomain.com
+```
+
 1.  Open your web browser (Chrome or Firefox recommended).
-2.  Navigate to `https://localhost:8080/openjk_upload.html` (or `openjk_bundled.html`).
-    *   *Note: The server uses HTTPS to satisfy WebTransport secure context requirements. You may need to accept the self-signed certificate warning.*
+2.  Navigate to `https://localhost:8080/` (or your domain if using the `-domain` flag).
+    *   *Note: The server uses HTTPS to satisfy WebTransport secure context requirements. You may need to accept the self-signed certificate warning if running locally.*
     *   *Note: The bundled versions are protected by Basic Auth. Use username `jedi` and password `academy`.*
 3.  Click anywhere on the cinematic or menu to grant the browser permission to play audio and capture your mouse (pointer lock).
 4.  To release your mouse cursor, press the `Escape` key (or whatever key your browser binds to exiting pointer lock).

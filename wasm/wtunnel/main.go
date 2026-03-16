@@ -58,12 +58,12 @@ func serve(dir string, domain string) {
 	var tlsConfig *tls.Config
 	var getHashes func() []string
 
-	httpsPort := ":8080"
-	quicPort := ":8443"
+	httpsPort := "0.0.0.0:8080"
+	quicPort := "0.0.0.0:8443"
 
 	if domain != "" {
-		httpsPort = ":443"
-		quicPort = ":443"
+		httpsPort = "0.0.0.0:443"
+		quicPort = "0.0.0.0:443"
 		m := &autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
 			HostPolicy: autocert.HostWhitelist(domain),
@@ -147,6 +147,14 @@ func serve(dir string, domain string) {
 			}
 		}
 
+		// Advertise HTTP/3 so browsers know to use QUIC for WebTransport
+		if r.ProtoMajor < 3 {
+			if err := ht3Server.SetQUICHeaders(w.Header()); err != nil {
+				// Fallback: manually set Alt-Svc if the server hasn't started listening yet
+				w.Header().Set("Alt-Svc", `h3=":443"; ma=2592000`)
+			}
+		}
+
 		w.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
 		w.Header().Set("Cross-Origin-Embedder-Policy", "require-corp")
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -164,6 +172,13 @@ func serve(dir string, domain string) {
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 		w.Header().Set("Pragma", "no-cache")
 		w.Header().Set("Expires", "0")
+
+		// Advertise HTTP/3 on this endpoint too
+		if r.ProtoMajor < 3 {
+			if err := ht3Server.SetQUICHeaders(w.Header()); err != nil {
+				w.Header().Set("Alt-Svc", `h3=":443"; ma=2592000`)
+			}
+		}
 
 		hashes := getHashes()
 		json.NewEncoder(w).Encode(map[string][]string{"hashes": hashes})
@@ -229,29 +244,25 @@ func serve(dir string, domain string) {
 
 	// Start WebTransport server in go routine
 	go func() {
-		log.Println("Starting UDP WebTransport :8443")
-		if err := wtServer.ListenAndServe(); err != nil {
+		log.Printf("Starting UDP WebTransport %s\n", quicPort)
+		// Explicitly bind to IPv4 to avoid dual-stack IPv6 socket issues
+		// (sendmsg: invalid argument when sending to IPv4 clients from [::] socket)
+		udpAddr, err := net.ResolveUDPAddr("udp4", quicPort)
+		if err != nil {
+			log.Fatalf("Failed to resolve UDP address: %v", err)
+		}
+		conn, err := net.ListenUDP("udp4", udpAddr)
+		if err != nil {
+			log.Fatalf("Failed to listen UDP: %v", err)
+		}
+		if err := wtServer.Serve(conn); err != nil {
 			log.Fatalf("WebTransport server failed: %v", err)
 		}
 	}()
 
 	// Start normal http server in main thread
-	log.Println("Starting HTTPS :8080")
+	log.Printf("Starting HTTPS %s\n", httpsPort)
 	if err := httpServer.ListenAndServeTLS("", ""); err != nil {
 		log.Fatalf("HTTPS server failed: %v", err)
 	}
 }
-
-// Middleware to advertise http/3 upgrades in general
-// Not currently used because would need a real cert (serverCertificateHash isn't supported outside of webTransport)
-// func advertiseHttp3(next http.Handler, server *http3.Server) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		if r.ProtoMajor < 3 {
-// 			err := server.SetQUICHeaders((w.Header()))
-// 			if err != nil {
-// 				log.Printf(fmt.Errorf("failed to set QUIC headers: %w", err).Error())
-// 			}
-// 		}
-// 		next.ServeHTTP(w, r)
-// 	})
-// }

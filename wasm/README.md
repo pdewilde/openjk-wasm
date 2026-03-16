@@ -80,6 +80,13 @@ To run the server in production with a real Let's Encrypt certificate, you can p
 3.  Click anywhere on the cinematic or menu to grant the browser permission to play audio and capture your mouse (pointer lock).
 4.  To release your mouse cursor, press the `Escape` key (or whatever key your browser binds to exiting pointer lock).
 
+**Troubleshooting `sendmsg: invalid argument`:**
+If you encounter `sendmsg: invalid argument` errors when running the server in a containerized environment (like OpenVZ or Virtuozzo), try disabling GSO and ECN by setting the following environment variables:
+```bash
+export QUIC_GO_DISABLE_GSO=true
+export QUIC_GO_DISABLE_ECN=true
+```
+
 ## Known Limitations
 
 * **Video Resolution Changes:** The in-game `Setup -> Video` menu option to change resolutions does not work. Changing resolutions natively requires destroying the SDL window and recreating it with a new OpenGL context. In WebAssembly, destroying the window permanently drops the HTML Canvas WebGL context, causing a black screen. Because of this, the engine is forced to stretch the underlying canvas to fit the CSS window size, and changing the internal resolution variables is currently a no-op.

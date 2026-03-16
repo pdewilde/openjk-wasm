@@ -74,6 +74,9 @@ The Multiplayer WebAssembly port is currently underway. Key achievements and ong
    - **Action:** Integrated mDNS support via `github.com/hashicorp/mdns` to advertise the server as `openjk.local`, allowing direct connections to the WSL IP and bypassing unreliable UDP port-forwarding on `localhost`.
    - **Action:** Fixed a potential panic by ensuring the internal routing table is properly initialized on startup.
    - **Action:** Optimized the build system (`wasm/CMakeLists.txt`) to ensure the WebTransport test page is updated in the distribution directory on every build.
+   - **Action:** Added `Alt-Svc` header to TCP responses to inform the browser that HTTP/3 (and thus WebTransport) is available on the same port.
+   - **Action:** Fixed IPv6 dual-stack binding issues by explicitly binding the server to `0.0.0.0:443` (IPv4 only). This avoids `sendmsg: invalid argument` errors encountered when the Go runtime attempts to send IPv4-mapped IPv6 packets on certain kernel configurations.
+   - **Action:** Disabled Generic Segmentation Offload (GSO) and Explicit Congestion Notification (ECN) in the `quic-go` stack via environment variables (`QUIC_GO_DISABLE_GSO=true` and `QUIC_GO_DISABLE_ECN=true`). This ensures compatibility with restricted container environments (like OpenVZ/Virtuozzo) that do not support these advanced UDP socket features.
 
 10. **Asset Loading Strategies:**
     - **Action:** Created two distinct build targets for both Singleplayer and Multiplayer:

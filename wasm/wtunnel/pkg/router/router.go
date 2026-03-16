@@ -43,9 +43,9 @@ func (r *Router) Send(sender netip.Addr, p *youdp.Packet) {
 	defer r.rLock.RUnlock()
 	dest := p.DestIp
 
+	packetBuf := p.Serialize()
 	if ipv4Broadcast == dest {
 		// Broadcast to all
-		packetBuf := p.Serialize()
 		for ip, w := range r.routes {
 			if ip != sender {
 				if _, err := w.Write(packetBuf); err != nil {
@@ -55,7 +55,7 @@ func (r *Router) Send(sender netip.Addr, p *youdp.Packet) {
 			}
 		}
 	} else if w, ok := r.routes[dest]; ok {
-		if _, err := w.Write(p.Serialize()); err != nil {
+		if _, err := w.Write(packetBuf); err != nil {
 			// This should never run due to our async writer interface
 			log.Printf("Error writing to ip %v: %v", dest, err)
 		}

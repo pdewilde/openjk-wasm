@@ -99,6 +99,10 @@ if(NOT MSVC)
 	# remove "lib" prefix for .so/.dylib files
 	set_target_properties(${MPUI} PROPERTIES PREFIX "")
 endif()
+if(EMSCRIPTEN)
+	set_target_properties(${MPUI} PROPERTIES SUFFIX ".wasm")
+	target_link_options(${MPUI} PRIVATE ${OPENJK_EMSCRIPTEN_SIDE_LINK_FLAGS} -sEXPORTED_FUNCTIONS=_GetModuleAPI,_dllEntry,_vmMain)
+endif()
 
 if(MakeApplicationBundles AND BuildMPEngine)
 	install(TARGETS ${MPUI}

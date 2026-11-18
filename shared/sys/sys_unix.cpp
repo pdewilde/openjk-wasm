@@ -476,7 +476,13 @@ bool Sys_PathCmp( const char *path1, const char *path2 )
 Sys_DefaultHomePath
 ==================
 */
-#if defined(BUILD_PORTABLE)
+#if defined(__EMSCRIPTEN__)
+char *Sys_DefaultHomePath(void)
+{
+	Q_strncpyz( homePath, "/saves", sizeof( homePath ) );
+	return homePath;
+}
+#elif defined(BUILD_PORTABLE)
 char *Sys_DefaultHomePath(void)
 {
 	return NULL;

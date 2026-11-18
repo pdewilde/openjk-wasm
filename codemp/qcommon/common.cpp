@@ -1548,6 +1548,9 @@ void Com_Frame( void ) {
 		else
 			minMsec = 1;
 
+#ifdef __EMSCRIPTEN__
+		NET_Sleep(0);
+#else
 		timeVal = Com_TimeVal(minMsec);
 		do {
 			// Busy sleep the last millisecond for better timeout precision
@@ -1556,6 +1559,7 @@ void Com_Frame( void ) {
 			else
 				NET_Sleep(timeVal - 1);
 		} while( (timeVal = Com_TimeVal(minMsec)) != 0 );
+#endif
 		IN_Frame();
 
 		lastTime = com_frameTime;

@@ -382,6 +382,10 @@ if(NOT MSVC)
 	# remove "lib" prefix for .so/.dylib files
 	set_target_properties(${SPGame} PROPERTIES PREFIX "")
 endif()
+if(EMSCRIPTEN)
+	set_target_properties(${SPGame} PROPERTIES SUFFIX ".wasm")
+	target_link_options(${SPGame} PRIVATE ${OPENJK_EMSCRIPTEN_SIDE_LINK_FLAGS} -sEXPORTED_FUNCTIONS=_GetGameAPI,_vmMain,_dllEntry)
+endif()
 
 if(WIN32)
 	install(TARGETS ${SPGame}

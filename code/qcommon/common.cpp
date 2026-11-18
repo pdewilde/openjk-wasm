@@ -1421,6 +1421,7 @@ void Com_Frame( void ) {
 		// that framerate is stable at the requested value.
 		minMsec -= bias;
 
+#ifndef __EMSCRIPTEN__
 		timeVal = Com_TimeVal(minMsec);
 		do {
 			// Busy sleep the last millisecond for better timeout precision
@@ -1429,6 +1430,7 @@ void Com_Frame( void ) {
 			else
 				Sys_Sleep(timeVal - 1);
 		} while( (timeVal = Com_TimeVal(minMsec)) != 0 );
+#endif
 		IN_Frame();
 
 		lastTime = com_frameTime;

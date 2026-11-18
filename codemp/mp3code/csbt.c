@@ -48,6 +48,10 @@ void fdct8(float *, float *);
 void fdct8_dual(float *, float *);
 void fdct8_dual_mono(float *, float *);
 
+#ifdef __EMSCRIPTEN__
+#define window MP3_window
+#endif
+
 void window(float *vbuf, int vb_ptr, short *pcm);
 void window_dual(float *vbuf, int vb_ptr, short *pcm);
 void window16(float *vbuf, int vb_ptr, short *pcm);

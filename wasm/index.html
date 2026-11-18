@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>OpenJK WebAssembly</title>
+	<style>
+		body {
+			margin: 0;
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: radial-gradient(circle at top, #182030 0%, #090b10 70%);
+			color: #eef2f8;
+			font-family: system-ui, -apple-system, sans-serif;
+		}
+		.card {
+			max-width: 540px;
+			width: 90%;
+			background: rgba(18, 22, 31, 0.96);
+			border: 1px solid #2e3b52;
+			border-radius: 12px;
+			padding: 32px;
+			box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+		}
+		h1 {
+			margin: 0 0 8px;
+			color: #ffd54f;
+			font-size: 24px;
+		}
+		p {
+			color: #b7c2d6;
+			line-height: 1.5;
+			margin: 0 0 24px;
+		}
+		.links {
+			display: grid;
+			gap: 12px;
+		}
+		a {
+			display: block;
+			padding: 14px 18px;
+			border-radius: 8px;
+			border: 1px solid #3c5377;
+			background: #1b273b;
+			color: #fff;
+			text-decoration: none;
+			font-weight: 600;
+		}
+		a:hover {
+			background: #273854;
+			border-color: #5b82bd;
+		}
+		small {
+			display: block;
+			margin-top: 4px;
+			font-weight: 400;
+			color: #9cb0d1;
+		}
+	</style>
+</head>
+<body>
+	<div class="card">
+		<h1>OpenJK WebAssembly</h1>
+		<p>Clean upstream port using Emscripten side modules (<code>SIDE_MODULE=2</code>), GL4ES WebGL2, OpenAL WebAudio, and hybrid WebTransport.</p>
+		<div class="links">
+			<a href="openjk_sp.wasm32.html">
+				Jedi Academy — Singleplayer
+				<small>Select your local GameData/base folder or .pk3 files in the browser</small>
+			</a>
+			<a href="openjk.wasm32.html">
+				Jedi Academy — Multiplayer
+				<small>Select your local GameData/base folder or .pk3 files + WebTransport netplay</small>
+			</a>
+			<a href="test_wt.html">
+				WebTransport Diagnostics
+				<small>Verify HTTP/3 WebTransport handshake &amp; Virtual IP assignment</small>
+			</a>
+		</div>
+	</div>
+</body>
+</html>

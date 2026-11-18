@@ -299,6 +299,13 @@ void CON_Init( void )
 	// Make stdin reads non-blocking
 	fcntl(STDIN_FILENO, F_SETFL, fcntl(STDIN_FILENO, F_GETFL, 0) | O_NONBLOCK );
 
+#ifdef __EMSCRIPTEN__
+	Com_Printf("tty console mode disabled for Emscripten\n");
+	ttycon_on = qfalse;
+	stdin_active = qfalse;
+	return;
+#endif
+
 	if (!stdinIsATTY)
 	{
 		Com_Printf("tty console mode disabled\n");

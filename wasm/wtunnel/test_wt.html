@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebTransport Test</title>
+</head>
+<body>
+    <h1>WebTransport Test v2</h1>
+    <p>Check the console (F12) for logs.</p>
+    <script>
+        async function test() {
+            const hostname = window.location.hostname;
+            // Use port 8080 for hashes and 8443 for WebTransport
+            const hashUrl = "/wt-server-certificate-hashes?t=" + Date.now();
+            const wtUrl = "https://" + hostname + ":8443/jamp";
+
+            try {
+                const response = await fetch(hashUrl);
+                const data = await response.json();
+
+                const hashes = data.hashes.map(hex => {
+                    const bytes = new Uint8Array(hex.length / 2);
+                    for (let i = 0; i < hex.length; i += 2) {
+                        bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+                    }
+                    return { algorithm: "sha-256", value: bytes.buffer };
+                });
+
+                const transport = new WebTransport(wtUrl, { serverCertificateHashes: hashes });
+                
+                await transport.ready;
+                console.log("WebTransport connected!");
+
+                const reader = transport.incomingUnidirectionalStreams.getReader();
+                const { value: stream } = await reader.read();
+
+                const streamReader = stream.getReader();
+                const { value: vipBytes } = await streamReader.read();
+                
+                if (vipBytes && vipBytes.length >= 4) {
+                    const ip = Array.from(vipBytes.slice(0, 4)).join('.');
+                    console.log("SUCCESS! Your Virtual IP is:", ip);
+                } else {
+                    console.error("Received invalid VIP bytes");
+                }
+
+            } catch (e) {
+                console.error("Test failed:", e);
+                
+                // Attempt to create an expanded JSON-like representation of the error
+                const errorDetails = {
+                    name: e.name,
+                    message: e.message,
+                    source: e.source,
+                    streamErrorCode: e.streamErrorCode,
+                    code: e.code,
+                    result: e.result,
+                    filename: e.filename,
+                    lineNumber: e.lineNumber,
+                    columnNumber: e.columnNumber,
+                    data: e.data,
+                    stack: e.stack
+                };
+                
+                console.log("Expanded Error Details:", JSON.stringify(errorDetails, null, 2));
+                
+                // Also log all keys just in case
+                console.log("All error keys:", Object.keys(e));
+                for (const key in e) {
+                    console.log(`e[${key}] =`, e[key]);
+                }
+            }
+        }
+        test();
+    </script>
+</body>
+</html>

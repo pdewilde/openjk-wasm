@@ -174,6 +174,15 @@ cvar_t	*broadsword_ragtobase;
 cvar_t	*broadsword_dircap;
 
 // More bullshit needed for the proper modular renderer --eez
+#ifdef __EMSCRIPTEN__
+extern cvar_t	*sv_mapname;
+extern cvar_t	*sv_mapChecksum;
+extern cvar_t	*se_language;			// JKA
+#ifdef JK2_MODE
+extern cvar_t	*sp_language;			// JK2
+#endif
+extern cvar_t	*com_buildScript;
+#else
 cvar_t	*sv_mapname;
 cvar_t	*sv_mapChecksum;
 cvar_t	*se_language;			// JKA
@@ -181,6 +190,7 @@ cvar_t	*se_language;			// JKA
 cvar_t	*sp_language;			// JK2
 #endif
 cvar_t	*com_buildScript;
+#endif
 
 cvar_t	*r_environmentMapping;
 cvar_t *r_screenshotJpegQuality;

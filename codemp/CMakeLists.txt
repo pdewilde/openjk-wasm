@@ -140,18 +140,21 @@ if(BuildMPEngine OR BuildMPDed)
 		"${MPDir}/qcommon/qcommon.h"
 		"${MPDir}/qcommon/qfiles.h"
 		"${MPDir}/qcommon/tags.h"
-
-		${SharedCommonFiles}
 		)
+	if(NOT EMSCRIPTEN)
+		list(APPEND MPBotlibCommonFiles ${SharedCommonFiles})
+	endif()
 	source_group("common" FILES ${MPBotlibCommonFiles})
 	set(MPBotlibFiles ${MPBotlibFiles} ${MPBotlibCommonFiles})
 
 	set(MPBotlibCommonSafeFiles
 		"${SharedDir}/qcommon/safe/gsl.h"
-		"${SharedDir}/qcommon/safe/string.cpp"
 		"${SharedDir}/qcommon/safe/string.h"
 		"${SharedDir}/qcommon/safe/sscanf.h"
 		)
+	if(NOT EMSCRIPTEN)
+		list(APPEND MPBotlibCommonSafeFiles "${SharedDir}/qcommon/safe/string.cpp")
+	endif()
 	source_group("common/safe" FILES ${MPBotlibCommonSafeFiles})
 	set(MPBotlibFiles ${MPBotlibFiles} ${MPBotlibCommonSafeFiles})
 
@@ -357,7 +360,12 @@ if(BuildMPEngine)
 
 	#    Dependencies
 
-	if (NOT WIN32)
+	if (EMSCRIPTEN)
+		if (BuildMPRdVanilla)
+			set(MPEngineLibraries ${MPEngineLibraries} ${MPVanillaRenderer})
+		endif()
+		set(MPEngineLibraries ${MPEngineLibraries} gl4es::GL)
+	elseif (NOT WIN32)
 		# OpenGL
 		find_package(OpenGL REQUIRED)
 		set(MPEngineIncludeDirectories ${MPEngineIncludeDirectories} ${OPENGL_INCLUDE_DIR})
@@ -400,7 +408,7 @@ if(BuildMPEngine)
 			${MPEngineIncludeDirectories}
 			${OpenJKLibDir}/SDL2/include
 			)
-	else()
+	elseif(NOT EMSCRIPTEN)
 		find_package(SDL2 REQUIRED CONFIG)
 		if (TARGET SDL2::SDL2)
 			set(SDL2_INCLUDE_DIRS "")
@@ -618,6 +626,13 @@ if(BuildMPEngine)
 	set_target_properties(${MPEngine} PROPERTIES INCLUDE_DIRECTORIES "${MPEngineIncludeDirectories}")
 	set_target_properties(${MPEngine} PROPERTIES PROJECT_LABEL "MP Client")
 	target_link_libraries(${MPEngine} ${MPEngineLibraries})
+	if(EMSCRIPTEN)
+		set_target_properties(${MPEngine} PROPERTIES
+			SUFFIX ".html"
+			LINK_DEPENDS "${CMAKE_SOURCE_DIR}/wasm/shell.html"
+		)
+		target_link_options(${MPEngine} PRIVATE ${OPENJK_EMSCRIPTEN_ENGINE_LINK_FLAGS})
+	endif()
 endif(BuildMPEngine)
 
 #        Dedicated Server (Engine) (jampded.exe)

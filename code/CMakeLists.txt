@@ -47,7 +47,12 @@ if(BuildSPEngine OR BuildJK2SPEngine)
 
 	#    Dependencies
 
-	if (NOT WIN32)
+	if (EMSCRIPTEN)
+		if (BuildSPRdVanilla)
+			set(SPEngineLibraries ${SPEngineLibraries} ${SPRDVanillaRenderer})
+		endif()
+		set(SPEngineLibraries ${SPEngineLibraries} gl4es::GL)
+	elseif (NOT WIN32)
 		# OpenGL
 		find_package(OpenGL REQUIRED)
 		set(SPEngineIncludeDirectories ${SPEngineIncludeDirectories} ${OPENGL_INCLUDE_DIR})
@@ -97,7 +102,7 @@ if(BuildSPEngine OR BuildJK2SPEngine)
 			${SPEngineIncludeDirectories}
 			${OpenJKLibDir}/SDL2/include
 			)
-	else()
+	elseif(NOT EMSCRIPTEN)
 		find_package(SDL2 REQUIRED CONFIG)
 		if (TARGET SDL2::SDL2)
 			set(SDL2_INCLUDE_DIRS "")
@@ -443,6 +448,13 @@ if(BuildSPEngine OR BuildJK2SPEngine)
 		if(SPEngineLibraries)
 			target_link_libraries(${ProjectName} ${SPEngineLibraries})
 		endif(SPEngineLibraries)
+		if(EMSCRIPTEN)
+			set_target_properties(${ProjectName} PROPERTIES
+				SUFFIX ".html"
+				LINK_DEPENDS "${CMAKE_SOURCE_DIR}/wasm/shell.html"
+			)
+			target_link_options(${ProjectName} PRIVATE ${OPENJK_EMSCRIPTEN_ENGINE_LINK_FLAGS})
+		endif()
 	endfunction(add_sp_project)
 	if(BuildSPEngine)
 		add_sp_project(${SPEngine} "SP Client" ${SPDir} ${JKAInstallDir} ${JKASPClientComponent})

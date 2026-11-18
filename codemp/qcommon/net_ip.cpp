@@ -80,6 +80,248 @@ typedef int SOCKET;
 
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+
+#define WT_SOCKET_FD ((SOCKET)0x7FFF)
+
+EM_JS(void, WT_Shutdown, (), {
+	Module.wtGen = (Module.wtGen || 0) + 1;
+	Module.wtActive = false;
+	if (Module.wtOutStreamWriter) {
+		try { Module.wtOutStreamWriter.close(); } catch (e) {}
+		Module.wtOutStreamWriter = null;
+	}
+	if (Module.wt) {
+		try { Module.wt.close(); } catch (e) {}
+		Module.wt = null;
+	}
+	Module.wtVIP = null;
+	Module.wtReady = false;
+	Module.wtQueue = [];
+	Module.wtSendQueue = [];
+	Module.wtStreamSendChain = Promise.resolve();
+});
+
+EM_JS(void, WT_Init, (int srcPort), {
+	const MAX_DATAGRAM_SIZE = 1150;
+	const MAX_RECV_QUEUE = 256;
+	const MAX_SEND_QUEUE = 64;
+	const YOUDP_HEADER_SIZE = 12;
+
+	const myGen = (Module.wtGen || 0) + 1;
+	Module.wtGen = myGen;
+
+	if (Module.wt) {
+		try { Module.wt.close(); } catch (e) {}
+		Module.wt = null;
+	}
+
+	const loc = globalThis.location;
+	const hostname = loc.hostname;
+	const port = loc.port;
+	const fallbackQuicPort = port === "8080" ? "8443" : (port || "443");
+
+	Module.wtActive = true;
+	Module.wtSrcPort = srcPort & 0xFFFF;
+	Module.wtQueue = [];
+	Module.wtSendQueue = [];
+	Module.wtVIP = null;
+	Module.wtReady = false;
+	Module.wtOutStreamWriter = null;
+	Module.wtStreamSendChain = Promise.resolve();
+
+	Module.wtPushRecv = function(srcIp, pktSrcPort, payload) {
+		if (!Module.wtQueue) Module.wtQueue = [];
+		if (Module.wtQueue.length >= MAX_RECV_QUEUE) {
+			Module.wtQueue.shift();
+		}
+		Module.wtQueue.push({ srcIp, srcPort: pktSrcPort, payload });
+	};
+
+	Module.wtSendPacketNow = function(item) {
+		if (!Module.wt || !Module.wtReady || !Module.wtVIP) return;
+		const payload = item.payload;
+		const packet = new Uint8Array(YOUDP_HEADER_SIZE + payload.length);
+		packet[0] = item.destIp0;
+		packet[1] = item.destIp1;
+		packet[2] = item.destIp2;
+		packet[3] = item.destIp3;
+		packet.set(Module.wtVIP, 4);
+		packet[8] = (item.destPort >> 8) & 0xFF;
+		packet[9] = item.destPort & 0xFF;
+		packet[10] = (Module.wtSrcPort >> 8) & 0xFF;
+		packet[11] = Module.wtSrcPort & 0xFF;
+		packet.set(payload, YOUDP_HEADER_SIZE);
+
+		if (packet.length <= MAX_DATAGRAM_SIZE) {
+			const writer = Module.wt.datagrams.writable.getWriter();
+			writer.write(packet).catch(() => {});
+			writer.releaseLock();
+			return;
+		}
+
+		const frame = new Uint8Array(2 + packet.length);
+		frame[0] = (packet.length >> 8) & 0xFF;
+		frame[1] = packet.length & 0xFF;
+		frame.set(packet, 2);
+
+		Module.wtStreamSendChain = Module.wtStreamSendChain.then(async () => {
+			if (!Module.wt || !Module.wtReady) return;
+			if (!Module.wtOutStreamWriter) {
+				const stream = await Module.wt.createUnidirectionalStream();
+				Module.wtOutStreamWriter = stream.getWriter();
+			}
+			await Module.wtOutStreamWriter.write(frame);
+		}).catch(err => {
+			console.error("WebTransport stream write failed:", err);
+			Module.wtOutStreamWriter = null;
+		});
+	};
+
+	const hashUrl = "/wt-server-certificate-hashes?t=" + Date.now();
+	fetch(hashUrl)
+		.then(response => response.json())
+		.then(data => {
+			if (Module.wtGen !== myGen) return;
+			const hashes = (data.hashes || []).map(hex => {
+				const bytes = new Uint8Array(hex.length / 2);
+				for (let i = 0; i < hex.length; i += 2) {
+					bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+				}
+				return { algorithm: "sha-256", value: bytes.buffer };
+			});
+
+			try {
+				const quicPort = data.quicPort || fallbackQuicPort;
+				const urlStr = Module.wtUrl || ("https://" + hostname + ":" + quicPort + "/jamp");
+				const wtOptions = {};
+				if (hashes.length > 0) {
+					wtOptions.serverCertificateHashes = hashes;
+				}
+				const wt = new WebTransport(urlStr, wtOptions);
+				Module.wt = wt;
+
+				wt.ready.then(() => {
+					if (Module.wtGen !== myGen) {
+						try { wt.close(); } catch (e) {}
+						return;
+					}
+					async function readUniStreams() {
+						const reader = wt.incomingUnidirectionalStreams.getReader();
+						let gotVIP = false;
+						while (true) {
+							const { value: stream, done } = await reader.read();
+							if (done) break;
+							const streamReader = stream.getReader();
+							if (!gotVIP) {
+								let vipBuf = new Uint8Array(0);
+								while (vipBuf.length < 4) {
+									const { value, done: sDone } = await streamReader.read();
+									if (sDone || !value) break;
+									const merged = new Uint8Array(vipBuf.length + value.length);
+									merged.set(vipBuf, 0);
+									merged.set(value, vipBuf.length);
+									vipBuf = merged;
+								}
+								if (vipBuf.length >= 4) {
+									Module.wtVIP = vipBuf.slice(0, 4);
+									Module.wtReady = true;
+									gotVIP = true;
+									while (Module.wtSendQueue && Module.wtSendQueue.length > 0) {
+										Module.wtSendPacketNow(Module.wtSendQueue.shift());
+									}
+								}
+								continue;
+							}
+
+							// Framed packet stream: [2-byte BE length][12-byte youdp][payload]
+							(async () => {
+								let buf = new Uint8Array(0);
+								while (true) {
+									const { value, done: sDone } = await streamReader.read();
+									if (value && value.length > 0) {
+										const merged = new Uint8Array(buf.length + value.length);
+										merged.set(buf, 0);
+										merged.set(value, buf.length);
+										buf = merged;
+
+										while (buf.length >= 2) {
+											const frameLen = (buf[0] << 8) | buf[1];
+											if (buf.length < 2 + frameLen) break;
+											const frame = buf.slice(2, 2 + frameLen);
+											buf = buf.slice(2 + frameLen);
+											if (frame.length >= YOUDP_HEADER_SIZE) {
+												const pktSrcIp = frame.slice(4, 8);
+												const pktSrcPort = (frame[10] << 8) | frame[11];
+												const payload = frame.slice(YOUDP_HEADER_SIZE);
+												Module.wtPushRecv(pktSrcIp, pktSrcPort, payload);
+											}
+										}
+									}
+									if (sDone) break;
+								}
+							})().catch(err => console.error("WebTransport uni stream read error:", err));
+						}
+					}
+					readUniStreams().catch(err => console.error("WebTransport uni stream loop error:", err));
+
+					async function readDatagrams() {
+						const reader = wt.datagrams.readable.getReader();
+						while (true) {
+							const { value, done } = await reader.read();
+							if (done) break;
+							if (value && value.length >= YOUDP_HEADER_SIZE) {
+								const pktSrcIp = value.slice(4, 8);
+								const pktSrcPort = (value[10] << 8) | value[11];
+								const payload = value.slice(YOUDP_HEADER_SIZE);
+								Module.wtPushRecv(pktSrcIp, pktSrcPort, payload);
+							}
+						}
+					}
+					readDatagrams().catch(err => console.error("WebTransport datagram loop error:", err));
+				}).catch(err => {
+					console.error("WebTransport connection failed (async):", err);
+				});
+			} catch (e) {
+				console.error("WebTransport constructor failed (sync):", e);
+			}
+		})
+		.catch(err => console.error("Failed to fetch cert hashes:", err));
+});
+
+EM_JS(void, WT_SendPacket, (int length, const void *data, int destIp0, int destIp1, int destIp2, int destIp3, int destPort), {
+	if (!Module.wtActive) return;
+	const item = {
+		payload: new Uint8Array(HEAPU8.subarray(data, data + length)),
+		destIp0,
+		destIp1,
+		destIp2,
+		destIp3,
+		destPort
+	};
+	if (!Module.wtReady || !Module.wtVIP) {
+		if (!Module.wtSendQueue) Module.wtSendQueue = [];
+		if (Module.wtSendQueue.length >= 64) {
+			Module.wtSendQueue.shift();
+		}
+		Module.wtSendQueue.push(item);
+		return;
+	}
+	Module.wtSendPacketNow(item);
+});
+
+EM_JS(int, WT_GetPacket, (void *buffer, int bufferSize, void *fromIpBuffer, void *fromPortBuffer), {
+	if (!Module.wtQueue || Module.wtQueue.length === 0) return -1;
+	const packet = Module.wtQueue.shift();
+	if (packet.payload.length > bufferSize) return -1;
+	HEAPU8.set(packet.payload, buffer);
+	HEAPU8.set(packet.srcIp, fromIpBuffer);
+	HEAPU16[fromPortBuffer >> 1] = packet.srcPort;
+	return packet.payload.length;
+});
+#endif
+
 static qboolean usingSocks = qfalse;
 static qboolean networkingEnabled = qfalse;
 
@@ -252,6 +494,22 @@ qboolean NET_GetPacket( netadr_t *net_from, msg_t *net_message, fd_set *fdr ) {
 	socklen_t fromlen;
 	struct sockaddr_in from;
 
+#ifdef __EMSCRIPTEN__
+	if ( ip_socket == INVALID_SOCKET ) {
+		return qfalse;
+	}
+	uint16_t fromPort = 0;
+	ret = WT_GetPacket( net_message->data, net_message->maxsize, net_from->ip, &fromPort );
+	if ( ret != -1 ) {
+		net_from->type = NA_IP;
+		net_from->port = htons( fromPort );
+		net_message->readcount = 0;
+		net_message->cursize = ret;
+		return qtrue;
+	}
+	return qfalse;
+#endif
+
 	if ( ip_socket == INVALID_SOCKET || !FD_ISSET(ip_socket, fdr) ) {
 		return qfalse;
 	}
@@ -321,6 +579,15 @@ void Sys_SendPacket( int length, const void *data, const netadr_t *to ) {
 	if ( ip_socket == INVALID_SOCKET ) {
 		return;
 	}
+
+#ifdef __EMSCRIPTEN__
+	if ( to->type == NA_BROADCAST ) {
+		WT_SendPacket( length, data, 255, 255, 255, 255, ntohs( to->port ) );
+	} else {
+		WT_SendPacket( length, data, to->ip[0], to->ip[1], to->ip[2], to->ip[3], ntohs( to->port ) );
+	}
+	return;
+#endif
 
 	NetadrToSockadr( to, &addr );
 
@@ -425,6 +692,11 @@ static SOCKET NET_IPSocket( const char *net_interface, int port, int *err ) {
 	int					i = 1;
 
 	*err = 0;
+
+#ifdef __EMSCRIPTEN__
+	WT_Init( port );
+	return WT_SOCKET_FD;
+#endif
 
 	if( net_interface ) {
 		Com_Printf( "Opening IP socket: %s:%i\n", net_interface, port );
@@ -940,7 +1212,11 @@ void NET_Config( qboolean enableNetworking ) {
 
 	if ( stop ) {
 		if ( ip_socket != INVALID_SOCKET ) {
+#ifdef __EMSCRIPTEN__
+			WT_Shutdown();
+#else
 			closesocket( ip_socket );
+#endif
 			ip_socket = INVALID_SOCKET;
 		}
 
@@ -1040,6 +1316,10 @@ sleeps msec or until net socket is ready
 ====================
 */
 void NET_Sleep( int msec ) {
+#ifdef __EMSCRIPTEN__
+	NET_Event( NULL );
+	return;
+#endif
 	struct timeval timeout;
 	fd_set	fdset;
 	int retval;

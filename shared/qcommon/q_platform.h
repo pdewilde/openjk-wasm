@@ -115,6 +115,21 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
     #define DLL_EXT ".dylib"
 
+// Emscripten / WebAssembly
+#elif defined(__EMSCRIPTEN__)
+
+	#define OS_STRING "wasm"
+	#define QINLINE inline
+	#define PATH_SEP '/'
+
+	#if !defined(ARCH_STRING)
+		#define ARCH_STRING "wasm32"
+	#endif
+
+	#define Q3_LITTLE_ENDIAN
+
+	#define DLL_EXT ".wasm"
+
 // Linux
 #elif defined(__linux__) || defined(__FreeBSD_kernel__)
 

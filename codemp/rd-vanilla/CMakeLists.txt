@@ -71,6 +71,9 @@ set(MPVanillaRendererFiles
 	"${MPDir}/rd-vanilla/tr_WorldEffects.cpp"
 	"${MPDir}/rd-vanilla/tr_WorldEffects.h"
 	)
+if(EMSCRIPTEN)
+	list(REMOVE_ITEM MPVanillaRendererFiles "${MPDir}/rd-vanilla/tr_subs.cpp")
+endif()
 source_group("renderer" FILES ${MPVanillaRendererFiles})
 
 set(MPVanillaRendererGhoul2Files
@@ -96,19 +99,21 @@ set(MPVanillaRendererRdCommonFiles
 source_group("rd-common" FILES ${MPVanillaRendererRdCommonFiles})
 set(MPVanillaRendererFiles ${MPVanillaRendererFiles} ${MPVanillaRendererRdCommonFiles})
 
-set(MPVanillaRendererCommonFiles
-	"${MPDir}/qcommon/matcomp.cpp"
-	"${MPDir}/qcommon/q_shared.cpp"
+if(NOT EMSCRIPTEN)
+	set(MPVanillaRendererCommonFiles
+		"${MPDir}/qcommon/matcomp.cpp"
+		"${MPDir}/qcommon/q_shared.cpp"
 
-	${SharedCommonFiles})
-source_group("common" FILES ${MPVanillaRendererCommonFiles})
-set(MPVanillaRendererFiles ${MPVanillaRendererFiles} ${MPVanillaRendererCommonFiles})
+		${SharedCommonFiles})
+	source_group("common" FILES ${MPVanillaRendererCommonFiles})
+	set(MPVanillaRendererFiles ${MPVanillaRendererFiles} ${MPVanillaRendererCommonFiles})
 
-set(MPVanillaRendererCommonSafeFiles
-	${SharedCommonSafeFiles}
-	)
-source_group("common/safe" FILES ${MPVanillaRendererCommonSafeFiles})
-set(MPVanillaRendererFiles ${MPVanillaRendererFiles} ${MPVanillaRendererCommonSafeFiles})
+	set(MPVanillaRendererCommonSafeFiles
+		${SharedCommonSafeFiles}
+		)
+	source_group("common/safe" FILES ${MPVanillaRendererCommonSafeFiles})
+	set(MPVanillaRendererFiles ${MPVanillaRendererFiles} ${MPVanillaRendererCommonSafeFiles})
+endif()
 
 # Transparently use either bundled or system libjpeg.
 list(APPEND MPVanillaRendererIncludeDirectories ${JPEG_INCLUDE_DIR})
@@ -125,14 +130,24 @@ list(APPEND MPVanillaRendererLibraries          ${ZLIB_LIBRARIES})
 
 # Transparently use our bundled minizip.
 list(APPEND MPVanillaRendererIncludeDirectories ${MINIZIP_INCLUDE_DIRS})
-list(APPEND MPVanillaRendererLibraries          ${MINIZIP_LIBRARIES})
+if(NOT EMSCRIPTEN)
+	list(APPEND MPVanillaRendererLibraries          ${MINIZIP_LIBRARIES})
+endif()
 
-find_package(OpenGL REQUIRED)
-set(MPVanillaRendererIncludeDirectories ${MPVanillaRendererIncludeDirectories} ${OPENGL_INCLUDE_DIR})
-set(MPVanillaRendererLibraries ${MPVanillaRendererLibraries} ${OPENGL_LIBRARIES})
+if(EMSCRIPTEN)
+	set(MPVanillaRendererLibraries ${MPVanillaRendererLibraries} gl4es::GL)
+else()
+	find_package(OpenGL REQUIRED)
+	set(MPVanillaRendererIncludeDirectories ${MPVanillaRendererIncludeDirectories} ${OPENGL_INCLUDE_DIR})
+	set(MPVanillaRendererLibraries ${MPVanillaRendererLibraries} ${OPENGL_LIBRARIES})
+endif()
 
 set(MPVanillaRendererIncludeDirectories ${MPVanillaRendererIncludeDirectories} ${OpenJKLibDir})
-add_library(${MPVanillaRenderer} SHARED ${MPVanillaRendererFiles})
+if(EMSCRIPTEN)
+	add_library(${MPVanillaRenderer} STATIC ${MPVanillaRendererFiles})
+else()
+	add_library(${MPVanillaRenderer} SHARED ${MPVanillaRendererFiles})
+endif()
 
 if(NOT MSVC)
 	# remove "lib" prefix for .so/.dylib files

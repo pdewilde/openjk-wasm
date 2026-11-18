@@ -196,6 +196,9 @@ qboolean SNDDMA_Init(int sampleFrequencyInKHz)
 	else
 	{
 		// just pick a sane default.
+#ifdef __EMSCRIPTEN__
+		desired.samples = 4096;
+#else
 		if (desired.freq <= 11025)
 			desired.samples = 256;
 		else if (desired.freq <= 22050)
@@ -204,6 +207,7 @@ qboolean SNDDMA_Init(int sampleFrequencyInKHz)
 			desired.samples = 1024;
 		else
 			desired.samples = 2048;  // (*shrug*)
+#endif
 	}
 
 	desired.channels = (int) s_sdlChannels->value;
@@ -228,7 +232,13 @@ qboolean SNDDMA_Init(int sampleFrequencyInKHz)
 	//  reasonable...this is why I let the user override.
 	tmp = s_sdlMixSamps->value;
 	if (!tmp)
+	{
+#ifdef __EMSCRIPTEN__
+		tmp = 131072; // Huge DMA buffer (1.4s) to survive main-thread WebAudio starvation
+#else
 		tmp = (obtained.samples * obtained.channels) * 10;
+#endif
+	}
 
 	if (tmp & (tmp - 1))  // not a power of two? Seems to confuse something.
 	{

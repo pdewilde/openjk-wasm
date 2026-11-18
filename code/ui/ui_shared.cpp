@@ -7157,6 +7157,35 @@ void Item_Model_Paint(itemDef_t *item)
 	refdef.width = w * DC->xscale;
 	refdef.height = h * DC->yscale;
 
+#ifdef __EMSCRIPTEN__
+	// Clamp viewport to screen resolution to prevent WebGL/GL scissor bounds violations
+	if (refdef.x < 0) {
+		refdef.width += refdef.x;
+		refdef.x = 0;
+	} else if (refdef.x > DC->glconfig.vidWidth) {
+		refdef.x = DC->glconfig.vidWidth;
+	}
+	if (refdef.y < 0) {
+		refdef.height += refdef.y;
+		refdef.y = 0;
+	} else if (refdef.y > DC->glconfig.vidHeight) {
+		refdef.y = DC->glconfig.vidHeight;
+	}
+	if (refdef.width < 0) {
+		refdef.width = 0;
+	} else if (refdef.x + refdef.width > DC->glconfig.vidWidth) {
+		refdef.width = DC->glconfig.vidWidth - refdef.x;
+	}
+	if (refdef.height < 0) {
+		refdef.height = 0;
+	} else if (refdef.y + refdef.height > DC->glconfig.vidHeight) {
+		refdef.height = DC->glconfig.vidHeight - refdef.y;
+	}
+	if (refdef.width == 0 || refdef.height == 0) {
+		return;
+	}
+#endif
+
 	DC->modelBounds( item->asset, mins, maxs );
 
 	origin[2] = -0.5 * ( mins[2] + maxs[2] );
@@ -7299,6 +7328,35 @@ void Item_Model_Paint(itemDef_t *item)
 	refdef.y = y * DC->yscale;
 	refdef.width = w * DC->xscale;
 	refdef.height = h * DC->yscale;
+
+#ifdef __EMSCRIPTEN__
+	// Clamp viewport to screen resolution to prevent WebGL/GL scissor bounds violations
+	if (refdef.x < 0) {
+		refdef.width += refdef.x;
+		refdef.x = 0;
+	} else if (refdef.x > DC->glconfig.vidWidth) {
+		refdef.x = DC->glconfig.vidWidth;
+	}
+	if (refdef.y < 0) {
+		refdef.height += refdef.y;
+		refdef.y = 0;
+	} else if (refdef.y > DC->glconfig.vidHeight) {
+		refdef.y = DC->glconfig.vidHeight;
+	}
+	if (refdef.width < 0) {
+		refdef.width = 0;
+	} else if (refdef.x + refdef.width > DC->glconfig.vidWidth) {
+		refdef.width = DC->glconfig.vidWidth - refdef.x;
+	}
+	if (refdef.height < 0) {
+		refdef.height = 0;
+	} else if (refdef.y + refdef.height > DC->glconfig.vidHeight) {
+		refdef.height = DC->glconfig.vidHeight - refdef.y;
+	}
+	if (refdef.width == 0 || refdef.height == 0) {
+		return;
+	}
+#endif
 
 	if (item->flags&ITF_G2VALID)
 	{ //ghoul2 models don't have bounds, so we have to parse them.

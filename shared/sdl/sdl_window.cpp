@@ -142,16 +142,29 @@ void GLimp_Minimize(void)
 	SDL_MinimizeWindow( screen );
 }
 
+#ifdef __EMSCRIPTEN__
+extern "C" void gl4es_glFlush(void);
+#endif
+
 void WIN_Present( window_t *window )
 {
 	if ( window->api == GRAPHICS_API_OPENGL )
 	{
+#ifdef __EMSCRIPTEN__
+		// Emscripten SDL_GL_SwapWindow is a no-op; flush GL4ES pending glBegin/glEnd batches
+		// before yielding to the browser compositor (e.g. when RB_BeginDrawingView sets finishCalled).
+		gl4es_glFlush();
+#endif
 		SDL_GL_SwapWindow(screen);
 
 		if ( r_swapInterval->modified )
 		{
 			r_swapInterval->modified = qfalse;
+#ifdef __EMSCRIPTEN__
+			if ( SDL_GL_SetSwapInterval( 1 ) == -1 )
+#else
 			if ( SDL_GL_SetSwapInterval( r_swapInterval->integer ) == -1 )
+#endif
 			{
 				Com_DPrintf( "SDL_GL_SetSwapInterval failed: %s\n", SDL_GetError() );
 			}
@@ -404,6 +417,7 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		y = ( desktopMode.h / 2 ) - ( glConfig->vidHeight / 2 );
 	}
 
+#ifndef __EMSCRIPTEN__
 	// Destroy existing state if it exists
 	if( opengl_context != NULL )
 	{
@@ -418,6 +432,7 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		SDL_DestroyWindow( screen );
 		screen = NULL;
 	}
+#endif
 
 	if( fullscreen )
 	{
@@ -571,12 +586,28 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 			SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 			SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, !r_allowSoftwareGL->integer );
 
+#ifdef __EMSCRIPTEN__
+			if ( screen == NULL )
+			{
+				if( ( screen = SDL_CreateWindow( windowTitle, x, y,
+						glConfig->vidWidth, glConfig->vidHeight, flags ) ) == NULL )
+				{
+					Com_DPrintf( "SDL_CreateWindow failed: %s\n", SDL_GetError( ) );
+					continue;
+				}
+			}
+			else
+			{
+				SDL_SetWindowSize( screen, glConfig->vidWidth, glConfig->vidHeight );
+			}
+#else
 			if( ( screen = SDL_CreateWindow( windowTitle, x, y,
 					glConfig->vidWidth, glConfig->vidHeight, flags ) ) == NULL )
 			{
 				Com_DPrintf( "SDL_CreateWindow failed: %s\n", SDL_GetError( ) );
 				continue;
 			}
+#endif
 
 #ifndef MACOS_X
 			SDL_SetWindowIcon( screen, icon );
@@ -605,13 +636,28 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 				}
 			}
 
+#ifdef __EMSCRIPTEN__
+			if ( opengl_context == NULL )
+			{
+				if( ( opengl_context = SDL_GL_CreateContext( screen ) ) == NULL )
+				{
+					Com_Printf( "SDL_GL_CreateContext failed: %s\n", SDL_GetError( ) );
+					continue;
+				}
+			}
+#else
 			if( ( opengl_context = SDL_GL_CreateContext( screen ) ) == NULL )
 			{
 				Com_Printf( "SDL_GL_CreateContext failed: %s\n", SDL_GetError( ) );
 				continue;
 			}
+#endif
 
+#ifdef __EMSCRIPTEN__
+			if ( SDL_GL_SetSwapInterval( 1 ) == -1 )
+#else
 			if ( SDL_GL_SetSwapInterval( r_swapInterval->integer ) == -1 )
+#endif
 			{
 				Com_DPrintf( "SDL_GL_SetSwapInterval failed: %s\n", SDL_GetError() );
 			}
@@ -675,6 +721,10 @@ static qboolean GLimp_StartDriverAndSetMode(glconfig_t *glConfig, const windowDe
 	if (!SDL_WasInit(SDL_INIT_VIDEO))
 	{
 		const char *driverName;
+
+#ifdef __EMSCRIPTEN__
+		SDL_SetHint( SDL_HINT_EMSCRIPTEN_KEYBOARD_ELEMENT, "#canvas" );
+#endif
 
 		if (SDL_Init(SDL_INIT_VIDEO) == -1)
 		{
@@ -774,8 +824,17 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	glConfig->deviceSupportsGamma =
 		(qboolean)(!r_ignorehwgamma->integer && SDL_SetWindowBrightness( screen, 1.0f ) >= 0);
 
+#ifdef __EMSCRIPTEN__
+	static qboolean inputInitialized = qfalse;
+	if ( !inputInitialized )
+	{
+		IN_Init( screen );
+		inputInitialized = qtrue;
+	}
+#else
 	// This depends on SDL_INIT_VIDEO, hence having it here
 	IN_Init( screen );
+#endif
 
 	// window_t is only really useful for Windows if the renderer wants to create a D3D context.
 	window_t window = {};
@@ -812,6 +871,7 @@ void WIN_Shutdown( void )
 	Cmd_RemoveCommand("modelist");
 	Cmd_RemoveCommand("minimize");
 
+#ifndef __EMSCRIPTEN__
 	IN_Shutdown();
 
 	if ( opengl_context ) {
@@ -825,6 +885,7 @@ void WIN_Shutdown( void )
 	}
 
 	SDL_QuitSubSystem( SDL_INIT_VIDEO );
+#endif
 }
 
 void GLimp_EnableLogging( qboolean enable )

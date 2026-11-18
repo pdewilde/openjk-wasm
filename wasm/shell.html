@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>OpenJK</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+		html, body {
+			width: 100%;
+			height: 100%;
+			background: #000;
+			color: #eee;
+			font-family: system-ui, -apple-system, sans-serif;
+			overflow: hidden;
+		}
+		body {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+		}
+		#status {
+			position: fixed;
+			top: 12px;
+			left: 50%;
+			transform: translateX(-50%);
+			color: #bbb;
+			font-size: 13px;
+			z-index: 10;
+			pointer-events: none;
+		}
+		#canvas {
+			display: block;
+			width: 100vw;
+			height: 100vh;
+			object-fit: contain;
+			border: 0;
+			outline: none;
+		}
+		#output {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			max-height: 180px;
+			background: rgba(0, 0, 0, 0.85);
+			color: #0f0;
+			font-family: monospace;
+			font-size: 12px;
+			line-height: 1.35;
+			overflow-y: auto;
+			padding: 6px 8px;
+			white-space: pre-wrap;
+			word-break: break-word;
+			display: none;
+			z-index: 20;
+		}
+		#asset-picker {
+			position: fixed;
+			inset: 0;
+			background: radial-gradient(circle at top, #1b2230 0%, #090b10 70%);
+			display: none;
+			align-items: center;
+			justify-content: center;
+			z-index: 30;
+			padding: 24px;
+		}
+		.picker-card {
+			max-width: 520px;
+			width: 100%;
+			background: rgba(18, 22, 31, 0.96);
+			border: 1px solid #2f3b52;
+			border-radius: 12px;
+			padding: 28px;
+			box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+		}
+		.picker-card h1 {
+			font-size: 20px;
+			margin-bottom: 10px;
+			color: #ffd54f;
+		}
+		.picker-card p {
+			font-size: 14px;
+			line-height: 1.5;
+			color: #c7d0e0;
+			margin-bottom: 16px;
+		}
+		.picker-card code {
+			background: rgba(255, 255, 255, 0.08);
+			padding: 2px 6px;
+			border-radius: 4px;
+			font-size: 12px;
+		}
+		.picker-actions {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			margin-bottom: 14px;
+		}
+		.picker-btn {
+			cursor: pointer;
+			border: 1px solid #4a6188;
+			background: #23334d;
+			color: #fff;
+			padding: 10px 16px;
+			border-radius: 8px;
+			font-size: 14px;
+			font-weight: 600;
+		}
+		.picker-btn:hover {
+			background: #2f4569;
+		}
+		.picker-btn.primary {
+			background: #2c6be0;
+			border-color: #4f88f2;
+		}
+		.picker-btn.primary:hover {
+			background: #3a79ed;
+		}
+		.picker-btn:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+		#picker-progress {
+			font-size: 13px;
+			color: #8fb4ff;
+			min-height: 20px;
+		}
+		.picker-hint {
+			font-size: 12px;
+			color: #8994a8;
+			margin-top: 10px;
+		}
+	</style>
+</head>
+<body>
+	<div id="status">Loading...</div>
+	<div id="asset-picker">
+		<div class="picker-card">
+			<h1>OpenJK WebAssembly</h1>
+			<p>Select your local Jedi Academy <code>GameData/base</code> folder (or individual <code>assets*.pk3</code> files) to mount into WasmFS and launch.</p>
+			<div class="picker-actions">
+				<label class="picker-btn primary">
+					Select <code>base/</code> Folder
+					<input id="folder-input" type="file" webkitdirectory directory multiple hidden>
+				</label>
+				<label class="picker-btn">
+					Select <code>.pk3</code> Files
+					<input id="files-input" type="file" multiple accept=".pk3,.cfg" hidden>
+				</label>
+			</div>
+			<div id="picker-progress"></div>
+			<div class="picker-hint">Press <code>Ctrl + `</code> at any time to toggle engine logs.</div>
+		</div>
+	</div>
+	<canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+	<pre id="output"></pre>
+
+	<script>
+		var statusElement = document.getElementById('status');
+		var canvasElement = document.getElementById('canvas');
+		var outputElement = document.getElementById('output');
+		var pickerElement = document.getElementById('asset-picker');
+		var progressElement = document.getElementById('picker-progress');
+		var folderInput = document.getElementById('folder-input');
+		var filesInput = document.getElementById('files-input');
+		var maxLogLines = 500;
+		window.__openjkLogs = [];
+
+		document.addEventListener('keydown', function (e) {
+			if (e.ctrlKey && e.key === '`') {
+				outputElement.style.display = getComputedStyle(outputElement).display === 'none' ? 'block' : 'none';
+			}
+		});
+
+		canvasElement.addEventListener('click', function () {
+			canvasElement.focus();
+		});
+
+		function appendLog(level, text) {
+			window.__openjkLogs.push({ level: level, text: text });
+			if (window.__openjkLogs.length > 1000) {
+				window.__openjkLogs.shift();
+			}
+			if (!outputElement) return;
+			var line = document.createElement('div');
+			line.textContent = text;
+			outputElement.appendChild(line);
+			while (outputElement.childElementCount > maxLogLines) {
+				outputElement.removeChild(outputElement.firstChild);
+			}
+			outputElement.scrollTop = outputElement.scrollHeight;
+		}
+
+		function preloadSideModules() {
+			var fs = typeof FS !== 'undefined' ? FS : Module.FS;
+			var modules = [
+				'jagamewasm32.wasm',
+				'jampgamewasm32.wasm',
+				'cgamewasm32.wasm',
+				'uiwasm32.wasm'
+			];
+			try { fs.mkdir('/base'); } catch (e) { }
+			return Promise.all(modules.map(function (name) {
+				return fetch(name)
+					.then(function (resp) {
+						if (!resp.ok) return fetch('base/' + name);
+						return resp;
+					})
+					.then(function (resp) {
+						if (!resp || !resp.ok) return null;
+						return resp.arrayBuffer();
+					})
+					.then(function (buf) {
+						if (buf) {
+							fs.writeFile('/base/' + name, new Uint8Array(buf));
+						}
+					})
+					.catch(function () { });
+			}));
+		}
+
+		function ensureDirTree(fs, fullPath) {
+			var parts = fullPath.split('/');
+			var cur = '';
+			for (var i = 1; i < parts.length - 1; i++) {
+				cur += '/' + parts[i];
+				try { fs.mkdir(cur); } catch (e) { }
+			}
+		}
+
+		function resolveRelativeBasePath(file) {
+			var rel = file.webkitRelativePath || file.name;
+			var parts = rel.replace(/\\/g, '/').split('/');
+			var baseIdx = -1;
+			for (var i = parts.length - 2; i >= 0; i--) {
+				if (parts[i].toLowerCase() === 'base') {
+					baseIdx = i;
+					break;
+				}
+			}
+			if (baseIdx >= 0) {
+				return parts.slice(baseIdx + 1).join('/');
+			}
+			if (!file.webkitRelativePath) {
+				return file.name;
+			}
+			return null;
+		}
+
+		function mountSelectedFiles(fileList, launchArgs) {
+			var fs = typeof FS !== 'undefined' ? FS : Module.FS;
+			var selected = [];
+			for (var i = 0; i < fileList.length; i++) {
+				var f = fileList[i];
+				var rel = resolveRelativeBasePath(f);
+				if (!rel) continue;
+				if (/\.dll$|\.so$|\.dylib$|\.exe$/i.test(rel)) continue;
+				selected.push({ file: f, dest: '/base/' + rel });
+			}
+			if (selected.length === 0) {
+				progressElement.textContent = 'No base/ files or .pk3 files found in selection.';
+				return;
+			}
+			folderInput.disabled = true;
+			filesInput.disabled = true;
+			(async function () {
+				for (var j = 0; j < selected.length; j++) {
+					var item = selected[j];
+					progressElement.textContent = 'Mounting ' + (j + 1) + '/' + selected.length + ': ' + item.dest;
+					ensureDirTree(fs, item.dest);
+					var buf = await item.file.arrayBuffer();
+					fs.writeFile(item.dest, new Uint8Array(buf));
+				}
+				pickerElement.style.display = 'none';
+				Module.setStatus('');
+				canvasElement.focus();
+				Module.callMain(launchArgs);
+			})().catch(function (err) {
+				progressElement.textContent = 'Failed to mount assets: ' + err;
+				folderInput.disabled = false;
+				filesInput.disabled = false;
+			});
+		}
+
+		function hasHostedBaseAssets() {
+			return fetch('base/assets0.pk3', { method: 'HEAD' })
+				.then(function (resp) { return resp.ok; })
+				.catch(function () { return false; });
+		}
+
+		var Module = {
+			canvas: canvasElement,
+			noInitialRun: true,
+			print: function () {
+				var text = Array.prototype.slice.call(arguments).join(' ');
+				console.log(text);
+				appendLog('log', text);
+			},
+			printErr: function () {
+				var text = Array.prototype.slice.call(arguments).join(' ');
+				console.error(text);
+				appendLog('err', text);
+			},
+			setStatus: function (text) {
+				if (text) {
+					statusElement.textContent = text;
+					statusElement.style.display = 'block';
+				} else {
+					statusElement.style.display = 'none';
+				}
+			},
+			totalDependencies: 0,
+			monitorRunDependencies: function (left) {
+				this.totalDependencies = Math.max(this.totalDependencies, left);
+				if (left) {
+					Module.setStatus('Preparing... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')');
+				} else {
+					Module.setStatus('');
+				}
+			},
+			onRuntimeInitialized: function () {
+				var params = new URLSearchParams(window.location.search);
+				var args = Module.arguments;
+				if (!args) {
+					var rawArgs = params.get('args');
+					args = rawArgs ? rawArgs.trim().split(/\s+/) : [];
+				}
+				var autoStart = params.has('args') || params.has('autostart');
+				Module.setStatus('Loading modules...');
+				preloadSideModules().then(function () {
+					if (autoStart) {
+						Module.setStatus('');
+						Module.callMain(args);
+						return;
+					}
+					return hasHostedBaseAssets().then(function (hosted) {
+						if (hosted) {
+							Module.setStatus('');
+							Module.callMain(args);
+						} else {
+							Module.setStatus('');
+							pickerElement.style.display = 'flex';
+							folderInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };
+							filesInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };
+						}
+					});
+				});
+			}
+		};
+
+		window.onerror = function () {
+			Module.setStatus('Exception thrown, see JavaScript console');
+		};
+	</script>
+	{{{ SCRIPT }}}
+</body>
+</html>

@@ -2321,7 +2321,9 @@ static void CL_ShutdownRef( qboolean restarting ) {
 	re = NULL;
 
 	if ( rendererLib != NULL ) {
+#ifndef __EMSCRIPTEN__
 		Sys_UnloadDll (rendererLib);
+#endif
 		rendererLib = NULL;
 	}
 }
@@ -2414,14 +2416,21 @@ static IHeapAllocator *GetG2VertSpaceServer( void ) {
 
 #define DEFAULT_RENDER_LIBRARY "rd-vanilla"
 
+#ifdef __EMSCRIPTEN__
+extern "C" refexport_t *GetRefAPI( int apiVersion, refimport_t *rimp );
+#endif
+
 void CL_InitRef( void ) {
 	static refimport_t ri;
 	refexport_t	*ret;
+#ifndef __EMSCRIPTEN__
 	GetRefAPI_t	GetRefAPI;
 	char		dllName[MAX_OSPATH];
+#endif
 
 	Com_Printf( "----- Initializing Renderer ----\n" );
 
+#ifndef __EMSCRIPTEN__
 	cl_renderer = Cvar_Get( "cl_renderer", DEFAULT_RENDER_LIBRARY, CVAR_ARCHIVE|CVAR_LATCH, "Which renderer library to use" );
 
 	Com_sprintf( dllName, sizeof( dllName ), "%s_" ARCH_STRING DLL_EXT, cl_renderer->string );
@@ -2438,12 +2447,17 @@ void CL_InitRef( void ) {
 	if ( !rendererLib ) {
 		Com_Error( ERR_FATAL, "Failed to load renderer\n" );
 	}
+#else
+	Com_Printf( "Using statically linked renderer\n" );
+#endif
 
 	memset( &ri, 0, sizeof( ri ) );
 
+#ifndef __EMSCRIPTEN__
 	GetRefAPI = (GetRefAPI_t)Sys_LoadFunction( rendererLib, "GetRefAPI" );
 	if ( !GetRefAPI )
 		Com_Error( ERR_FATAL, "Can't load symbol GetRefAPI: '%s'", Sys_LibraryError() );
+#endif
 
 	//set up the import table
 	ri.Printf = CL_RefPrintf;

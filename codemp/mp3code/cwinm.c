@@ -37,6 +37,10 @@ portable C
 #include <float.h>
 #include <math.h>
 
+#ifdef __EMSCRIPTEN__
+#define window MP3_window
+#endif
+
 const float wincoef[264] =
 {				/* window coefs */
 #include "tableawd.h"

@@ -211,7 +211,11 @@ cvar_t	*broadsword_dircap=0;
 Ghoul2 Insert End
 */
 
+#ifdef __EMSCRIPTEN__
+extern cvar_t *se_language;
+#else
 cvar_t *se_language;
+#endif
 
 cvar_t *r_aviMotionJpegQuality;
 cvar_t *r_screenshotJpegQuality;

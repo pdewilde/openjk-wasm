@@ -26,6 +26,11 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include <sys/stat.h>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <emscripten/wasmfs.h>
+#include <emscripten/threading.h>
+#endif
 #include "qcommon/qcommon.h"
 #include "sys_local.h"
 #include "sys_loadlib.h"
@@ -383,6 +388,20 @@ enum SearchPathFlag
 	SEARCH_PATH_ROOT	= 1 << 3
 };
 
+#ifdef __EMSCRIPTEN__
+static void *Sys_TryLoadLibrary( const char *path )
+{
+	struct stat st;
+	if ( stat( path, &st ) != 0 || !S_ISREG( st.st_mode ) )
+	{
+		return NULL;
+	}
+	return Sys_LoadLibrary( path );
+}
+#else
+#define Sys_TryLoadLibrary(path) Sys_LoadLibrary(path)
+#endif
+
 static void *Sys_LoadDllFromPaths( const char *filename, const char *gamedir, const char **searchPaths,
 									size_t numPaths, uint32_t searchFlags, const char *callerName )
 {
@@ -398,7 +417,7 @@ static void *Sys_LoadDllFromPaths( const char *filename, const char *gamedir, co
 				continue;
 
 			fn = FS_BuildOSPath( libDir, gamedir, filename );
-			libHandle = Sys_LoadLibrary( fn );
+			libHandle = Sys_TryLoadLibrary( fn );
 			if ( libHandle )
 				return libHandle;
 
@@ -415,7 +434,7 @@ static void *Sys_LoadDllFromPaths( const char *filename, const char *gamedir, co
 				continue;
 
 			fn = FS_BuildOSPath( libDir, BASEGAME, filename );
-			libHandle = Sys_LoadLibrary( fn );
+			libHandle = Sys_TryLoadLibrary( fn );
 			if ( libHandle )
 				return libHandle;
 
@@ -432,7 +451,7 @@ static void *Sys_LoadDllFromPaths( const char *filename, const char *gamedir, co
 				continue;
 
 			fn = FS_BuildOSPath( libDir, OPENJKGAME, filename );
-			libHandle = Sys_LoadLibrary( fn );
+			libHandle = Sys_TryLoadLibrary( fn );
 			if ( libHandle )
 				return libHandle;
 
@@ -449,7 +468,7 @@ static void *Sys_LoadDllFromPaths( const char *filename, const char *gamedir, co
 				continue;
 
 			fn = va( "%s%c%s", libDir, PATH_SEP, filename );
-			libHandle = Sys_LoadLibrary( fn );
+			libHandle = Sys_TryLoadLibrary( fn );
 			if ( libHandle )
 				return libHandle;
 
@@ -524,7 +543,11 @@ void *Sys_LoadLegacyGameDll( const char *name, VMMainProc **vmMain, SystemCallPr
 				};
 				size_t numPaths = ARRAY_LEN( searchPaths );
 
+#ifdef __EMSCRIPTEN__
+				libHandle = Sys_LoadDllFromPaths( filename, gamedir, searchPaths, numPaths, SEARCH_PATH_BASE | SEARCH_PATH_MOD | SEARCH_PATH_ROOT, __FUNCTION__ );
+#else
 				libHandle = Sys_LoadDllFromPaths( filename, gamedir, searchPaths, numPaths, SEARCH_PATH_BASE | SEARCH_PATH_MOD, __FUNCTION__ );
+#endif
 				if ( !libHandle )
 					return NULL;
 			}
@@ -657,7 +680,11 @@ void *Sys_LoadGameDll( const char *name, GetModuleAPIProc **moduleAPI )
 				};
 				size_t numPaths = ARRAY_LEN( searchPaths );
 
+#ifdef __EMSCRIPTEN__
+				libHandle = Sys_LoadDllFromPaths( filename, gamedir, searchPaths, numPaths, SEARCH_PATH_BASE | SEARCH_PATH_MOD | SEARCH_PATH_ROOT, __FUNCTION__ );
+#else
 				libHandle = Sys_LoadDllFromPaths( filename, gamedir, searchPaths, numPaths, SEARCH_PATH_BASE | SEARCH_PATH_MOD, __FUNCTION__ );
+#endif
 				if ( !libHandle )
 					return NULL;
 			}
@@ -742,6 +769,25 @@ char *Sys_StripAppBundle( char *dir )
 #	endif
 #endif
 
+#ifdef __EMSCRIPTEN__
+extern "C" void initialize_gl4es();
+
+static void Sys_InitWasmFS(void)
+{
+#ifdef OPENJK_WASM_OPFS
+	if (!emscripten_is_main_browser_thread()) {
+		backend_t opfs = wasmfs_create_opfs_backend();
+		if (opfs && wasmfs_create_directory("/saves", 0777, opfs) == 0) {
+			printf("WasmFS: mounted OPFS backend at /saves\n");
+			return;
+		}
+		printf("WasmFS: OPFS backend unavailable, falling back to memory /saves\n");
+	}
+#endif
+	mkdir("/saves", 0777);
+}
+#endif
+
 int main ( int argc, char* argv[] )
 {
 	int		i;
@@ -749,6 +795,12 @@ int main ( int argc, char* argv[] )
 
 	Sys_PlatformInit( argc, argv );
 	CON_Init();
+
+#ifdef __EMSCRIPTEN__
+	Sys_InitWasmFS();
+	setenv("LIBGL_VSYNC", "1", 1);
+	initialize_gl4es();
+#endif
 
 	// get the initial time base
 	Sys_Milliseconds();
@@ -790,6 +842,11 @@ int main ( int argc, char* argv[] )
 	Com_Printf( "SDL Version Linked: %d.%d.%d\n", linked.major, linked.minor, linked.patch );
 #endif
 
+#ifdef __EMSCRIPTEN__
+	// In the browser, we must yield control to the browser event loop.
+	// emscripten_set_main_loop calls Com_Frame via requestAnimationFrame.
+	emscripten_set_main_loop(Com_Frame, 0, 1);
+#else
 	// main game loop
 	while (1)
 	{
@@ -818,6 +875,7 @@ int main ( int argc, char* argv[] )
 		// run the game
 		Com_Frame();
 	}
+#endif
 
 	// never gets here
 	return 0;

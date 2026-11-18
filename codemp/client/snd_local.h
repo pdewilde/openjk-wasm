@@ -28,16 +28,21 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "snd_public.h"
 #include "mp3code/mp3struct.h"
 
-#if defined(_MSC_VER) && !defined(WIN64)
+#if (defined(_MSC_VER) && !defined(WIN64)) || defined(__EMSCRIPTEN__)
 #define USE_OPENAL
 #endif
 
 // Open AL Specific
 #ifdef USE_OPENAL
+#ifdef __EMSCRIPTEN__
+#include <AL/al.h>
+#include <AL/alc.h>
+#else
 #include "OpenAL/al.h"
 #include "OpenAL/alc.h"
 #include "eax/eax.h"
 #include "eax/EaxMan.h"
+#endif
 /*#elif defined MACOS_X
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>

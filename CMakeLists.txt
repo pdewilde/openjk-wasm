@@ -35,13 +35,20 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 #=============================================================================
 option(BuildPortableVersion "Build portable version (does not read or write files from your user/home directory" OFF)
 
+set(BuildMPDedDefault ON)
+set(BuildMPRend2Default ON)
+if(EMSCRIPTEN)
+	set(BuildMPDedDefault OFF)
+	set(BuildMPRend2Default OFF)
+endif()
+
 option(BuildMPEngine "Whether to create projects for the MP client (openjk.exe)" ON)
 option(BuildMPRdVanilla "Whether to create projects for the MP default renderer (rd-vanilla_x86.dll)" ON)
-option(BuildMPDed "Whether to create projects for the MP dedicated server (openjkded.exe)" ON)
+option(BuildMPDed "Whether to create projects for the MP dedicated server (openjkded.exe)" ${BuildMPDedDefault})
 option(BuildMPGame "Whether to create projects for the MP server-side gamecode (jampgamex86.dll)" ON)
 option(BuildMPCGame "Whether to create projects for the MP clientside gamecode (cgamex86.dll)" ON)
 option(BuildMPUI "Whether to create projects for the MP UI code (uix86.dll)" ON)
-option(BuildMPRend2 "Whether to create projects for the EXPERIMENTAL MP rend2 renderer (rd-rend2_x86.dll)" ON)
+option(BuildMPRend2 "Whether to create projects for the EXPERIMENTAL MP rend2 renderer (rd-rend2_x86.dll)" ${BuildMPRend2Default})
 
 option(BuildSPEngine "Whether to create projects for the SP engine (openjk_sp.exe)" ON)
 option(BuildSPGame "Whether to create projects for the SP gamecode (jagamex86.dll)" ON)
@@ -83,6 +90,14 @@ if(APPLE)
   set(UseInternalPNGDefault  ON)
 endif()
 
+if(EMSCRIPTEN)
+  set(UseInternalOpenALDefault OFF)
+  set(UseInternalZlibDefault   OFF)
+  set(UseInternalPNGDefault    OFF)
+  set(UseInternalJPEGDefault   OFF)
+  set(UseInternalSDL2Default   OFF)
+endif()
+
 option(UseInternalOpenAL "If set, use bundled OpenAL."  ${UseInternalOpenALDefault})
 option(UseInternalZlib   "If set, use bundled zlib."    ${UseInternalZlibDefault})
 option(UseInternalPNG    "If set, use bundled libpng."  ${UseInternalPNGDefault})
@@ -116,7 +131,10 @@ endif()
 #=============================================================================
 # ${Architecture} must match ARCH_STRING in q_platform.h,
 # and is used in DLL names (jagamex86.dll, jagamex86.dylib, jagamei386.so).
-if(WIN32)
+if(EMSCRIPTEN)
+	set(X86 OFF)
+	set(Architecture "wasm32")
+elseif(WIN32)
 	set(X86 ON)
 	if(CMAKE_SIZEOF_VOID_P MATCHES "8")
 		set(Architecture "x86_64")
@@ -390,22 +408,82 @@ set(SharedCommonSafeFiles
 # Adding all of the projects
 #
 #=============================================================================
-if(UseInternalJPEG)
-  add_subdirectory(lib/jpeg-9a)
-else()
-  find_package(JPEG REQUIRED)
-endif()
+if(EMSCRIPTEN)
+  option(WasmUsePthreads "Enable Emscripten pthreads + PROXY_TO_PTHREAD for OPFS persistence (requires COOP/COEP)" OFF)
+  set_property(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
+  set(CMAKE_SHARED_LIBRARY_SUFFIX ".wasm")
+  set(CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS "-sSIDE_MODULE=2 -msimd128 -fwasm-exceptions")
+  set(CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS "-sSIDE_MODULE=2 -msimd128 -fwasm-exceptions")
+  set(OPENJK_EMSCRIPTEN_SIDE_LINK_FLAGS -sSIDE_MODULE=2 -msimd128 -fwasm-exceptions)
+  if(WasmUsePthreads)
+    string(APPEND CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS " -pthread")
+    string(APPEND CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS " -pthread")
+    list(APPEND OPENJK_EMSCRIPTEN_SIDE_LINK_FLAGS -pthread)
+  endif()
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+  set(OPENJK_EMSCRIPTEN_PORT_FLAGS
+    -sUSE_SDL=2
+    -sUSE_ZLIB=1
+    -sUSE_LIBPNG=1
+    -sUSE_LIBJPEG=1
+    -msimd128
+    -fwasm-exceptions
+  )
+  if(WasmUsePthreads)
+    list(APPEND OPENJK_EMSCRIPTEN_PORT_FLAGS -pthread)
+    add_compile_definitions(OPENJK_WASM_OPFS=1)
+  endif()
+  add_compile_options(${OPENJK_EMSCRIPTEN_PORT_FLAGS})
+  set(OPENJK_EMSCRIPTEN_ENGINE_LINK_FLAGS
+    -sMAIN_MODULE=1
+    -sALLOW_MEMORY_GROWTH=1
+    -sINITIAL_MEMORY=67108864
+    -sMAXIMUM_MEMORY=4GB
+    -sSTACK_SIZE=8388608
+    -sFORCE_FILESYSTEM=1
+    -sWASMFS
+    -sERROR_ON_UNDEFINED_SYMBOLS=1
+    -sFULL_ES2=1
+    -sMAX_WEBGL_VERSION=2
+    -sUSE_SDL=2
+    -sUSE_ZLIB=1
+    -sUSE_LIBPNG=1
+    -sUSE_LIBJPEG=1
+    -msimd128
+    -fwasm-exceptions
+    -lopenal
+    "-sEXPORTED_RUNTIME_METHODS=['FS','run','callMain']"
+    --shell-file "${CMAKE_SOURCE_DIR}/wasm/shell.html"
+  )
+  if(WasmUsePthreads)
+    list(APPEND OPENJK_EMSCRIPTEN_ENGINE_LINK_FLAGS -pthread -sPROXY_TO_PTHREAD -sOFFSCREEN_FRAMEBUFFER=1)
+  endif()
+  include("${CMAKE_SOURCE_DIR}/wasm/gl4es.cmake")
 
-if(UseInternalZlib)
-  add_subdirectory(lib/zlib)
+  set(JPEG_INCLUDE_DIR "")
+  set(JPEG_LIBRARIES "")
+  set(ZLIB_INCLUDE_DIR "")
+  set(ZLIB_LIBRARIES "")
+  set(PNG_INCLUDE_DIRS "")
+  set(PNG_LIBRARIES "")
 else()
-  find_package(ZLIB REQUIRED)
-endif()
+  if(UseInternalJPEG)
+    add_subdirectory(lib/jpeg-9a)
+  else()
+    find_package(JPEG REQUIRED)
+  endif()
 
-if(UseInternalPNG)
-  add_subdirectory(lib/libpng)
-else()
-  find_package(PNG REQUIRED)
+  if(UseInternalZlib)
+    add_subdirectory(lib/zlib)
+  else()
+    find_package(ZLIB REQUIRED)
+  endif()
+
+  if(UseInternalPNG)
+    add_subdirectory(lib/libpng)
+  else()
+    find_package(PNG REQUIRED)
+  endif()
 endif()
 
 # Always use bundled minizip (sets MINIZIP_{LIBRARIES,INCLUDE_DIR})

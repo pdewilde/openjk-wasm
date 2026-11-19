@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/netip"
 	"os"
+	stdpath "path"
 	"strconv"
 	"strings"
 
@@ -92,8 +93,8 @@ func main() {
 	domain := flag.String("domain", envOrDefault("WTUNNEL_DOMAIN", ""), "domain name for Let's Encrypt (if empty, uses self-signed cert)")
 	httpsAddr := flag.String("https-addr", envOrDefault("WTUNNEL_HTTPS_ADDR", ""), "HTTPS listen address (default 0.0.0.0:8080, or 0.0.0.0:443 with -domain)")
 	quicAddr := flag.String("quic-addr", envOrDefault("WTUNNEL_QUIC_ADDR", ""), "QUIC/WebTransport listen address (default 0.0.0.0:8443, or 0.0.0.0:443 with -domain)")
-	authUser := flag.String("auth-user", envOrDefault("WTUNNEL_AUTH_USER", ""), "optional HTTP basic auth username for bundled assets (disabled if empty)")
-	authPass := flag.String("auth-pass", envOrDefault("WTUNNEL_AUTH_PASS", ""), "optional HTTP basic auth password for bundled assets")
+	authUser := flag.String("auth-user", envOrDefault("WTUNNEL_AUTH_USER", ""), "optional HTTP basic auth username for hosted /base/ assets (disabled if empty)")
+	authPass := flag.String("auth-pass", envOrDefault("WTUNNEL_AUTH_PASS", ""), "optional HTTP basic auth password for hosted /base/ assets")
 	corsOrigin := flag.String("cors-origin", envOrDefault("WTUNNEL_CORS_ORIGIN", "*"), "allowed CORS / WebTransport origin (or * for any)")
 	maxDgram := flag.Int("max-datagram-size", envIntOrDefault("WTUNNEL_MAX_DATAGRAM_SIZE", defaultMaxDatagramSize), "max serialized packet size sent via WebTransport datagram before falling back to framed uni stream")
 	udpAllowSpec := flag.String("udp-allow", envOrDefault("WTUNNEL_UDP_ALLOW", ""), "comma-separated host:port or IPv4 CIDR allowlist for real UDP egress (empty disables egress)")
@@ -180,6 +181,68 @@ func checkBasicAuth(r *http.Request, expectedUser, expectedPass string) bool {
 	return userMatch && passMatch
 }
 
+func isProtectedAssetPath(rawPath string) bool {
+	clean := stdpath.Clean("/" + strings.ReplaceAll(rawPath, "\\", "/"))
+	if clean == "/base" || strings.HasPrefix(clean, "/base/") {
+		return true
+	}
+	switch clean {
+	case "/openjk_bundled.html", "/openjk_mp_bundled.html",
+		"/openjk_bundled.js", "/openjk_mp_bundled.js",
+		"/openjk_bundled.wasm", "/openjk_mp_bundled.wasm",
+		"/openjk_bundled.data", "/openjk_mp_bundled.data":
+		return true
+	}
+	return false
+}
+
+func sanitizeNextRedirect(next string) string {
+	next = strings.TrimSpace(next)
+	if next == "" || !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") || strings.ContainsAny(next, "\\\r\n") {
+		return "/"
+	}
+	return next
+}
+
+func newStaticHandler(cfg serverConfig, ht3Server *http3.Server) http.Handler {
+	fs := http.FileServer(http.Dir(cfg.dir))
+	authEnabled := cfg.authUser != "" || cfg.authPass != ""
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cleanPath := stdpath.Clean("/" + strings.ReplaceAll(r.URL.Path, "\\", "/"))
+		if cleanPath == "/base/login" {
+			if authEnabled && !checkBasicAuth(r, cfg.authUser, cfg.authPass) {
+				w.Header().Set("WWW-Authenticate", `Basic realm="OpenJK Hosted Assets"`)
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			http.Redirect(w, r, sanitizeNextRedirect(r.URL.Query().Get("next")), http.StatusSeeOther)
+			return
+		}
+
+		if authEnabled && isProtectedAssetPath(r.URL.Path) {
+			if !checkBasicAuth(r, cfg.authUser, cfg.authPass) {
+				if r.Header.Get("X-No-Auth-Prompt") != "1" {
+					w.Header().Set("WWW-Authenticate", `Basic realm="OpenJK Hosted Assets"`)
+				}
+				w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+		}
+
+		if ht3Server != nil {
+			setAltSvcHeader(w, r, ht3Server, cfg.quicAddr)
+		}
+
+		w.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
+		w.Header().Set("Cross-Origin-Embedder-Policy", "require-corp")
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		w.Header().Set("Pragma", "no-cache")
+		fs.ServeHTTP(w, r)
+	})
+}
+
 func serve(cfg serverConfig) {
 	mux := http.NewServeMux()
 
@@ -249,29 +312,7 @@ func serve(cfg serverConfig) {
 	}
 
 	log.Printf("Serving static files from: %s", cfg.dir)
-	fs := http.FileServer(http.Dir(cfg.dir))
-	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		if (cfg.authUser != "" || cfg.authPass != "") &&
-			(path == "/openjk_bundled.html" || path == "/openjk_mp_bundled.html" ||
-				path == "/openjk_bundled.js" || path == "/openjk_mp_bundled.js" ||
-				path == "/openjk_bundled.wasm" || path == "/openjk_mp_bundled.wasm" ||
-				path == "/openjk_bundled.data" || path == "/openjk_mp_bundled.data") {
-			if !checkBasicAuth(r, cfg.authUser, cfg.authPass) {
-				w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
-				return
-			}
-		}
-
-		setAltSvcHeader(w, r, &ht3Server, cfg.quicAddr)
-
-		w.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
-		w.Header().Set("Cross-Origin-Embedder-Policy", "require-corp")
-		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-		w.Header().Set("Pragma", "no-cache")
-		fs.ServeHTTP(w, r)
-	}))
+	mux.Handle("/", newStaticHandler(cfg, &ht3Server))
 
 	mux.HandleFunc("GET /wt-server-certificate-hashes", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", cfg.corsOrigin)

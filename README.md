@@ -96,6 +96,7 @@ Open **`https://localhost:8080/`** in Chrome, Edge, or Firefox (accept the local
 
 | Flag | Default | Description |
 |------|---------|-------------|
+| `-auth-user` / `-auth-pass` | *(empty — disabled)* | Optional HTTP Basic Auth (or `WTUNNEL_AUTH_USER` / `WTUNNEL_AUTH_PASS`) protecting hosted `/base/*` assets; unauthenticated visitors automatically fall back to the local `base/` folder picker without a login popup, while authorized users sign in at `/base/login` |
 | `-udp-allow` | *(empty — deny egress)* | Comma-separated allowlist of `host:port` / `CIDR:port` UDP destinations (e.g. dedicated JKA servers) |
 | `-max-sessions-per-ip` | `128` | Maximum concurrent WebTransport sessions per client IP (safe for LAN parties / NAT) |
 | `-max-sessions` | `2048` | Global concurrent WebTransport session cap |

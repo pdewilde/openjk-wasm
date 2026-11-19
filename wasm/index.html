@@ -324,8 +324,14 @@
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
+			gap: 12px;
 			font-size: 12px;
 			color: #7484a1;
+		}
+		.footer-links {
+			display: flex;
+			align-items: center;
+			gap: 14px;
 		}
 		.footer a,
 		.footer button.link-btn {
@@ -496,7 +502,10 @@
 
 		<div class="footer">
 			<span>Mods are saved locally in your browser.</span>
-			<button id="diag-open-btn" class="link-btn" type="button">Network Diagnostics</button>
+			<div class="footer-links">
+				<a id="hosted-login-btn" href="/base/login?next=/" style="display: none;">Hosted Login</a>
+				<button id="diag-open-btn" class="link-btn" type="button">Network Diagnostics</button>
+			</div>
 		</div>
 	</div>
 
@@ -1287,6 +1296,20 @@
 			refreshMods([]).catch(function (err) {
 				setStatus('Could not read saved mods: ' + err.message, 'error');
 			});
+
+			// Show Hosted Login link only when /base/ is present behind Basic Auth
+			var hostedLoginBtn = document.getElementById('hosted-login-btn');
+			if (hostedLoginBtn) {
+				fetch('base/manifest.json', {
+					method: 'HEAD',
+					cache: 'no-cache',
+					headers: { 'X-No-Auth-Prompt': '1' }
+				}).then(function (resp) {
+					if (resp && resp.status === 401) {
+						hostedLoginBtn.style.display = 'inline';
+					}
+				}).catch(function () { });
+			}
 
 			// Network Diagnostics Modal
 			var diagModal = document.getElementById('diag-modal');

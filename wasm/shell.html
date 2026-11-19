@@ -136,6 +136,13 @@
 			color: #8994a8;
 			margin-top: 10px;
 		}
+		.picker-hint a {
+			color: #8db3f2;
+			text-decoration: none;
+		}
+		.picker-hint a:hover {
+			text-decoration: underline;
+		}
 		#prefetch-banner {
 			display: none;
 			position: fixed;
@@ -171,6 +178,7 @@
 			</div>
 			<div id="picker-progress"></div>
 			<div class="picker-hint">Press <code>Ctrl + `</code> at any time to toggle engine logs.</div>
+			<div id="hosted-login-hint" class="picker-hint" style="display:none;">Have hosted asset access? <a id="hosted-login-link" href="/base/login">Sign in</a></div>
 		</div>
 	</div>
 	<svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true">
@@ -375,9 +383,18 @@
 			});
 		}
 
+		var hostedAuthRequired = false;
+
 		function hasHostedBaseAssets() {
-			return fetch('base/assets0.pk3', { method: 'HEAD' })
-				.then(function (resp) { return resp.ok; })
+			return fetch('base/assets0.pk3', {
+				method: 'HEAD',
+				cache: 'no-cache',
+				headers: { 'X-No-Auth-Prompt': '1' }
+			})
+				.then(function (resp) {
+					if (resp.status === 401) hostedAuthRequired = true;
+					return resp.ok;
+				})
 				.catch(function () { return false; });
 		}
 
@@ -964,11 +981,17 @@
 		async function initManifestMode() {
 			var resp;
 			try {
-				resp = await fetch('base/manifest.json', { cache: 'no-cache' });
+				resp = await fetch('base/manifest.json', {
+					cache: 'no-cache',
+					headers: { 'X-No-Auth-Prompt': '1' }
+				});
 			} catch (err) {
 				return false;
 			}
-			if (!resp || !resp.ok) return false;
+			if (!resp || !resp.ok) {
+				if (resp && resp.status === 401) hostedAuthRequired = true;
+				return false;
+			}
 
 			var manifest = await resp.json();
 			if (!manifest || !manifest.boot || !Array.isArray(manifest.paks) || !manifest.entries) {
@@ -1136,6 +1159,15 @@
 								startOpenJK(args);
 							} else {
 								Module.setStatus('');
+								if (hostedAuthRequired) {
+									var loginHint = document.getElementById('hosted-login-hint');
+									var loginLink = document.getElementById('hosted-login-link');
+									if (loginLink) {
+										var nextPath = window.location.pathname + window.location.search;
+										loginLink.href = '/base/login?next=' + encodeURIComponent(nextPath);
+									}
+									if (loginHint) loginHint.style.display = 'block';
+								}
 								pickerElement.style.display = 'flex';
 								folderInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };
 								filesInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };

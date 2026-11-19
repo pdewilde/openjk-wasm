@@ -546,7 +546,12 @@
 			if (typeof navigator === 'undefined' || !navigator.storage || !navigator.storage.getDirectory) {
 				return null;
 			}
-			var root = await navigator.storage.getDirectory();
+			var root;
+			try {
+				root = await navigator.storage.getDirectory();
+			} catch (e) {
+				return null;
+			}
 			var dir = await root.getDirectoryHandle(rootName, { create: create });
 			if (subDirs) {
 				for (var i = 0; i < subDirs.length; i++) {
@@ -1296,6 +1301,19 @@
 										loginLink.href = '/base/login?next=' + encodeURIComponent(nextPath);
 									}
 									if (loginHint) loginHint.style.display = 'block';
+								}
+								var saveRow = document.getElementById('save-base-checkbox');
+								if (saveRow && saveRow.parentElement) {
+									getOpfsDir('openjk-base', null, false).catch(function () { return null; });
+									if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.getDirectory) {
+										navigator.storage.getDirectory().catch(function () {
+											saveRow.checked = false;
+											saveRow.parentElement.style.display = 'none';
+										});
+									} else {
+										saveRow.checked = false;
+										saveRow.parentElement.style.display = 'none';
+									}
 								}
 								pickerElement.style.display = 'flex';
 								folderInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };

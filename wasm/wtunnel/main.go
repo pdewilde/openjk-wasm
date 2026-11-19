@@ -204,12 +204,42 @@ func sanitizeNextRedirect(next string) string {
 	return next
 }
 
+const hostedLoggedOutCookie = "openjk_hosted_off"
+
+func isHostedLoggedOut(r *http.Request) bool {
+	c, err := r.Cookie(hostedLoggedOutCookie)
+	return err == nil && c.Value == "1"
+}
+
 func newStaticHandler(cfg serverConfig, ht3Server *http3.Server) http.Handler {
 	fs := http.FileServer(http.Dir(cfg.dir))
 	authEnabled := cfg.authUser != "" || cfg.authPass != ""
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cleanPath := stdpath.Clean("/" + strings.ReplaceAll(r.URL.Path, "\\", "/"))
+		if cleanPath == "/base/logout" {
+			http.SetCookie(w, &http.Cookie{
+				Name:     hostedLoggedOutCookie,
+				Value:    "1",
+				Path:     "/",
+				SameSite: http.SameSiteLaxMode,
+			})
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			if r.Header.Get("X-No-Auth-Prompt") == "1" {
+				http.Error(w, "Logged out", http.StatusUnauthorized)
+				return
+			}
+			http.Redirect(w, r, sanitizeNextRedirect(r.URL.Query().Get("next")), http.StatusSeeOther)
+			return
+		}
+
 		if cleanPath == "/base/login" {
+			http.SetCookie(w, &http.Cookie{
+				Name:     hostedLoggedOutCookie,
+				Value:    "",
+				Path:     "/",
+				MaxAge:   -1,
+				SameSite: http.SameSiteLaxMode,
+			})
 			if authEnabled && !checkBasicAuth(r, cfg.authUser, cfg.authPass) {
 				w.Header().Set("WWW-Authenticate", `Basic realm="OpenJK Hosted Assets"`)
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -221,7 +251,7 @@ func newStaticHandler(cfg serverConfig, ht3Server *http3.Server) http.Handler {
 		}
 
 		if authEnabled && isProtectedAssetPath(r.URL.Path) {
-			if !checkBasicAuth(r, cfg.authUser, cfg.authPass) {
+			if isHostedLoggedOut(r) || !checkBasicAuth(r, cfg.authUser, cfg.authPass) {
 				if r.Header.Get("X-No-Auth-Prompt") != "1" {
 					w.Header().Set("WWW-Authenticate", `Basic realm="OpenJK Hosted Assets"`)
 				}
@@ -229,6 +259,7 @@ func newStaticHandler(cfg serverConfig, ht3Server *http3.Server) http.Handler {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
 			}
+			w.Header().Set("X-Hosted-Auth", "enabled")
 		}
 
 		if ht3Server != nil {

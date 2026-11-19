@@ -866,6 +866,7 @@
 			<span>Saves &amp; mods are stored locally in your browser.</span>
 			<div class="footer-links">
 				<a id="hosted-login-btn" href="/base/login?next=/" style="display: none;">Hosted Login</a>
+				<button id="hosted-logout-btn" class="link-btn" type="button" style="display: none;">Hosted Logout</button>
 				<button id="diag-open-btn" class="link-btn" type="button">Network Diagnostics</button>
 				<a href="https://github.com/pdewilde/openjk-wasm" target="_blank" rel="noopener noreferrer">GitHub</a>
 			</div>
@@ -2024,12 +2025,35 @@
 
 			// Check if hosted /base/ assets are available; if not, show the Game Files setup card
 			var hostedLoginBtn = document.getElementById('hosted-login-btn');
+			var hostedLogoutBtn = document.getElementById('hosted-logout-btn');
+			if (hostedLogoutBtn) {
+				hostedLogoutBtn.addEventListener('click', function () {
+					hostedLogoutBtn.disabled = true;
+					var done = function () { window.location.reload(); };
+					try {
+						var xhr = new XMLHttpRequest();
+						xhr.open('GET', '/base/logout?t=' + Date.now(), true, '__logout__', '__logout__');
+						xhr.setRequestHeader('X-No-Auth-Prompt', '1');
+						xhr.onload = done;
+						xhr.onerror = done;
+						xhr.send(null);
+					} catch (e) {
+						fetch('/base/logout?t=' + Date.now(), {
+							cache: 'no-cache',
+							headers: { 'X-No-Auth-Prompt': '1' }
+						}).finally(done);
+					}
+				});
+			}
 			fetch('base/manifest.json', {
 				method: 'HEAD',
 				cache: 'no-cache',
 				headers: { 'X-No-Auth-Prompt': '1' }
 			}).then(function (resp) {
 				if (resp && resp.ok) {
+					if (hostedLogoutBtn && resp.headers && resp.headers.get('X-Hosted-Auth') === 'enabled') {
+						hostedLogoutBtn.style.display = 'inline';
+					}
 					refreshSavedBaseUi(true);
 					return;
 				}
@@ -2041,6 +2065,9 @@
 					cache: 'no-cache',
 					headers: { 'X-No-Auth-Prompt': '1' }
 				}).then(function (r2) {
+					if (r2 && r2.ok && hostedLogoutBtn && r2.headers && r2.headers.get('X-Hosted-Auth') === 'enabled') {
+						hostedLogoutBtn.style.display = 'inline';
+					}
 					refreshSavedBaseUi(!!(r2 && r2.ok));
 				}).catch(function () {
 					refreshSavedBaseUi(false);

@@ -109,3 +109,57 @@ func TestBaseLoginRedirect(t *testing.T) {
 		}
 	}
 }
+
+func TestBaseLogoutCookieForcesUnauthenticatedState(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "base"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "base", "manifest.json"), []byte("{}"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	h := newStaticHandler(serverConfig{
+		dir:      dir,
+		authUser: "jedi",
+		authPass: "secret",
+	}, nil)
+
+	// Logout sets openjk_hosted_off=1 cookie.
+	req := httptest.NewRequest(http.MethodGet, "/base/logout", nil)
+	req.Header.Set("X-No-Auth-Prompt", "1")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 from silent /base/logout, got %d", rec.Code)
+	}
+	cookies := rec.Result().Cookies()
+	if len(cookies) == 0 || cookies[0].Name != hostedLoggedOutCookie || cookies[0].Value != "1" {
+		t.Fatalf("expected %s=1 cookie from /base/logout, got %+v", hostedLoggedOutCookie, cookies)
+	}
+
+	// Even with cached Basic Auth header, openjk_hosted_off=1 forces 401 on /base/manifest.json.
+	req = httptest.NewRequest(http.MethodGet, "/base/manifest.json", nil)
+	req.SetBasicAuth("jedi", "secret")
+	req.AddCookie(cookies[0])
+	req.Header.Set("X-No-Auth-Prompt", "1")
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 when logged-out cookie is present, got %d", rec.Code)
+	}
+
+	// /base/login clears the logged-out cookie.
+	req = httptest.NewRequest(http.MethodGet, "/base/login?next=/", nil)
+	req.SetBasicAuth("jedi", "secret")
+	req.AddCookie(cookies[0])
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("expected 303 from /base/login, got %d", rec.Code)
+	}
+	cleared := rec.Result().Cookies()
+	if len(cleared) == 0 || cleared[0].Name != hostedLoggedOutCookie || cleared[0].MaxAge >= 0 {
+		t.Fatalf("expected %s cookie to be cleared by /base/login, got %+v", hostedLoggedOutCookie, cleared)
+	}
+}

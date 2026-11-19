@@ -531,6 +531,8 @@ if(BuildMPEngine)
 		"${SharedDir}/sys/sys_loadlib.h"
 		"${SharedDir}/sys/sys_local.h"
 		"${SharedDir}/sys/sys_main.cpp"
+		"${SharedDir}/sys/sys_wasm_vfs.cpp"
+		"${SharedDir}/sys/sys_wasm_vfs.h"
 		"${SharedDir}/sys/sys_event.cpp"
 		"${SharedDir}/sys/sys_public.h"
 		"${SharedDir}/sys/con_local.h"

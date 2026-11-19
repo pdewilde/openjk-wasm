@@ -452,7 +452,9 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 		case CA_LOADING:
 		case CA_PRIMED:
 			// draw the game information screen and loading progress
-			CL_CGameRendering( stereoFrame );
+			if ( cls.cgameStarted ) {
+				CL_CGameRendering( stereoFrame );
+			}
 
 			// also draw the connection information, so it doesn't
 			// flash away too briefly on local or lan games
@@ -461,7 +463,9 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 			UIVM_DrawConnectScreen( qtrue );
 			break;
 		case CA_ACTIVE:
-			CL_CGameRendering( stereoFrame );
+			if ( cls.cgameStarted ) {
+				CL_CGameRendering( stereoFrame );
+			}
 			SCR_DrawDemoRecording();
 			break;
 		}

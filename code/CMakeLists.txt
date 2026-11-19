@@ -340,6 +340,8 @@ if(BuildSPEngine OR BuildJK2SPEngine)
 
 	set(SPEngineSysFiles
 		"${SharedDir}/sys/sys_main.cpp"
+		"${SharedDir}/sys/sys_wasm_vfs.cpp"
+		"${SharedDir}/sys/sys_wasm_vfs.h"
 		"${SharedDir}/sys/sys_event.cpp"
 		"${SharedDir}/sys/sys_local.h"
 		"${SharedDir}/sys/sys_public.h"

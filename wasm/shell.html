@@ -136,10 +136,25 @@
 			color: #8994a8;
 			margin-top: 10px;
 		}
+		#prefetch-banner {
+			display: none;
+			position: fixed;
+			top: 12px;
+			right: 12px;
+			z-index: 25;
+			background: rgba(18, 22, 31, 0.92);
+			color: #d7e3ff;
+			border: 1px solid #3c5480;
+			border-radius: 6px;
+			padding: 8px 12px;
+			font-size: 12px;
+			pointer-events: none;
+		}
 	</style>
 </head>
 <body>
 	<div id="status">Loading...</div>
+	<div id="prefetch-banner"></div>
 	<div id="asset-picker">
 		<div class="picker-card">
 			<h1>OpenJK WebAssembly</h1>
@@ -294,6 +309,490 @@
 				.catch(function () { return false; });
 		}
 
+		function getWasmFs() {
+			return typeof FS !== 'undefined' ? FS : Module.FS;
+		}
+
+		function ensureDirTree(fs, dirPath) {
+			var parts = String(dirPath || '').split('/');
+			var cur = '';
+			for (var i = 0; i < parts.length; i++) {
+				if (!parts[i]) continue;
+				cur += '/' + parts[i];
+				try { fs.mkdir(cur); } catch (e) { }
+			}
+		}
+
+		function writeWasmFile(fs, fullPath, bytes) {
+			var slash = fullPath.lastIndexOf('/');
+			if (slash > 0) {
+				ensureDirTree(fs, fullPath.slice(0, slash));
+			}
+			fs.writeFile(fullPath, bytes);
+		}
+
+		var opfsSaveQueue = Promise.resolve();
+		var opfsCacheQueue = Promise.resolve();
+
+		function enqueueOpfsSave(fn) {
+			opfsSaveQueue = opfsSaveQueue.then(fn).catch(function (err) {
+				console.warn('OPFS save error:', err);
+			});
+			return opfsSaveQueue;
+		}
+
+		function enqueueOpfsCache(fn) {
+			opfsCacheQueue = opfsCacheQueue.then(fn).catch(function (err) {
+				console.warn('OPFS cache error:', err);
+			});
+			return opfsCacheQueue;
+		}
+
+		async function getOpfsDir(rootName, subDirs, create) {
+			if (typeof navigator === 'undefined' || !navigator.storage || !navigator.storage.getDirectory) {
+				return null;
+			}
+			var root = await navigator.storage.getDirectory();
+			var dir = await root.getDirectoryHandle(rootName, { create: create });
+			if (subDirs) {
+				for (var i = 0; i < subDirs.length; i++) {
+					if (!subDirs[i]) continue;
+					dir = await dir.getDirectoryHandle(subDirs[i], { create: create });
+				}
+			}
+			return dir;
+		}
+
+		async function walkOpfsToWasm(dirHandle, vfsPrefix, fs, onFile) {
+			for await (var entry of dirHandle.entries()) {
+				var name = entry[0];
+				var handle = entry[1];
+				var vfsPath = vfsPrefix + '/' + name;
+				if (handle.kind === 'directory') {
+					ensureDirTree(fs, vfsPath);
+					await walkOpfsToWasm(handle, vfsPath, fs, onFile);
+				} else if (handle.kind === 'file') {
+					var file = await handle.getFile();
+					var bytes = new Uint8Array(await file.arrayBuffer());
+					writeWasmFile(fs, vfsPath, bytes);
+					if (onFile) onFile(vfsPath, bytes);
+				}
+			}
+		}
+
+		async function hydrateOpfsSaves() {
+			var fs = getWasmFs();
+			ensureDirTree(fs, '/saves');
+			try {
+				var savesDir = await getOpfsDir('openjk-saves', null, true);
+				if (savesDir) {
+					await walkOpfsToWasm(savesDir, '/saves', fs, null);
+				}
+			} catch (err) {
+				console.warn('OPFS save hydration skipped:', err);
+			}
+		}
+
+		window.__openjkOpfsSyncFile = function (osPath) {
+			var norm = String(osPath || '').replace(/\\/g, '/');
+			if (norm.indexOf('/saves/') !== 0) return;
+			var rel = norm.slice('/saves/'.length).replace(/^\/+/, '');
+			if (!rel || rel.indexOf('..') !== -1) return;
+			var fs = getWasmFs();
+			var copy;
+			try {
+				copy = new Uint8Array(fs.readFile(norm));
+			} catch (err) {
+				return;
+			}
+			var parts = rel.split('/');
+			var fileName = parts.pop();
+			enqueueOpfsSave(async function () {
+				var dir = await getOpfsDir('openjk-saves', parts, true);
+				if (!dir) return;
+				var fh = await dir.getFileHandle(fileName, { create: true });
+				var w = await fh.createWritable();
+				await w.write(copy);
+				await w.close();
+			});
+		};
+
+		window.__openjkOpfsRemoveFile = function (osPath) {
+			var norm = String(osPath || '').replace(/\\/g, '/');
+			if (norm.indexOf('/saves/') !== 0) return;
+			var rel = norm.slice('/saves/'.length).replace(/^\/+/, '');
+			if (!rel || rel.indexOf('..') !== -1) return;
+			var parts = rel.split('/');
+			var fileName = parts.pop();
+			enqueueOpfsSave(async function () {
+				var dir = await getOpfsDir('openjk-saves', parts, false);
+				if (!dir) return;
+				await dir.removeEntry(fileName);
+			});
+		};
+
+		var manifestState = {
+			data: null,
+			pakEntries: [],
+			mounted: new Set(),
+			activeCount: 0,
+			inflight: Object.create(null),
+			pendingCmd: ''
+		};
+
+		function setPrefetchBanner(text) {
+			var el = document.getElementById('prefetch-banner');
+			if (!el) return;
+			if (!text) {
+				el.style.display = 'none';
+				el.textContent = '';
+			} else {
+				el.style.display = 'block';
+				el.textContent = text;
+			}
+		}
+
+		function storeOpfsCacheFile(relPath, bytes) {
+			var norm = String(relPath || '').replace(/\\/g, '/').replace(/^\/+/, '').toLowerCase();
+			if (!norm || norm.indexOf('..') !== -1) return;
+			var copy = new Uint8Array(bytes);
+			var parts = ['entries'].concat(norm.split('/'));
+			var fileName = parts.pop();
+			enqueueOpfsCache(async function () {
+				var dir = await getOpfsDir('openjk-cache', parts, true);
+				if (!dir) return;
+				var fh = await dir.getFileHandle(fileName, { create: true });
+				var w = await fh.createWritable();
+				await w.write(copy);
+				await w.close();
+			});
+		}
+
+		async function inflateRawBytes(compBytes) {
+			if (typeof DecompressionStream === 'function') {
+				var stream = new Blob([compBytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+				var ab = await new Response(stream).arrayBuffer();
+				return new Uint8Array(ab);
+			}
+			throw new Error('DecompressionStream deflate-raw unavailable');
+		}
+
+		async function prefetchMapDependencies(mapKey, deps) {
+			var fs = getWasmFs();
+			var missing = [];
+			for (var i = 0; i < deps.length; i++) {
+				var p = deps[i];
+				if (!manifestState.mounted.has(p) && manifestState.data.entries[p]) {
+					missing.push(p);
+				}
+			}
+			if (missing.length === 0) return;
+
+			var itemsByPak = Object.create(null);
+			var totalItems = 0;
+			var completed = 0;
+
+			for (var j = 0; j < missing.length; j++) {
+				var path = missing[j];
+				var e = manifestState.data.entries[path];
+				var pakIdx = e[0];
+				var compLen = e[2];
+				var uncompLen = e[3];
+				if (compLen === 0 && uncompLen === 0) {
+					writeWasmFile(fs, '/base/' + path, new Uint8Array(0));
+					manifestState.mounted.add(path);
+					continue;
+				}
+				if (!itemsByPak[pakIdx]) itemsByPak[pakIdx] = [];
+				itemsByPak[pakIdx].push({
+					path: path,
+					pakName: manifestState.data.paks[pakIdx].name,
+					start: e[1],
+					compLen: compLen,
+					uncompLen: uncompLen,
+					method: e[4]
+				});
+				totalItems++;
+			}
+
+			if (totalItems === 0) return;
+
+			var GAP_LIMIT = 65536;
+			var MAX_BATCH = 2 * 1024 * 1024;
+			var batches = [];
+
+			var pakIndices = Object.keys(itemsByPak);
+			for (var pi = 0; pi < pakIndices.length; pi++) {
+				var list = itemsByPak[pakIndices[pi]];
+				list.sort(function (a, b) { return a.start - b.start; });
+				var cur = null;
+				for (var li = 0; li < list.length; li++) {
+					var it = list[li];
+					var itEnd = it.start + it.compLen;
+					if (!cur || (it.start - cur.end) > GAP_LIMIT || (itEnd - cur.start) > MAX_BATCH) {
+						cur = { pakName: it.pakName, start: it.start, end: itEnd, items: [it] };
+						batches.push(cur);
+					} else {
+						if (itEnd > cur.end) cur.end = itEnd;
+						cur.items.push(it);
+					}
+				}
+			}
+
+			setPrefetchBanner('Downloading map "' + mapKey + '" assets (0/' + totalItems + ')...');
+			var cursor = 0;
+
+			async function runWorker() {
+				while (cursor < batches.length) {
+					var batch = batches[cursor++];
+					var resp = await fetch('base/' + batch.pakName, {
+						headers: { 'Range': 'bytes=' + batch.start + '-' + (batch.end - 1) }
+					});
+					if (!resp.ok) {
+						throw new Error('Range fetch failed (' + resp.status + ') for ' + batch.pakName);
+					}
+					var isPartial = (resp.status === 206);
+					var buf = new Uint8Array(await resp.arrayBuffer());
+					for (var bi = 0; bi < batch.items.length; bi++) {
+						var item = batch.items[bi];
+						var relOfs = isPartial ? (item.start - batch.start) : item.start;
+						var compSlice = buf.subarray(relOfs, relOfs + item.compLen);
+						var outBytes;
+						if (item.method === 8) {
+							outBytes = await inflateRawBytes(compSlice);
+						} else if (item.method === 0) {
+							outBytes = new Uint8Array(compSlice);
+						} else {
+							throw new Error('Unsupported zip method ' + item.method + ' for ' + item.path);
+						}
+						writeWasmFile(fs, '/base/' + item.path, outBytes);
+						manifestState.mounted.add(item.path);
+						storeOpfsCacheFile(item.path, outBytes);
+						completed++;
+						var pct = Math.round((completed * 100) / totalItems);
+						setPrefetchBanner('Downloading map "' + mapKey + '" assets (' + completed + '/' + totalItems + ', ' + pct + '%)');
+					}
+				}
+			}
+
+			var workers = [];
+			var concurrency = Math.min(4, batches.length);
+			for (var wi = 0; wi < concurrency; wi++) {
+				workers.push(runWorker());
+			}
+			await Promise.all(workers);
+			setPrefetchBanner('');
+		}
+
+		function installManifestBindings() {
+			window.__openjkManifestApi = {
+				getPakCount: function (gameDir) {
+					if (!manifestState.data || gameDir !== 'base') return 0;
+					return manifestState.data.paks.length;
+				},
+				getPakInfo: function (pakIdx) {
+					if (!manifestState.data || pakIdx < 0 || pakIdx >= manifestState.data.paks.length) return null;
+					var p = manifestState.data.paks[pakIdx];
+					return {
+						basename: p.basename,
+						numEntries: manifestState.pakEntries[pakIdx].length,
+						numCrcs: p.crcs ? p.crcs.length : 0
+					};
+				},
+				getPakCrcs: function (pakIdx) {
+					if (!manifestState.data || pakIdx < 0 || pakIdx >= manifestState.data.paks.length) return null;
+					return manifestState.data.paks[pakIdx].crcs || [];
+				},
+				getPakEntry: function (pakIdx, entryIdx) {
+					var list = manifestState.pakEntries[pakIdx];
+					if (!list || entryIdx < 0 || entryIdx >= list.length) return null;
+					return list[entryIdx];
+				},
+				fetchRangeSync: function (pakBasename, dataOfs, compLen) {
+					if (!manifestState.data || compLen <= 0) return new Uint8Array(0);
+					var pak = null;
+					for (var i = 0; i < manifestState.data.paks.length; i++) {
+						if (manifestState.data.paks[i].basename === pakBasename) {
+							pak = manifestState.data.paks[i];
+							break;
+						}
+					}
+					if (!pak) return null;
+					var xhr = new XMLHttpRequest();
+					xhr.open('GET', 'base/' + pak.name, false);
+					xhr.setRequestHeader('Range', 'bytes=' + dataOfs + '-' + (dataOfs + compLen - 1));
+					xhr.overrideMimeType('text/plain; charset=x-user-defined');
+					xhr.send(null);
+					if (xhr.status !== 206 && xhr.status !== 200) return null;
+					var text = xhr.responseText || '';
+					var startAt = (xhr.status === 200) ? dataOfs : 0;
+					if (text.length < startAt + compLen) return null;
+					var out = new Uint8Array(compLen);
+					for (var j = 0; j < compLen; j++) {
+						out[j] = text.charCodeAt(startAt + j) & 0xff;
+					}
+					return out;
+				},
+				cachePutFile: function (cleanQ, destPath) {
+					var key = String(cleanQ || '').replace(/\\/g, '/').replace(/^\/+/, '').toLowerCase();
+					if (!key) return;
+					manifestState.mounted.add(key);
+					try {
+						var bytes = getWasmFs().readFile(destPath);
+						storeOpfsCacheFile(key, bytes);
+					} catch (err) { }
+				}
+			};
+
+			window.__openjkIsMapPrefetchActive = function () {
+				return manifestState.activeCount > 0 ? 1 : 0;
+			};
+
+			window.__openjkRunCommand = function (cmd) {
+				var s = String(cmd || '').trim();
+				if (!s) return;
+				manifestState.pendingCmd = manifestState.pendingCmd ? (manifestState.pendingCmd + '\n' + s) : s;
+			};
+
+			window.__openjkConsumePendingCommand = function () {
+				if (manifestState.activeCount > 0 || !manifestState.pendingCmd) return '';
+				var cmd = manifestState.pendingCmd;
+				manifestState.pendingCmd = '';
+				return cmd;
+			};
+
+			window.__openjkEnsureMapAssets = function (mapName, retryCmd) {
+				if (!manifestState.data) return 1;
+				var m = String(mapName || '').trim().toLowerCase().replace(/^maps\//, '').replace(/\.bsp$/, '');
+				var deps = (manifestState.data.maps && manifestState.data.maps[m]) ? manifestState.data.maps[m] : [];
+				if (deps.length === 0) return 1;
+
+				var needFetch = false;
+				for (var i = 0; i < deps.length; i++) {
+					var d = deps[i];
+					if (!manifestState.mounted.has(d) && manifestState.data.entries[d]) {
+						needFetch = true;
+						break;
+					}
+				}
+				if (!needFetch) return 1;
+
+				if (manifestState.inflight[m]) {
+					if (retryCmd) manifestState.inflight[m].retryCmd = retryCmd;
+					return 0;
+				}
+
+				var state = { retryCmd: retryCmd || '' };
+				manifestState.activeCount++;
+				manifestState.inflight[m] = state;
+
+				prefetchMapDependencies(m, deps)
+					.catch(function (err) {
+						console.error('Map asset prefetch error for ' + m + ':', err);
+						setPrefetchBanner('Map prefetch partial failure (' + m + ') — continuing with fallback');
+					})
+					.finally(function () {
+						delete manifestState.inflight[m];
+						manifestState.activeCount--;
+						if (state.retryCmd) {
+							manifestState.pendingCmd = state.retryCmd;
+						}
+					});
+				return 0;
+			};
+		}
+
+		async function initManifestMode() {
+			var resp;
+			try {
+				resp = await fetch('base/manifest.json', { cache: 'no-cache' });
+			} catch (err) {
+				return false;
+			}
+			if (!resp || !resp.ok) return false;
+
+			var manifest = await resp.json();
+			if (!manifest || !manifest.boot || !Array.isArray(manifest.paks) || !manifest.entries) {
+				return false;
+			}
+
+			manifestState.data = manifest;
+			manifestState.pakEntries = manifest.paks.map(function () { return []; });
+			var entryKeys = Object.keys(manifest.entries);
+			for (var i = 0; i < entryKeys.length; i++) {
+				var k = entryKeys[i];
+				var e = manifest.entries[k];
+				if (e && e[0] >= 0 && e[0] < manifestState.pakEntries.length) {
+					manifestState.pakEntries[e[0]].push([k, e[1], e[2], e[3], e[4]]);
+				}
+			}
+
+			var fs = getWasmFs();
+			ensureDirTree(fs, '/base');
+
+			var bootName = manifest.boot.name || '00_boot.pk3';
+			var bootBytes = null;
+			var cacheRoot = null;
+			try {
+				cacheRoot = await getOpfsDir('openjk-cache', null, true);
+				if (cacheRoot) {
+					var metaMatch = false;
+					try {
+						var metaFile = await (await cacheRoot.getFileHandle('boot_meta.json', { create: false })).getFile();
+						var meta = JSON.parse(await metaFile.text());
+						if (meta && meta.size === manifest.boot.size && meta.sha256 === manifest.boot.sha256) {
+							metaMatch = true;
+						}
+					} catch (e) { }
+
+					if (metaMatch) {
+						try {
+							var bootFile = await (await cacheRoot.getFileHandle(bootName, { create: false })).getFile();
+							bootBytes = new Uint8Array(await bootFile.arrayBuffer());
+						} catch (e) {
+							bootBytes = null;
+						}
+						try {
+							var entriesDir = await cacheRoot.getDirectoryHandle('entries', { create: false });
+							await walkOpfsToWasm(entriesDir, '/base', fs, function (vfsPath) {
+								var rel = vfsPath.slice('/base/'.length).toLowerCase();
+								manifestState.mounted.add(rel);
+							});
+						} catch (e) { }
+					} else {
+						try { await cacheRoot.removeEntry('entries', { recursive: true }); } catch (e) { }
+					}
+				}
+			} catch (err) {
+				console.warn('OPFS cache check skipped:', err);
+			}
+
+			if (!bootBytes) {
+				Module.setStatus('Downloading boot assets...');
+				var bootResp = await fetch('base/' + bootName);
+				if (!bootResp.ok) {
+					throw new Error('Failed to fetch base/' + bootName + ': ' + bootResp.status);
+				}
+				bootBytes = new Uint8Array(await bootResp.arrayBuffer());
+				if (cacheRoot) {
+					try {
+						var bfh = await cacheRoot.getFileHandle(bootName, { create: true });
+						var bw = await bfh.createWritable();
+						await bw.write(bootBytes);
+						await bw.close();
+						var mfh = await cacheRoot.getFileHandle('boot_meta.json', { create: true });
+						var mw = await mfh.createWritable();
+						await mw.write(JSON.stringify({ size: manifest.boot.size, sha256: manifest.boot.sha256 }));
+						await mw.close();
+					} catch (e) { }
+				}
+			}
+
+			writeWasmFile(fs, '/base/' + bootName, bootBytes);
+			installManifestBindings();
+			return true;
+		}
+
 		var Module = {
 			canvas: canvasElement,
 			noInitialRun: true,
@@ -333,24 +832,40 @@
 				}
 				var autoStart = params.has('args') || params.has('autostart');
 				Module.setStatus('Loading modules...');
-				preloadSideModules().then(function () {
-					if (autoStart) {
-						Module.setStatus('');
-						Module.callMain(args);
-						return;
-					}
-					return hasHostedBaseAssets().then(function (hosted) {
-						if (hosted) {
+				preloadSideModules()
+					.then(function () {
+						return hydrateOpfsSaves();
+					})
+					.then(function () {
+						return initManifestMode();
+					})
+					.then(function (manifestReady) {
+						if (manifestReady) {
 							Module.setStatus('');
 							Module.callMain(args);
-						} else {
-							Module.setStatus('');
-							pickerElement.style.display = 'flex';
-							folderInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };
-							filesInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };
+							return;
 						}
+						if (autoStart) {
+							Module.setStatus('');
+							Module.callMain(args);
+							return;
+						}
+						return hasHostedBaseAssets().then(function (hosted) {
+							if (hosted) {
+								Module.setStatus('');
+								Module.callMain(args);
+							} else {
+								Module.setStatus('');
+								pickerElement.style.display = 'flex';
+								folderInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };
+								filesInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };
+							}
+						});
+					})
+					.catch(function (err) {
+						console.error('Initialization failed:', err);
+						Module.setStatus('Initialization failed: ' + err.message);
 					});
-				});
 			}
 		};
 

@@ -33,6 +33,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "server.h"
 #include "../qcommon/stringed_ingame.h"
 #include "../game/statindex.h"
+#include "sys/sys_wasm_vfs.h"
 #include "../game/weapons.h"
 #include "../game/g_items.h"
 
@@ -269,6 +270,14 @@ void SV_LoadGame_f(void)
 	Com_Printf (S_COLOR_CYAN "%s\n",va(SE_GetString("MENUS_LOADING_MAPNAME"), psFilename));
 #endif
 
+#ifdef __EMSCRIPTEN__
+	{
+		char *mapHint = SG_GetSaveGameMapName( psFilename );
+		if ( mapHint && mapHint[0] && !Sys_WasmEnsureMapAssets( mapHint, va( "load \"%s\"\n", psFilename ) ) ) {
+			return;
+		}
+	}
+#endif
 	gbAlreadyDoingLoad = qtrue;
 	if (!SG_ReadSavegame(psFilename)) {
 		gbAlreadyDoingLoad = qfalse; //	do NOT do this here now, need to wait until client spawn, unless the load failed.

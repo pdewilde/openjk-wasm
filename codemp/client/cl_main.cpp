@@ -32,6 +32,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "qcommon/MiniHeap.h"
 #include "qcommon/stringed_ingame.h"
 #include "qcommon/game_version.h"
+#include "sys/sys_wasm_vfs.h"
 #include "cl_cgameapi.h"
 #include "cl_uiapi.h"
 #include "cl_lan.h"
@@ -781,6 +782,10 @@ void CL_Disconnect( qboolean showMainMenu ) {
 		return;
 	}
 
+#ifdef __EMSCRIPTEN__
+	cls.wasmPrefetchPending = qfalse;
+#endif
+
 	// shutting down the client so enter full screen ui mode
 	Cvar_Set("r_uiFullScreen", "1");
 
@@ -1364,6 +1369,20 @@ void CL_DownloadsComplete( void ) {
 	if ( cls.state != CA_LOADING ) {
 		return;
 	}
+
+#ifdef __EMSCRIPTEN__
+	{
+		const char *info = cl.gameState.stringData + cl.gameState.stringOffsets[CS_SERVERINFO];
+		const char *mapname = Info_ValueForKey( info, "mapname" );
+		if ( mapname && mapname[0] && !Sys_WasmEnsureMapAssets( mapname, "" ) ) {
+			// Stay in CA_CONNECTED until async map prefetch completes so SCR_DrawScreenField does not render an uninitialized cgame.
+			cls.state = CA_CONNECTED;
+			cls.wasmPrefetchPending = qtrue;
+			return;
+		}
+		cls.wasmPrefetchPending = qfalse;
+	}
+#endif
 
 	// starting to load a map so we get out of full screen ui mode
 	Cvar_Set("r_uiFullScreen", "0");
@@ -2186,6 +2205,15 @@ void CL_Frame ( int msec ) {
 	if ( !com_cl_running->integer ) {
 		return;
 	}
+
+#ifdef __EMSCRIPTEN__
+	if ( cls.wasmPrefetchPending && !Sys_WasmIsMapPrefetchActive() ) {
+		cls.wasmPrefetchPending = qfalse;
+		if ( cls.state == CA_CONNECTED ) {
+			CL_DownloadsComplete();
+		}
+	}
+#endif
 
 	SE_CheckForLanguageUpdates();	// will take zero time to execute unless language changes, then will reload strings.
 									//	of course this still doesn't work for menus...

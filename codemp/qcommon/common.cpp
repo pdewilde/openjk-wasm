@@ -29,6 +29,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "qcommon/game_version.h"
 #include "../server/NPCNav/navigator.h"
 #include "../shared/sys/sys_local.h"
+#include "sys/sys_wasm_vfs.h"
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -1569,6 +1570,16 @@ void Com_Frame( void ) {
 
 		Cbuf_Execute ();
 
+#ifdef __EMSCRIPTEN__
+		{
+			char wasmCmd[MAX_STRING_CHARS];
+			if (Sys_WasmConsumePendingCommand(wasmCmd, sizeof(wasmCmd))) {
+				Cbuf_AddText(wasmCmd);
+				Cbuf_Execute();
+			}
+		}
+#endif
+
 		// mess with msec if needed
 		msec = Com_ModifyMsec( msec );
 
@@ -1610,6 +1621,16 @@ void Com_Frame( void ) {
 			}
 			Com_EventLoop();
 			Cbuf_Execute ();
+
+#ifdef __EMSCRIPTEN__
+		{
+			char wasmCmd[MAX_STRING_CHARS];
+			if (Sys_WasmConsumePendingCommand(wasmCmd, sizeof(wasmCmd))) {
+				Cbuf_AddText(wasmCmd);
+				Cbuf_Execute();
+			}
+		}
+#endif
 
 
 			//

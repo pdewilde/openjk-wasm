@@ -297,6 +297,9 @@ typedef struct clientStatic_s {
 	qboolean	soundRegistered;
 	qboolean	uiStarted;
 	qboolean	cgameStarted;
+#ifdef __EMSCRIPTEN__
+	qboolean	wasmPrefetchPending;
+#endif
 
 	int			framecount;
 	int			frametime;			// msec since last frame

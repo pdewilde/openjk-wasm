@@ -31,6 +31,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 
 #include "qcommon/qcommon.h"
+#include "sys/sys_wasm_vfs.h"
 
 #ifndef DEDICATED
 #ifndef FINAL_BUILD
@@ -197,6 +198,10 @@ typedef struct fileInPack_s {
 	char					*name;		// name of the file
 	unsigned long			pos;		// file info position in zip
 	unsigned long			len;		// uncompress file size
+#ifdef __EMSCRIPTEN__
+	unsigned long			wasmCompLen;
+	int						wasmMethod;
+#endif
 	struct	fileInPack_s*	next;		// next file in the hash
 } fileInPack_t;
 
@@ -212,6 +217,9 @@ typedef struct pack_s {
 	int				referenced;					// referenced file flags
 	qboolean		noref;						// file is blacklisted for referencing
 	int				hashSize;					// hash table size (power of 2)
+#ifdef __EMSCRIPTEN__
+	qboolean		wasmManifestPak;
+#endif
 	fileInPack_t*	*hashTable;					// hash table
 	fileInPack_t*	buildBuffer;				// buffer with the filenames etc.
 } pack_t;
@@ -271,6 +279,9 @@ typedef struct fileHandleData_s {
 	int			zipFileLen;
 	qboolean	zipFile;
 	char		name[MAX_ZPATH];
+#ifdef __EMSCRIPTEN__
+	char		wasmWritePath[MAX_OSPATH];
+#endif
 } fileHandleData_t;
 
 static fileHandleData_t	fsh[MAX_FILE_HANDLES];
@@ -671,6 +682,7 @@ void FS_Remove( const char *osPath ) {
 	FS_CheckFilenameIsMutable( osPath, __func__ );
 
 	remove( osPath );
+	Sys_WasmRemoveSavePath( osPath );
 }
 
 /*
@@ -682,8 +694,9 @@ FS_HomeRemove
 void FS_HomeRemove( const char *homePath ) {
 	FS_CheckFilenameIsMutable( homePath, __func__ );
 
-	remove( FS_BuildOSPath( fs_homepath->string,
-			fs_gamedir, homePath ) );
+	char *osPath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, homePath );
+	remove( osPath );
+	Sys_WasmRemoveSavePath( osPath );
 }
 
 /*
@@ -984,6 +997,9 @@ void FS_SV_Rename( const char *from, const char *to, qboolean safe ) {
 		// Failed, try copying it and deleting the original
 		FS_CopyFile ( from_ospath, to_ospath );
 		FS_Remove ( from_ospath );
+	} else {
+		Sys_WasmRemoveSavePath( from_ospath );
+		Sys_WasmPersistSavePath( to_ospath );
 	}
 }
 
@@ -1014,6 +1030,9 @@ void FS_Rename( const char *from, const char *to ) {
 		// Failed, try copying it and deleting the original
 		FS_CopyFile ( from_ospath, to_ospath );
 		FS_Remove ( from_ospath );
+	} else {
+		Sys_WasmRemoveSavePath( from_ospath );
+		Sys_WasmPersistSavePath( to_ospath );
 	}
 }
 
@@ -1052,6 +1071,11 @@ void FS_FCloseFile( fileHandle_t f ) {
 	if (fsh[f].handleFiles.file.o) {
 		fclose (fsh[f].handleFiles.file.o);
 	}
+#ifdef __EMSCRIPTEN__
+	if (fsh[f].wasmWritePath[0]) {
+		Sys_WasmPersistSavePath( fsh[f].wasmWritePath );
+	}
+#endif
 	Com_Memset( &fsh[f], 0, sizeof( fsh[f] ) );
 }
 
@@ -1094,6 +1118,10 @@ fileHandle_t FS_FOpenFileWrite( const char *filename, qboolean safe ) {
 	fsh[f].handleSync = qfalse;
 	if (!fsh[f].handleFiles.file.o) {
 		f = 0;
+	} else {
+#ifdef __EMSCRIPTEN__
+		Q_strncpyz( fsh[f].wasmWritePath, ospath, sizeof( fsh[f].wasmWritePath ) );
+#endif
 	}
 	return f;
 }
@@ -1134,6 +1162,10 @@ fileHandle_t FS_FOpenFileAppend( const char *filename ) {
 	fsh[f].handleSync = qfalse;
 	if (!fsh[f].handleFiles.file.o) {
 		f = 0;
+	} else {
+#ifdef __EMSCRIPTEN__
+		Q_strncpyz( fsh[f].wasmWritePath, ospath, sizeof( fsh[f].wasmWritePath ) );
+#endif
 	}
 	return f;
 }
@@ -1450,6 +1482,33 @@ long FS_FOpenFileRead( const char *filename, fileHandle_t *file, qboolean unique
 							}
 							*/
 						}
+
+#ifdef __EMSCRIPTEN__
+						if ( pak->wasmManifestPak ) {
+							const char *baseDir = fs_basepath->string[0] ? fs_basepath->string : "/";
+							char *ospath = FS_BuildOSPath( baseDir, pak->pakGamename, pakFile->name );
+							FILE *mfp = fopen( ospath, "rb" );
+							if ( !mfp ) {
+								if ( Sys_WasmFetchManifestEntry( pak->pakBasename, pakFile->name, pakFile->pos,
+										pakFile->wasmCompLen, pakFile->len, pakFile->wasmMethod,
+										baseDir, pak->pakGamename ) ) {
+									mfp = fopen( ospath, "rb" );
+								}
+							}
+							if ( !mfp ) {
+								break;
+							}
+							fsh[*file].handleFiles.file.o = mfp;
+							Q_strncpyz( fsh[*file].name, filename, sizeof( fsh[*file].name ) );
+							fsh[*file].zipFile = qfalse;
+							fsh[*file].handleSync = qfalse;
+							if ( fs_debug->integer ) {
+								Com_Printf( "FS_FOpenFileRead: %s (manifest pak '%s')\n",
+									filename, pak->pakFilename );
+							}
+							return pakFile->len;
+						}
+#endif
 
 						if ( uniqueFILE ) {
 							// open a new file on the pakfile
@@ -2222,7 +2281,9 @@ Frees a pak structure and releases all associated resources
 
 void FS_FreePak(pack_t *thepak)
 {
-	unzClose(thepak->handle);
+	if (thepak->handle) {
+		unzClose(thepak->handle);
+	}
 	Z_Free(thepak->buildBuffer);
 	Z_Free(thepak);
 }
@@ -3156,6 +3217,107 @@ static void FS_AddGameDirectory( const char *path, const char *dir ) {
 
 	// done
 	Sys_FreeFileList( pakfiles );
+
+#ifdef __EMSCRIPTEN__
+	if ( !Q_stricmp( path, fs_basepath->string ) ) {
+		int mCount = Sys_WasmGetManifestPakCount( dir );
+		for ( i = 0; i < mCount; i++ ) {
+			char basename[MAX_OSPATH];
+			int numEntries = 0, numCrcs = 0;
+			if ( !Sys_WasmGetManifestPakInfo( i, basename, sizeof(basename), &numEntries, &numCrcs ) ) {
+				continue;
+			}
+			qboolean alreadyLoaded = qfalse;
+			for ( sp = fs_searchpaths; sp; sp = sp->next ) {
+				if ( sp->pack && !Q_stricmp( sp->pack->pakGamename, dir ) && !Q_stricmp( sp->pack->pakBasename, basename ) ) {
+					alreadyLoaded = qtrue;
+					break;
+				}
+			}
+			if ( alreadyLoaded || numEntries <= 0 ) {
+				continue;
+			}
+
+			int hashSz = 1;
+			while ( hashSz <= numEntries && hashSz < MAX_FILEHASH_SIZE ) {
+				hashSz <<= 1;
+			}
+			pack_t *mpak = (pack_t *)Z_Malloc( sizeof( pack_t ) + hashSz * sizeof( fileInPack_t * ), TAG_FILESYS, qtrue );
+			mpak->wasmManifestPak = qtrue;
+			mpak->handle = NULL;
+			mpak->hashSize = hashSz;
+			mpak->hashTable = (fileInPack_t **)( ((char *)mpak) + sizeof( pack_t ) );
+			for ( int j = 0; j < mpak->hashSize; j++ ) {
+				mpak->hashTable[j] = NULL;
+			}
+			Q_strncpyz( mpak->pakPathname, curpath, sizeof( mpak->pakPathname ) );
+			Q_strncpyz( mpak->pakBasename, basename, sizeof( mpak->pakBasename ) );
+			Q_strncpyz( mpak->pakGamename, dir, sizeof( mpak->pakGamename ) );
+			Com_sprintf( mpak->pakFilename, sizeof( mpak->pakFilename ), "%s/%s.pk3", curpath, basename );
+			if ( Q_stricmpn( mpak->pakGamename, BASEGAME, (int)strlen( BASEGAME ) ) ) {
+				mpak->referenced |= FS_GENERAL_REF;
+			}
+
+			char entryPath[MAX_ZPATH];
+			size_t totalStrLen = 0;
+			for ( int ei = 0; ei < numEntries; ei++ ) {
+				unsigned long dOfs = 0, cLen = 0, uLen = 0;
+				int mMethod = 0;
+				if ( Sys_WasmGetManifestPakEntry( i, ei, entryPath, sizeof(entryPath), &dOfs, &cLen, &uLen, &mMethod ) ) {
+					totalStrLen += strlen( entryPath ) + 1;
+				}
+			}
+			fileInPack_t *buf = (fileInPack_t *)Z_Malloc( (numEntries * sizeof( fileInPack_t )) + totalStrLen, TAG_FILESYS, qtrue );
+			char *nPtr = ((char *)buf) + numEntries * sizeof( fileInPack_t );
+			int actualFiles = 0;
+			for ( int ei = 0; ei < numEntries; ei++ ) {
+				unsigned long dOfs = 0, cLen = 0, uLen = 0;
+				int mMethod = 0;
+				if ( !Sys_WasmGetManifestPakEntry( i, ei, entryPath, sizeof(entryPath), &dOfs, &cLen, &uLen, &mMethod ) ) {
+					continue;
+				}
+				Q_strlwr( entryPath );
+				long h = FS_HashFileName( entryPath, mpak->hashSize );
+				buf[actualFiles].name = nPtr;
+				strcpy( buf[actualFiles].name, entryPath );
+				nPtr += strlen( entryPath ) + 1;
+				buf[actualFiles].pos = dOfs;
+				buf[actualFiles].len = uLen;
+				buf[actualFiles].wasmCompLen = cLen;
+				buf[actualFiles].wasmMethod = mMethod;
+				buf[actualFiles].next = mpak->hashTable[h];
+				mpak->hashTable[h] = &buf[actualFiles];
+				actualFiles++;
+			}
+			mpak->numfiles = actualFiles;
+			mpak->buildBuffer = buf;
+
+			if ( numCrcs > 0 ) {
+				int *crcs = (int *)Z_Malloc( (numCrcs + 1) * sizeof( int ), TAG_FILESYS, qtrue );
+				crcs[0] = LittleLong( fs_checksumFeed );
+				int gotCrcs = Sys_WasmGetManifestPakCrcs( i, &crcs[1], numCrcs );
+				if ( gotCrcs > 0 ) {
+					mpak->checksum = Com_BlockChecksum( &crcs[1], sizeof( *crcs ) * gotCrcs );
+					mpak->pure_checksum = Com_BlockChecksum( crcs, sizeof( *crcs ) * (gotCrcs + 1) );
+					mpak->checksum = LittleLong( mpak->checksum );
+					mpak->pure_checksum = LittleLong( mpak->pure_checksum );
+				}
+				Z_Free( crcs );
+			}
+
+			fs_packFiles += mpak->numfiles;
+			search = (searchpath_s *)Z_Malloc( sizeof( searchpath_t ), TAG_FILESYS, qtrue );
+			search->pack = mpak;
+			if ( thedir ) {
+				search->next = thedir->next;
+				thedir->next = search;
+			} else {
+				search->next = fs_searchpaths;
+				fs_searchpaths = search;
+			}
+		}
+	}
+#endif
 }
 
 /*

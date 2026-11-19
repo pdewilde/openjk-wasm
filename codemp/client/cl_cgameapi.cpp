@@ -1936,4 +1936,5 @@ void CL_UnbindCGame( void ) {
 	CGVM_Shutdown();
 	VM_Free( cgvm );
 	cgvm = NULL;
+	cge = NULL;
 }

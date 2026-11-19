@@ -1452,4 +1452,5 @@ void CL_UnbindUI( void ) {
 	UIVM_Shutdown();
 	VM_Free( uivm );
 	uivm = NULL;
+	uie = NULL;
 }

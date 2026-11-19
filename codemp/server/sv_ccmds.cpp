@@ -26,6 +26,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "qcommon/stringed_ingame.h"
 #include "qcommon/game_version.h"
 #include "server/sv_gameapi.h"
+#include "sys/sys_wasm_vfs.h"
 
 /*
 ===============================================================================
@@ -183,6 +184,11 @@ static void SV_Map_f( void ) {
 	}
 
 	Com_sprintf (expanded, sizeof(expanded), "maps/%s.bsp", map);
+#ifdef __EMSCRIPTEN__
+	if ( !Sys_WasmEnsureMapAssets( map, va( "%s %s\n", Cmd_Argv(0), Cmd_Args() ) ) ) {
+		return;
+	}
+#endif
 	if ( FS_ReadFile (expanded, NULL) == -1 ) {
 		Com_Printf ("Can't find map %s\n", expanded);
 		return;

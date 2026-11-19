@@ -766,9 +766,8 @@
 				<span id="base-badge" class="badge warn">Required</span>
 			</div>
 			<p id="gamefiles-help" class="gamefiles-help">
-				Select your local Jedi Academy <code>GameData/base</code> folder (containing <code>assets0.pk3</code>&ndash;<code>assets3.pk3</code>), or drop those files here.
-				On Steam, look in <code>Steam/steamapps/common/Jedi Academy/GameData/base</code>.
-				Don't own it yet? Get it on <a href="https://store.steampowered.com/app/6020/" target="_blank" rel="noopener noreferrer">Steam</a> or <a href="https://www.gog.com/game/star_wars_jedi_knight_jedi_academy" target="_blank" rel="noopener noreferrer">GOG</a>.
+				Drop or select your Jedi Academy <code>GameData/base</code> folder (<code>assets0.pk3</code>&ndash;<code>assets3.pk3</code>), <strong>or drop the GOG installer <code>.exe</code></strong> and we'll unpack it automatically in your browser.
+				Already own it on GOG? <a href="https://www.gog.com/downloads/star_wars_jedi_knight_jedi_academy/en1installer0" target="_blank" rel="noopener noreferrer">Download the GOG installer</a> (requires GOG login), or buy on <a href="https://store.steampowered.com/app/6020/" target="_blank" rel="noopener noreferrer">Steam</a> / <a href="https://www.gog.com/game/star_wars_jedi_knight_jedi_academy" target="_blank" rel="noopener noreferrer">GOG</a>.
 			</p>
 			<div class="gamefiles-actions">
 				<label class="btn gold">
@@ -776,8 +775,8 @@
 					<input id="base-folder-input" type="file" webkitdirectory directory multiple hidden>
 				</label>
 				<label class="btn">
-					Choose <code>assets*.pk3</code> Files
-					<input id="base-files-input" type="file" multiple accept=".pk3,.cfg" hidden>
+					Choose GOG <code>.exe</code> or <code>.pk3</code>
+					<input id="base-files-input" type="file" multiple accept=".exe,.pk3,.cfg" hidden>
 				</label>
 				<button id="base-clear-btn" class="btn small danger" type="button" style="display: none;">Clear Saved Files</button>
 			</div>
@@ -894,6 +893,7 @@
 		</div>
 	</div>
 
+	<script src="gog_extractor.js"></script>
 	<script>
 		(function () {
 			var RESERVED_NAMES = {
@@ -1055,13 +1055,72 @@
 					gamefilesTitle.textContent = 'Step 1 · Load Your Jedi Academy Files';
 					baseBadge.className = 'badge warn';
 					baseBadge.textContent = 'Required';
-					gamefilesHelp.innerHTML = 'Select your local Jedi Academy <code>GameData/base</code> folder (containing <code>assets0.pk3</code>&ndash;<code>assets3.pk3</code>), or drop those files here. On Steam, look in <code>Steam/steamapps/common/Jedi Academy/GameData/base</code>. Don\'t own it yet? Get it on <a href="https://store.steampowered.com/app/6020/" target="_blank" rel="noopener noreferrer">Steam</a> or <a href="https://www.gog.com/game/star_wars_jedi_knight_jedi_academy" target="_blank" rel="noopener noreferrer">GOG</a>.';
+					gamefilesHelp.innerHTML = 'Drop or select your Jedi Academy <code>GameData/base</code> folder (<code>assets0.pk3</code>&ndash;<code>assets3.pk3</code>), <strong>or drop the GOG installer <code>.exe</code></strong> and we\'ll unpack it automatically in your browser. Already own it on GOG? <a href="https://www.gog.com/downloads/star_wars_jedi_knight_jedi_academy/en1installer0" target="_blank" rel="noopener noreferrer">Download the GOG installer</a> (requires GOG login), or buy on <a href="https://store.steampowered.com/app/6020/" target="_blank" rel="noopener noreferrer">Steam</a> / <a href="https://www.gog.com/game/star_wars_jedi_knight_jedi_academy" target="_blank" rel="noopener noreferrer">GOG</a>.';
 					baseClearBtn.style.display = info.count > 0 ? 'inline-flex' : 'none';
+				}
+			}
+
+			async function importGogExeFile(exeFile) {
+				if (!window.OpenJKGogExtractor) {
+					setBaseStatus('GOG installer unpacker failed to load.', 'error');
+					return;
+				}
+				baseFolderInput.disabled = true;
+				baseFilesInput.disabled = true;
+				baseClearBtn.disabled = true;
+				try {
+					var root = await getOpfsRoot();
+					var sessionExtracted = [];
+					var res = await window.OpenJKGogExtractor.extractGogInstaller(exeFile, {
+						onProgress: function (msg) {
+							setBaseStatus(msg, '');
+						},
+						createSink: async function (fileName) {
+							if (root) {
+								var dir = await getSubDir(root, ['openjk-base'], true);
+								var fh = await dir.getFileHandle(fileName, { create: true });
+								var w = await fh.createWritable();
+								return {
+									write: async function (bytes) { await w.write(bytes); },
+									close: async function () { await w.close(); }
+								};
+							}
+							var parts = [];
+							return {
+								write: async function (bytes) { parts.push(bytes); },
+								close: async function () {
+									var f = new File(parts, fileName, { type: 'application/octet-stream' });
+									sessionExtracted.push({ rel: fileName, file: f });
+								}
+							};
+						}
+					});
+					if (!root) {
+						var byKey = Object.create(null);
+						sessionBaseFiles.forEach(function (it) { byKey[it.rel.toLowerCase()] = it; });
+						sessionExtracted.forEach(function (it) { byKey[it.rel.toLowerCase()] = it; });
+						sessionBaseFiles = Object.keys(byKey).map(function (k) { return byKey[k]; });
+						window.__openjkSessionBaseFiles = sessionBaseFiles;
+					}
+					await refreshSavedBaseUi(false);
+					setBaseStatus('Unpacked ' + res.files.length + ' game archives from GOG installer! Click Play Multiplayer or Play Singleplayer below.', 'ok');
+				} catch (err) {
+					setBaseStatus('GOG unpack failed: ' + err.message, 'error');
+				} finally {
+					baseFolderInput.disabled = false;
+					baseFilesInput.disabled = false;
+					baseClearBtn.disabled = false;
 				}
 			}
 
 			async function importBaseFiles(fileList) {
 				if (!fileList || fileList.length === 0) return;
+				for (var ei = 0; ei < fileList.length; ei++) {
+					if (window.OpenJKGogExtractor && window.OpenJKGogExtractor.isGogExeFile(fileList[ei])) {
+						await importGogExeFile(fileList[ei]);
+						return;
+					}
+				}
 				var selected = [];
 				for (var i = 0; i < fileList.length; i++) {
 					var f = fileList[i];
@@ -1072,7 +1131,7 @@
 					selected.push({ file: f, rel: rel });
 				}
 				if (selected.length === 0) {
-					setBaseStatus('No .pk3 game files found. Please select your Jedi Academy GameData/base folder (containing assets0.pk3–assets3.pk3).', 'error');
+					setBaseStatus('No .pk3 or GOG installer .exe found. Select your GameData/base folder, assets0–3.pk3, or the GOG installer .exe.', 'error');
 					return;
 				}
 				var root = await getOpfsRoot();
@@ -1415,10 +1474,10 @@
 				var files = Array.prototype.slice.call(fileList);
 
 				var looksLikeBaseAssets = files.every(function (f) {
-					return /^assets[0-3]\.pk3$/i.test(f.name);
+					return /^assets[0-3]\.pk3$/i.test(f.name) || /\.exe$/i.test(f.name);
 				});
 				if (looksLikeBaseAssets) {
-					setStatus('Those are base Jedi Academy assets — saving them into Game Files above instead.', 'ok');
+					setStatus('Those are base Jedi Academy game files — loading them into Step 1 above instead.', 'ok');
 					await importBaseFiles(fileList);
 					return;
 				}

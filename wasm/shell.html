@@ -166,15 +166,15 @@
 	<div id="asset-picker">
 		<div class="picker-card">
 			<h1>Load Jedi Academy Game Files</h1>
-			<p>Select your local Jedi Academy <code>GameData/base</code> folder (containing <code>assets0.pk3</code>&ndash;<code>assets3.pk3</code>) to launch. On Steam, look in <code>Steam/steamapps/common/Jedi Academy/GameData/base</code>.</p>
+			<p>Select your local Jedi Academy <code>GameData/base</code> folder (<code>assets0.pk3</code>&ndash;<code>assets3.pk3</code>) or the <strong>GOG installer <code>.exe</code></strong>. Own it on GOG? <a href="https://www.gog.com/downloads/star_wars_jedi_knight_jedi_academy/en1installer0" target="_blank" rel="noopener noreferrer" style="color:#8db3f2;">Download installer</a>.</p>
 			<div class="picker-actions">
 				<label class="picker-btn primary">
 					Select <code>base/</code> Folder
 					<input id="folder-input" type="file" webkitdirectory directory multiple hidden>
 				</label>
 				<label class="picker-btn">
-					Select <code>assets*.pk3</code> Files
-					<input id="files-input" type="file" multiple accept=".pk3,.cfg" hidden>
+					Choose GOG <code>.exe</code> or <code>.pk3</code>
+					<input id="files-input" type="file" multiple accept=".exe,.pk3,.cfg" hidden>
 				</label>
 			</div>
 			<label class="picker-hint" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;color:#cbd7ec;">
@@ -200,6 +200,7 @@
 	<canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
 	<pre id="output"></pre>
 
+	<script src="gog_extractor.js"></script>
 	<script>
 		var statusElement = document.getElementById('status');
 		var canvasElement = document.getElementById('canvas');
@@ -469,6 +470,68 @@
 
 		function mountSelectedFiles(fileList, launchArgs) {
 			var fs = typeof FS !== 'undefined' ? FS : Module.FS;
+			var gogExe = null;
+			for (var gi = 0; gi < fileList.length; gi++) {
+				if (window.OpenJKGogExtractor && window.OpenJKGogExtractor.isGogExeFile(fileList[gi])) {
+					gogExe = fileList[gi];
+					break;
+				}
+			}
+			if (gogExe) {
+				var saveCbGog = document.getElementById('save-base-checkbox');
+				var shouldSaveGog = !!(saveCbGog && saveCbGog.checked);
+				folderInput.disabled = true;
+				filesInput.disabled = true;
+				(async function () {
+					ensureDirTree(fs, '/base');
+					await window.OpenJKGogExtractor.extractGogInstaller(gogExe, {
+						onProgress: function (msg) { progressElement.textContent = msg; },
+						createSink: async function (fileName) {
+							var chunks = [];
+							var totalLen = 0;
+							var opfsWriter = null;
+							if (shouldSaveGog) {
+								try {
+									var dir = await getOpfsDir('openjk-base', null, true);
+									if (dir) {
+										var fh = await dir.getFileHandle(fileName, { create: true });
+										opfsWriter = await fh.createWritable();
+									}
+								} catch (e) { opfsWriter = null; }
+							}
+							return {
+								write: async function (bytes) {
+									chunks.push(bytes);
+									totalLen += bytes.length;
+									if (opfsWriter) {
+										try { await opfsWriter.write(bytes); } catch (e) { opfsWriter = null; }
+									}
+								},
+								close: async function () {
+									if (opfsWriter) {
+										try { await opfsWriter.close(); } catch (e) { }
+									}
+									var full = new Uint8Array(totalLen);
+									var ofs = 0;
+									for (var ci = 0; ci < chunks.length; ci++) {
+										full.set(chunks[ci], ofs);
+										ofs += chunks[ci].length;
+									}
+									fs.writeFile('/base/' + fileName, full);
+								}
+							};
+						}
+					});
+					pickerElement.style.display = 'none';
+					canvasElement.focus();
+					startOpenJK(launchArgs);
+				})().catch(function (err) {
+					progressElement.textContent = 'Failed to unpack GOG installer: ' + err.message;
+					folderInput.disabled = false;
+					filesInput.disabled = false;
+				});
+				return;
+			}
 			var selected = [];
 			for (var i = 0; i < fileList.length; i++) {
 				var f = fileList[i];

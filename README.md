@@ -4,7 +4,9 @@ Play **Star Wars Jedi Knight: Jedi Academy** (Singleplayer & Multiplayer) right 
 
 ### **[▶ Play Now at openjk.pdewil.de](https://openjk.pdewil.de/)**
 
-> **Game Files Required:** Just like desktop OpenJK, copyrighted Jedi Academy assets are not included. You'll need your own copy of Jedi Academy ([Steam](https://store.steampowered.com/app/6020/), [GOG](https://www.gog.com/game/star_wars_jedi_knight_jedi_academy), or original CD). When launching, select your local `GameData/base` folder (containing `assets0.pk3`–`assets3.pk3`)—everything stays local in your browser.
+> **Game Files Required:** Just like desktop OpenJK, copyrighted Jedi Academy assets are not included. You'll need your own copy of Jedi Academy ([Steam](https://store.steampowered.com/app/6020/), [GOG](https://www.gog.com/game/star_wars_jedi_knight_jedi_academy), or original CD).
+> - **Own it on GOG?** Download the installer directly from [GOG's installer link](https://www.gog.com/downloads/star_wars_jedi_knight_jedi_academy/en1installer0) (while signed into GOG) and drop the `.exe` right onto the homepage—the browser unpacks `assets0.pk3`–`assets3.pk3` locally in a few seconds (no need to run the `.exe`, works on macOS/Linux/Chromebooks too!).
+> - **Own it on Steam / already installed?** Select your local `GameData/base` folder (`assets0.pk3`–`assets3.pk3`). Everything stays 100% local in your browser and is never uploaded to a server.
 
 ---
 

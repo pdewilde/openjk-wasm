@@ -54,6 +54,7 @@ cp build-wasm/codemp/cgame/cgamewasm32.wasm dist/
 cp build-wasm/codemp/ui/uiwasm32.wasm dist/
 cp build-wasm/code/game/jagamewasm32.wasm dist/
 cp wasm/index.html dist/index.html
+cp wasm/gog_extractor.js dist/gog_extractor.js
 cp wasm/icons/mp128.png wasm/icons/sp128.png dist/icons/
 ```
 

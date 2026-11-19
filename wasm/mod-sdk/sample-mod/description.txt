@@ -1,0 +1,1 @@
+OpenJK WASM Sample Mod (SIDE_MODULE=2)

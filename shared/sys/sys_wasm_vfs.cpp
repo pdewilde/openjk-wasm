@@ -65,6 +65,15 @@ void Sys_WasmRemoveSavePath(const char *osPath)
 	}, osPath);
 }
 
+void Sys_WasmSyncBrowserUrl(const char *fsGame, const char *connectAddr, const char *mapName)
+{
+	EM_ASM({
+		if (typeof window !== 'undefined' && typeof window.__openjkSyncUrl === 'function') {
+			window.__openjkSyncUrl(UTF8ToString($0), UTF8ToString($1), UTF8ToString($2));
+		}
+	}, fsGame ? fsGame : "", connectAddr ? connectAddr : "", mapName ? mapName : "");
+}
+
 int Sys_WasmEnsureMapAssets(const char *mapName, const char *retryCmd)
 {
 	if (!mapName || !mapName[0]) {

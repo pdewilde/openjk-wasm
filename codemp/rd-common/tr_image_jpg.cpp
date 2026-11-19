@@ -33,6 +33,14 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <jpeglib.h>
+#include <setjmp.h>
+
+struct R_JPGErrorMgr
+{
+	struct jpeg_error_mgr pub;
+	jmp_buf setjmp_buffer;
+	qboolean hasJumpBuf;
+};
 
 static void R_JPGErrorExit(j_common_ptr cinfo)
 {
@@ -43,7 +51,12 @@ static void R_JPGErrorExit(j_common_ptr cinfo)
 	/* Let the memory manager delete any temp files before we die */
 	jpeg_destroy(cinfo);
 
-	Com_Printf("%s", buffer);
+	Com_Printf("%s\n", buffer);
+
+	R_JPGErrorMgr *myerr = (R_JPGErrorMgr *)cinfo->err;
+	if (myerr && myerr->hasJumpBuf) {
+		longjmp(myerr->setjmp_buffer, 1);
+	}
 }
 
 static void R_JPGOutputMessage(j_common_ptr cinfo)
@@ -74,13 +87,13 @@ void LoadJPG( const char *filename, unsigned char **pic, int *width, int *height
 	* Note that this struct must live as long as the main JPEG parameter
 	* struct, to avoid dangling-pointer problems.
 	*/
-	struct jpeg_error_mgr jerr;
+	R_JPGErrorMgr jerr;
 	/* More stuff */
 	JSAMPARRAY buffer;		/* Output row buffer */
 	unsigned int row_stride;  /* physical row width in output buffer */
 	unsigned int pixelcount, memcount;
 	unsigned int sindex, dindex;
-	byte *out;
+	byte *volatile out = NULL;
 	fileBuffer_t fbuffer;
 	byte  *buf;
 	/* In this example we want to open the input file before doing anything else,
@@ -90,7 +103,10 @@ void LoadJPG( const char *filename, unsigned char **pic, int *width, int *height
 	*/
 
 	int len = ri.FS_ReadFile ( ( char * ) filename, &fbuffer.v);
-	if (!fbuffer.b || len < 0) {
+	if (!fbuffer.b || len <= 0) {
+		if (fbuffer.v) {
+			ri.FS_FreeFile (fbuffer.v);
+		}
 		return;
 	}
 
@@ -101,9 +117,18 @@ void LoadJPG( const char *filename, unsigned char **pic, int *width, int *height
 	* This routine fills in the contents of struct jerr, and returns jerr's
 	* address which we place into the link field in cinfo.
 	*/
-	cinfo.err = jpeg_std_error(&jerr);
+	jerr.hasJumpBuf = qtrue;
+	cinfo.err = jpeg_std_error(&jerr.pub);
 	cinfo.err->error_exit = R_JPGErrorExit;
 	cinfo.err->output_message = R_JPGOutputMessage;
+
+	if (setjmp(jerr.setjmp_buffer)) {
+		if (out) {
+			Z_Free((void *)out);
+		}
+		ri.FS_FreeFile (fbuffer.v);
+		return;
+	}
 
 	/* Now we can initialize the JPEG decompression object. */
 	jpeg_create_decompress(&cinfo);
@@ -339,7 +364,7 @@ size_t RE_SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality,
 	int image_width, int image_height, byte *image_buffer, int padding)
 {
 	struct jpeg_compress_struct cinfo;
-	struct jpeg_error_mgr jerr;
+	R_JPGErrorMgr jerr;
 	JSAMPROW row_pointer[1];	/* pointer to JSAMPLE row[s] */
 	my_dest_ptr dest;
 	int row_stride;		/* physical row width in image buffer */
@@ -347,9 +372,14 @@ size_t RE_SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality,
 
 	/* Step 1: allocate and initialize JPEG compression object */
 
-	cinfo.err = jpeg_std_error(&jerr);
+	jerr.hasJumpBuf = qtrue;
+	cinfo.err = jpeg_std_error(&jerr.pub);
 	cinfo.err->error_exit = R_JPGErrorExit;
 	cinfo.err->output_message = R_JPGOutputMessage;
+
+	if (setjmp(jerr.setjmp_buffer)) {
+		return 0;
+	}
 
 	/* Now we can initialize the JPEG compression object. */
 	jpeg_create_compress(&cinfo);

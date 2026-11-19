@@ -2427,6 +2427,22 @@ int	FS_GetModList( char *listbuf, int bufsize ) {
 				Sys_FreeFileList( pPaks );
 			}
 
+#ifdef __EMSCRIPTEN__
+			/* also recognize code-only WebAssembly mods (.wasm side modules) */
+			if ( nPaks <= 0 )
+			{
+				path = FS_BuildOSPath( fs_basepath->string, name, "" );
+				pPaks = Sys_ListFiles( path, ".wasm", NULL, &nPaks, qfalse );
+				Sys_FreeFileList( pPaks );
+			}
+			if ( nPaks <= 0 )
+			{
+				path = FS_BuildOSPath( fs_homepath->string, name, "" );
+				pPaks = Sys_ListFiles( path, ".wasm", NULL, &nPaks, qfalse );
+				Sys_FreeFileList( pPaks );
+			}
+#endif
+
 			if (nPaks > 0) {
 				bool isBase = !Q_stricmp( name, BASEGAME );
 				nLen = isBase ? 1 : strlen(name) + 1;

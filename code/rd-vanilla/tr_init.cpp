@@ -1851,6 +1851,10 @@ void RE_Shutdown( qboolean destroyWindow, qboolean restarting ) {
 	// shut down platform specific OpenGL stuff
 	if ( destroyWindow ) {
 		ri.WIN_Shutdown();
+#ifdef __EMSCRIPTEN__
+		// Renderer is statically linked in Wasm, so reset glConfig to allow vid_restart mode changes.
+		memset( &glConfig, 0, sizeof( glConfig ) );
+#endif
 	}
 	tr.registered = qfalse;
 }

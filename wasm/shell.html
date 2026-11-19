@@ -173,6 +173,17 @@
 			<div class="picker-hint">Press <code>Ctrl + `</code> at any time to toggle engine logs.</div>
 		</div>
 	</div>
+	<svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true">
+		<defs>
+			<filter id="openjk-gamma" color-interpolation-filters="sRGB">
+				<feComponentTransfer>
+					<feFuncR id="openjk-gamma-r" type="gamma" amplitude="1" exponent="1" offset="0"/>
+					<feFuncG id="openjk-gamma-g" type="gamma" amplitude="1" exponent="1" offset="0"/>
+					<feFuncB id="openjk-gamma-b" type="gamma" amplitude="1" exponent="1" offset="0"/>
+				</feComponentTransfer>
+			</filter>
+		</defs>
+	</svg>
 	<canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
 	<pre id="output"></pre>
 
@@ -185,11 +196,73 @@
 		var folderInput = document.getElementById('folder-input');
 		var filesInput = document.getElementById('files-input');
 		var maxLogLines = 500;
+		var gameRunning = false;
 		window.__openjkLogs = [];
+
+		window.__openjkSetGamma = function (gamma) {
+			var g = Number(gamma);
+			if (!isFinite(g) || g <= 0) g = 1.0;
+			if (g < 0.5) g = 0.5;
+			if (g > 3.0) g = 3.0;
+			var exp = (1.0 / g).toFixed(4);
+			var r = document.getElementById('openjk-gamma-r');
+			var gr = document.getElementById('openjk-gamma-g');
+			var b = document.getElementById('openjk-gamma-b');
+			if (r) r.setAttribute('exponent', exp);
+			if (gr) gr.setAttribute('exponent', exp);
+			if (b) b.setAttribute('exponent', exp);
+			if (canvasElement) {
+				canvasElement.style.filter = Math.abs(g - 1.0) < 0.01 ? '' : 'url(#openjk-gamma)';
+			}
+		};
+
+		function startOpenJK(args) {
+			gameRunning = true;
+			Module.setStatus('');
+			Module.callMain(args);
+		}
+
+		function syncKeyboardLock() {
+			if (!navigator.keyboard) return;
+			var isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+			if (isFs && typeof navigator.keyboard.lock === 'function') {
+				navigator.keyboard.lock([
+					'KeyW', 'KeyA', 'KeyS', 'KeyD',
+					'KeyR', 'KeyT', 'KeyN', 'Tab', 'Escape'
+				]).catch(function () { });
+			} else if (!isFs && typeof navigator.keyboard.unlock === 'function') {
+				try { navigator.keyboard.unlock(); } catch (e) { }
+			}
+		}
+
+		document.addEventListener('fullscreenchange', syncKeyboardLock);
+		document.addEventListener('webkitfullscreenchange', syncKeyboardLock);
+
+		window.addEventListener('beforeunload', function (e) {
+			if (!gameRunning) return;
+			e.preventDefault();
+			e.returnValue = '';
+		});
 
 		document.addEventListener('keydown', function (e) {
 			if (e.ctrlKey && e.key === '`') {
 				outputElement.style.display = getComputedStyle(outputElement).display === 'none' ? 'block' : 'none';
+				return;
+			}
+			if (e.altKey && e.key === 'Enter') {
+				e.preventDefault();
+				if (document.fullscreenElement) {
+					if (document.exitFullscreen) document.exitFullscreen().catch(function () { });
+				} else if (document.documentElement.requestFullscreen) {
+					document.documentElement.requestFullscreen().catch(function () { });
+				}
+				return;
+			}
+			if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+				var k = String(e.key || '').toLowerCase();
+				if (k === 'w' || k === 'r' || k === 't' || k === 'n') {
+					e.preventDefault();
+				}
 			}
 		});
 
@@ -240,7 +313,7 @@
 			}));
 		}
 
-		function ensureDirTree(fs, fullPath) {
+		function ensureParentDirTree(fs, fullPath) {
 			var parts = fullPath.split('/');
 			var cur = '';
 			for (var i = 1; i < parts.length - 1; i++) {
@@ -288,14 +361,13 @@
 				for (var j = 0; j < selected.length; j++) {
 					var item = selected[j];
 					progressElement.textContent = 'Mounting ' + (j + 1) + '/' + selected.length + ': ' + item.dest;
-					ensureDirTree(fs, item.dest);
+					ensureParentDirTree(fs, item.dest);
 					var buf = await item.file.arrayBuffer();
 					fs.writeFile(item.dest, new Uint8Array(buf));
 				}
 				pickerElement.style.display = 'none';
-				Module.setStatus('');
 				canvasElement.focus();
-				Module.callMain(launchArgs);
+				startOpenJK(launchArgs);
 			})().catch(function (err) {
 				progressElement.textContent = 'Failed to mount assets: ' + err;
 				folderInput.disabled = false;
@@ -392,6 +464,164 @@
 				console.warn('OPFS save hydration skipped:', err);
 			}
 		}
+
+		var RESERVED_MOD_NAMES = {
+			base: true,
+			saves: true,
+			dev: true,
+			tmp: true,
+			proc: true,
+			home: true,
+			lib: true,
+			usr: true,
+			etc: true
+		};
+
+		function sanitizeModName(raw) {
+			var name = String(raw || '').trim().replace(/^\/+|\/+$/g, '');
+			if (!name || name.length > 48) return '';
+			if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(name)) return '';
+			if (RESERVED_MOD_NAMES[name.toLowerCase()]) return '';
+			return name;
+		}
+
+		var PROTECTED_BASE_FILES = {
+			'00_boot.pk3': true,
+			'assets0.pk3': true,
+			'assets1.pk3': true,
+			'assets2.pk3': true,
+			'assets3.pk3': true,
+			'manifest.json': true,
+			'description.txt': true
+		};
+
+		function getEnabledModsList(params, activeFsGame) {
+			var raw = [];
+			var modsParam = params.get('mods');
+			if (modsParam !== null) {
+				raw = modsParam.split(',');
+			} else {
+				try {
+					var stored = localStorage.getItem('openjk_mp_enabled_mods');
+					if (stored) {
+						var parsed = JSON.parse(stored);
+						if (Array.isArray(parsed)) raw = parsed;
+					}
+				} catch (e) { }
+			}
+			var out = [];
+			var seen = Object.create(null);
+			var activeLower = String(activeFsGame || '').toLowerCase();
+			for (var i = 0; i < raw.length; i++) {
+				var name = sanitizeModName(raw[i]);
+				if (!name) continue;
+				var lower = name.toLowerCase();
+				if (lower === activeLower || seen[lower]) continue;
+				seen[lower] = true;
+				out.push(name);
+			}
+			return out;
+		}
+
+		function pathExistsInWasm(fs, path) {
+			try {
+				fs.stat(path);
+				return true;
+			} catch (e) {
+				return false;
+			}
+		}
+
+		async function hydrateOpfsMods(activeFsGame, enabledMods) {
+			var fs = getWasmFs();
+			var hydrated = [];
+			var enabledSet = Object.create(null);
+			(enabledMods || []).forEach(function (m) { enabledSet[m.toLowerCase()] = true; });
+			var mountedIntoBase = [];
+
+			try {
+				var modsDir = await getOpfsDir('openjk-mods', null, false);
+				if (modsDir) {
+					ensureDirTree(fs, '/base');
+					for await (var entry of modsDir.entries()) {
+						var rawName = entry[0];
+						var handle = entry[1];
+						if (handle.kind !== 'directory') continue;
+						var modName = sanitizeModName(rawName);
+						if (!modName) continue;
+						ensureDirTree(fs, '/' + modName);
+						var mountToBase = !!enabledSet[modName.toLowerCase()];
+						await walkOpfsToWasm(handle, '/' + modName, fs, function (vfsPath, bytes) {
+							var rel = vfsPath.slice(('/' + modName + '/').length);
+							if (!rel || /\.wasm$/i.test(rel)) return;
+							var lowerRel = rel.toLowerCase();
+							if (PROTECTED_BASE_FILES[lowerRel] || lowerRel === '.native_code_unsupported') return;
+							var baseName = rel.split('/').pop();
+							var lowerBase = baseName.toLowerCase();
+							// Skip Mac/x86-only binary wrapper paks that contain no usable assets
+							if (/(_mac|jampgamex86)\.pk3$/i.test(lowerBase)) return;
+							// Also hoist nested .pk3 files to /<modName>/ root so Setup -> Mods sees multi-folder packs
+							if (/\.pk3$/i.test(lowerBase) && rel.indexOf('/') !== -1) {
+								var modRootDest = '/' + modName + '/' + baseName;
+								if (!pathExistsInWasm(fs, modRootDest)) {
+									writeWasmFile(fs, modRootDest, bytes);
+								}
+							}
+							if (!mountToBase) return;
+							var dest = /\.pk3$/i.test(lowerBase) ? ('/base/' + baseName) : ('/base/' + rel);
+							if (/\.pk3$/i.test(lowerBase) && pathExistsInWasm(fs, dest)) {
+								dest = '/base/' + modName + '_' + baseName;
+							}
+							writeWasmFile(fs, dest, bytes);
+						});
+						hydrated.push(modName);
+						if (mountToBase) mountedIntoBase.push(modName);
+					}
+				}
+			} catch (err) {
+				// openjk-mods may not exist yet if no mods have been imported
+				if (!err || err.name !== 'NotFoundError') {
+					console.warn('OPFS mod hydration skipped:', err);
+				}
+			}
+			window.__openjkHydratedMods = hydrated;
+			window.__openjkEnabledBaseMods = mountedIntoBase;
+		}
+
+		window.__openjkSyncUrl = function (fsGame, connectAddr, mapName) {
+			if (typeof history === 'undefined' || typeof history.replaceState !== 'function') return;
+			try {
+				var url = new URL(window.location.href);
+				var mod = sanitizeModName(fsGame);
+				var conn = String(connectAddr || '').trim();
+				var map = String(mapName || '').trim();
+
+				if (mod) {
+					url.searchParams.set('mod', mod);
+				} else {
+					url.searchParams.delete('mod');
+				}
+
+				if (conn && /^[a-zA-Z0-9.:\[\]-]+$/.test(conn)) {
+					url.searchParams.set('connect', conn);
+					url.searchParams.delete('map');
+					document.title = 'Jedi Academy — ' + conn;
+				} else if (map && /^[a-zA-Z0-9_\/-]+$/.test(map)) {
+					url.searchParams.set('map', map);
+					url.searchParams.delete('connect');
+					document.title = 'Jedi Academy — ' + map;
+				} else {
+					url.searchParams.delete('connect');
+					url.searchParams.delete('map');
+					document.title = mod ? ('Jedi Academy — ' + mod) : 'OpenJK';
+				}
+
+				var next = url.pathname + (url.search ? url.search : '') + url.hash;
+				if (next !== (window.location.pathname + window.location.search + window.location.hash)) {
+					history.replaceState(null, '', next);
+				}
+			} catch (err) { }
+		};
 
 		window.__openjkOpfsSyncFile = function (osPath) {
 			var norm = String(osPath || '').replace(/\\/g, '/');
@@ -702,6 +932,35 @@
 			};
 		}
 
+		async function hydrateOpfsManifestCache(dirHandle, relPrefix, fs, manifestEntries) {
+			for await (var entry of dirHandle.entries()) {
+				var name = entry[0];
+				var handle = entry[1];
+				var rel = relPrefix ? (relPrefix + '/' + name) : name;
+				if (handle.kind === 'directory') {
+					await hydrateOpfsManifestCache(handle, rel, fs, manifestEntries);
+				} else if (handle.kind === 'file') {
+					var key = rel.toLowerCase();
+					var meta = manifestEntries[key];
+					if (!meta) continue;
+					var file = await handle.getFile();
+					var expectedLen = meta[3];
+					if (file.size !== expectedLen) {
+						// Self-heal truncated / 0-byte OPFS files left by an interrupted tab crash/reload.
+						try { await dirHandle.removeEntry(name); } catch (e) { }
+						continue;
+					}
+					var bytes = new Uint8Array(await file.arrayBuffer());
+					if (bytes.length !== expectedLen) {
+						try { await dirHandle.removeEntry(name); } catch (e) { }
+						continue;
+					}
+					writeWasmFile(fs, '/base/' + rel, bytes);
+					manifestState.mounted.add(key);
+				}
+			}
+		}
+
 		async function initManifestMode() {
 			var resp;
 			try {
@@ -748,16 +1007,17 @@
 					if (metaMatch) {
 						try {
 							var bootFile = await (await cacheRoot.getFileHandle(bootName, { create: false })).getFile();
-							bootBytes = new Uint8Array(await bootFile.arrayBuffer());
+							if (bootFile.size === manifest.boot.size) {
+								bootBytes = new Uint8Array(await bootFile.arrayBuffer());
+							} else {
+								bootBytes = null;
+							}
 						} catch (e) {
 							bootBytes = null;
 						}
 						try {
 							var entriesDir = await cacheRoot.getDirectoryHandle('entries', { create: false });
-							await walkOpfsToWasm(entriesDir, '/base', fs, function (vfsPath) {
-								var rel = vfsPath.slice('/base/'.length).toLowerCase();
-								manifestState.mounted.add(rel);
-							});
+							await hydrateOpfsManifestCache(entriesDir, '', fs, manifest.entries);
 						} catch (e) { }
 					} else {
 						try { await cacheRoot.removeEntry('entries', { recursive: true }); } catch (e) { }
@@ -825,10 +1085,30 @@
 			},
 			onRuntimeInitialized: function () {
 				var params = new URLSearchParams(window.location.search);
+				var modParam = sanitizeModName(params.get('mod'));
+				var enabledMods = getEnabledModsList(params, modParam);
 				var args = Module.arguments;
 				if (!args) {
+					args = [];
+					if (modParam) {
+						args.push('+set', 'fs_game', modParam);
+					}
+					var allowDl = params.get('allowdownload');
+					if (allowDl === '1' || allowDl === 'true') {
+						args.push('+set', 'cl_allowDownload', '1');
+					}
+					var mapParam = (params.get('map') || '').trim();
+					if (mapParam && /^[a-zA-Z0-9_\/-]+$/.test(mapParam)) {
+						args.push('+map', mapParam);
+					}
+					var connectParam = (params.get('connect') || '').trim();
+					if (connectParam && /^[a-zA-Z0-9.:\[\]-]+$/.test(connectParam)) {
+						args.push('+connect', connectParam);
+					}
 					var rawArgs = params.get('args');
-					args = rawArgs ? rawArgs.trim().split(/\s+/) : [];
+					if (rawArgs && rawArgs.trim()) {
+						args = args.concat(rawArgs.trim().split(/\s+/));
+					}
 				}
 				var autoStart = params.has('args') || params.has('autostart');
 				Module.setStatus('Loading modules...');
@@ -837,23 +1117,23 @@
 						return hydrateOpfsSaves();
 					})
 					.then(function () {
+						return hydrateOpfsMods(modParam, enabledMods);
+					})
+					.then(function () {
 						return initManifestMode();
 					})
 					.then(function (manifestReady) {
 						if (manifestReady) {
-							Module.setStatus('');
-							Module.callMain(args);
+							startOpenJK(args);
 							return;
 						}
 						if (autoStart) {
-							Module.setStatus('');
-							Module.callMain(args);
+							startOpenJK(args);
 							return;
 						}
 						return hasHostedBaseAssets().then(function (hosted) {
 							if (hosted) {
-								Module.setStatus('');
-								Module.callMain(args);
+								startOpenJK(args);
 							} else {
 								Module.setStatus('');
 								pickerElement.style.display = 'flex';

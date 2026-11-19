@@ -21,6 +21,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include <SDL.h>
 #include <SDL_syswm.h>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <emscripten/html5.h>
+#endif
 #include "qcommon/qcommon.h"
 #include "rd-common/tr_types.h"
 #include "sys/sys_local.h"
@@ -387,6 +391,35 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 
 	if (mode == -2)
 	{
+#ifdef __EMSCRIPTEN__
+		int vw = EM_ASM_INT({ return Math.max(0, Math.floor(window.innerWidth || 0)); });
+		int vh = EM_ASM_INT({ return Math.max(0, Math.floor(window.innerHeight || 0)); });
+		if ( vw >= 640 && vh >= 480 )
+		{
+			// Integer-downscale very large browser viewports (> 1920x1080) to keep GL4ES fillrate fast and sharp.
+			int scaleW = (vw + 1919) / 1920;
+			int scaleH = (vh + 1079) / 1080;
+			int scale = scaleW > scaleH ? scaleW : scaleH;
+			if ( scale < 1 ) scale = 1;
+			vw = (vw / scale) & ~1;
+			vh = (vh / scale) & ~1;
+			if ( vw < 640 ) vw = 640;
+			if ( vh < 480 ) vh = 480;
+			glConfig->vidWidth = vw;
+			glConfig->vidHeight = vh;
+			displayAspect = (float)vw / (float)vh;
+		}
+		else if ( desktopMode.h > 0 )
+		{
+			glConfig->vidWidth = desktopMode.w;
+			glConfig->vidHeight = desktopMode.h;
+		}
+		else
+		{
+			glConfig->vidWidth = 1280;
+			glConfig->vidHeight = 720;
+		}
+#else
 		// use desktop video resolution
 		if( desktopMode.h > 0 )
 		{
@@ -399,6 +432,7 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 			glConfig->vidHeight = 480;
 			Com_Printf( "Cannot determine display resolution, assuming 640x480\n" );
 		}
+#endif
 
 		//glConfig.windowAspect = (float)glConfig.vidWidth / (float)glConfig.vidHeight;
 	}
@@ -600,6 +634,7 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 			{
 				SDL_SetWindowSize( screen, glConfig->vidWidth, glConfig->vidHeight );
 			}
+			emscripten_set_canvas_element_size( "#canvas", glConfig->vidWidth, glConfig->vidHeight );
 #else
 			if( ( screen = SDL_CreateWindow( windowTitle, x, y,
 					glConfig->vidWidth, glConfig->vidHeight, flags ) ) == NULL )
@@ -701,10 +736,15 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 
 	SDL_FreeSurface( icon );
 
+#ifdef __EMSCRIPTEN__
+	// Browser WebGL canvas supports arbitrary resolutions regardless of SDL display mode matching.
+	GLimp_DetectAvailableModes();
+#else
 	if (!GLimp_DetectAvailableModes())
 	{
 		return RSERR_UNKNOWN;
 	}
+#endif
 
 	return RSERR_OK;
 }
@@ -793,7 +833,11 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_customheight		= Cvar_Get( "r_customheight",		"1024",		CVAR_ARCHIVE|CVAR_LATCH );
 	r_swapInterval		= Cvar_Get( "r_swapInterval",		"0",		CVAR_ARCHIVE_ND );
 	r_stereo			= Cvar_Get( "r_stereo",				"0",		CVAR_ARCHIVE_ND|CVAR_LATCH );
+#ifdef __EMSCRIPTEN__
+	r_mode				= Cvar_Get( "r_mode",				"-2",		CVAR_ARCHIVE|CVAR_LATCH );
+#else
 	r_mode				= Cvar_Get( "r_mode",				"4",		CVAR_ARCHIVE|CVAR_LATCH );
+#endif
 	r_displayRefresh	= Cvar_Get( "r_displayRefresh",		"0",		CVAR_LATCH );
 	Cvar_CheckRange( r_displayRefresh, 0, 240, qtrue );
 
@@ -821,8 +865,12 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 		}
 	}
 
+#ifdef __EMSCRIPTEN__
+	glConfig->deviceSupportsGamma = (qboolean)(!r_ignorehwgamma->integer);
+#else
 	glConfig->deviceSupportsGamma =
 		(qboolean)(!r_ignorehwgamma->integer && SDL_SetWindowBrightness( screen, 1.0f ) >= 0);
+#endif
 
 #ifdef __EMSCRIPTEN__
 	static qboolean inputInitialized = qfalse;
@@ -898,11 +946,25 @@ void GLimp_LogComment( char *comment )
 
 void WIN_SetGamma( glconfig_t *glConfig, byte red[256], byte green[256], byte blue[256] )
 {
-	Uint16 table[3][256];
-	int i, j;
-
 	if( !glConfig->deviceSupportsGamma || r_ignorehwgamma->integer > 0 )
 		return;
+
+#ifdef __EMSCRIPTEN__
+	{
+		float g = Cvar_VariableValue( "r_gamma" );
+		if ( g < 0.5f ) g = 0.5f;
+		if ( g > 3.0f ) g = 3.0f;
+		EM_ASM({
+			if (typeof window !== 'undefined' && typeof window.__openjkSetGamma === 'function') {
+				window.__openjkSetGamma($0);
+			}
+		}, g);
+	}
+	return;
+#endif
+
+	Uint16 table[3][256];
+	int i, j;
 
 	for (i = 0; i < 256; i++)
 	{

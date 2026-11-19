@@ -1,0 +1,27 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "emscripten-wasm32",
+      "displayName": "OpenJK WASM Mod (SIDE_MODULE=2)",
+      "description": "Compile OpenJK MP mod side modules (*.wasm) with matching SIMD + Wasm-EH ABI",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-wasm32",
+      "toolchainFile": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "emscripten-wasm32",
+      "configurePreset": "emscripten-wasm32"
+    }
+  ]
+}

@@ -670,6 +670,7 @@ void FS_CopyFile( char *fromOSPath, char *toOSPath ) {
 	}
 	fclose( f );
 	free( buf );
+	Sys_WasmPersistSavePath( toOSPath );
 }
 
 /*
@@ -2731,6 +2732,22 @@ int	FS_GetModList( char *listbuf, int bufsize ) {
 				pPaks = Sys_ListFiles( path, ".pk3", NULL, &nPaks, qfalse );
 				Sys_FreeFileList( pPaks );
 			}
+
+#ifdef __EMSCRIPTEN__
+			/* also recognize code-only WebAssembly mods (.wasm side modules) */
+			if ( nPaks <= 0 )
+			{
+				path = FS_BuildOSPath( fs_basepath->string, name, "" );
+				pPaks = Sys_ListFiles( path, ".wasm", NULL, &nPaks, qfalse );
+				Sys_FreeFileList( pPaks );
+			}
+			if ( nPaks <= 0 )
+			{
+				path = FS_BuildOSPath( fs_homepath->string, name, "" );
+				pPaks = Sys_ListFiles( path, ".wasm", NULL, &nPaks, qfalse );
+				Sys_FreeFileList( pPaks );
+			}
+#endif
 
 			if (nPaks > 0) {
 				bool isBase = !Q_stricmp( name, BASEGAME );

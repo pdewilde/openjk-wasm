@@ -32,15 +32,19 @@ import (
 const defaultMaxDatagramSize = 1150
 
 type serverConfig struct {
-	dir             string
-	domain          string
-	httpsAddr       string
-	quicAddr        string
-	authUser        string
-	authPass        string
-	corsOrigin      string
-	maxDatagramSize int
-	udpAllow        *udpAllowlist
+	dir              string
+	domain           string
+	httpsAddr        string
+	quicAddr         string
+	authUser         string
+	authPass         string
+	corsOrigin       string
+	maxDatagramSize  int
+	udpAllow         *udpAllowlist
+	maxSessionsPerIP int
+	maxSessions      int
+	rateLimitPerIP   float64
+	rateBurstPerIP   float64
 }
 
 func envOrDefault(key, fallback string) string {
@@ -52,8 +56,17 @@ func envOrDefault(key, fallback string) string {
 
 func envIntOrDefault(key string, fallback int) int {
 	if v := os.Getenv(key); v != "" {
-		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
 			return n
+		}
+	}
+	return fallback
+}
+
+func envFloatOrDefault(key string, fallback float64) float64 {
+	if v := os.Getenv(key); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil && f >= 0 {
+			return f
 		}
 	}
 	return fallback
@@ -84,6 +97,10 @@ func main() {
 	corsOrigin := flag.String("cors-origin", envOrDefault("WTUNNEL_CORS_ORIGIN", "*"), "allowed CORS / WebTransport origin (or * for any)")
 	maxDgram := flag.Int("max-datagram-size", envIntOrDefault("WTUNNEL_MAX_DATAGRAM_SIZE", defaultMaxDatagramSize), "max serialized packet size sent via WebTransport datagram before falling back to framed uni stream")
 	udpAllowSpec := flag.String("udp-allow", envOrDefault("WTUNNEL_UDP_ALLOW", ""), "comma-separated host:port or IPv4 CIDR allowlist for real UDP egress (empty disables egress)")
+	maxSessionsPerIP := flag.Int("max-sessions-per-ip", envIntOrDefault("WTUNNEL_MAX_SESSIONS_PER_IP", defaultMaxSessionsPerIP), "max concurrent WebTransport sessions per client IP (0 disables)")
+	maxSessions := flag.Int("max-sessions", envIntOrDefault("WTUNNEL_MAX_SESSIONS", defaultMaxSessions), "max total concurrent WebTransport sessions (0 disables)")
+	rateLimitPerIP := flag.Float64("rate-limit-per-ip", envFloatOrDefault("WTUNNEL_RATE_LIMIT_PER_IP", defaultRateLimitPerIP), "max new WebTransport sessions per second per client IP (0 disables)")
+	rateBurstPerIP := flag.Float64("rate-burst-per-ip", envFloatOrDefault("WTUNNEL_RATE_BURST_PER_IP", defaultRateBurstPerIP), "token bucket burst size for per-IP WebTransport connection rate limit")
 	flag.Parse()
 
 	udpAllow, err := parseUDPAllowlist(*udpAllowSpec)
@@ -92,15 +109,22 @@ func main() {
 	}
 
 	cfg := serverConfig{
-		dir:             *dir,
-		domain:          *domain,
-		httpsAddr:       *httpsAddr,
-		quicAddr:        *quicAddr,
-		authUser:        *authUser,
-		authPass:        *authPass,
-		corsOrigin:      *corsOrigin,
-		maxDatagramSize: *maxDgram,
-		udpAllow:        udpAllow,
+		dir:              *dir,
+		domain:           *domain,
+		httpsAddr:        *httpsAddr,
+		quicAddr:         *quicAddr,
+		authUser:         *authUser,
+		authPass:         *authPass,
+		corsOrigin:       *corsOrigin,
+		maxDatagramSize:  *maxDgram,
+		udpAllow:         udpAllow,
+		maxSessionsPerIP: *maxSessionsPerIP,
+		maxSessions:      *maxSessions,
+		rateLimitPerIP:   *rateLimitPerIP,
+		rateBurstPerIP:   *rateBurstPerIP,
+	}
+	if cfg.maxDatagramSize <= 0 {
+		cfg.maxDatagramSize = defaultMaxDatagramSize
 	}
 	if cfg.httpsAddr == "" {
 		if cfg.domain != "" {
@@ -204,6 +228,7 @@ func serve(cfg serverConfig) {
 	}
 
 	virtualRouter := router.NewRouter()
+	limiter := newSessionLimiter(cfg.maxSessionsPerIP, cfg.maxSessions, cfg.rateLimitPerIP, cfg.rateBurstPerIP)
 
 	localIP := getLocalIP()
 	if localIP != nil {
@@ -271,6 +296,20 @@ func serve(cfg serverConfig) {
 	})
 
 	mux.HandleFunc("/jamp", func(w http.ResponseWriter, r *http.Request) {
+		clientIP, ok := extractClientIP(r.RemoteAddr)
+		if !ok {
+			http.Error(w, "invalid client address", http.StatusBadRequest)
+			return
+		}
+		release, reason, allowed := limiter.Acquire(clientIP)
+		if !allowed {
+			log.Printf("Rejected WebTransport session from %s: %s", clientIP, reason)
+			w.Header().Set("Retry-After", "1")
+			http.Error(w, reason, http.StatusTooManyRequests)
+			return
+		}
+		defer release()
+
 		sess, err := wtServer.Upgrade(w, r)
 		if err != nil {
 			log.Printf("WebTransport upgrade failed for %s: %v", r.RemoteAddr, err)

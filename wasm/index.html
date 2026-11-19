@@ -3,81 +3,1420 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>OpenJK WebAssembly</title>
+	<title>Jedi Academy — OpenJK Web</title>
 	<style>
+		* {
+			box-sizing: border-box;
+		}
 		body {
 			margin: 0;
 			min-height: 100vh;
 			display: flex;
 			align-items: center;
 			justify-content: center;
+			padding: 28px 16px;
 			background: radial-gradient(circle at top, #182030 0%, #090b10 70%);
 			color: #eef2f8;
 			font-family: system-ui, -apple-system, sans-serif;
 		}
 		.card {
-			max-width: 540px;
-			width: 90%;
+			max-width: 620px;
+			width: 100%;
 			background: rgba(18, 22, 31, 0.96);
-			border: 1px solid #2e3b52;
-			border-radius: 12px;
-			padding: 32px;
-			box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+			border: 1px solid #2b374d;
+			border-radius: 14px;
+			padding: 28px;
+			box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+		}
+		.header {
+			display: flex;
+			align-items: baseline;
+			justify-content: space-between;
+			gap: 12px;
+			margin-bottom: 20px;
 		}
 		h1 {
-			margin: 0 0 8px;
+			margin: 0;
 			color: #ffd54f;
 			font-size: 24px;
+			letter-spacing: -0.01em;
 		}
-		p {
-			color: #b7c2d6;
-			line-height: 1.5;
-			margin: 0 0 24px;
+		.subtitle {
+			font-size: 13px;
+			color: #8c9cb8;
 		}
-		.links {
+		.launch-grid {
 			display: grid;
+			grid-template-columns: 1fr 1fr;
 			gap: 12px;
 		}
-		a {
-			display: block;
-			padding: 14px 18px;
-			border-radius: 8px;
-			border: 1px solid #3c5377;
-			background: #1b273b;
+		@media (max-width: 520px) {
+			.launch-grid {
+				grid-template-columns: 1fr;
+			}
+		}
+		a.launch-btn {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			padding: 16px 18px;
+			border-radius: 10px;
+			border: 1px solid #354a6b;
+			background: #192436;
 			color: #fff;
 			text-decoration: none;
+			font-size: 16px;
 			font-weight: 600;
+			transition: background 0.15s, border-color 0.15s, transform 0.1s;
 		}
-		a:hover {
-			background: #273854;
-			border-color: #5b82bd;
+		a.launch-btn:hover {
+			background: #22324c;
+			border-color: #5479b3;
 		}
-		small {
+		a.launch-btn.primary {
+			background: #2353a6;
+			border-color: #4f88f2;
+		}
+		a.launch-btn.primary:hover {
+			background: #2c62bf;
+		}
+		a.launch-btn small {
 			display: block;
 			margin-top: 4px;
+			font-size: 12px;
 			font-weight: 400;
-			color: #9cb0d1;
+			color: #c2d4f2;
+		}
+		.section {
+			margin-top: 22px;
+			padding-top: 20px;
+			border-top: 1px solid #232f42;
+		}
+		.section-head {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 12px;
+		}
+		.section-title {
+			font-size: 15px;
+			font-weight: 600;
+			color: #e4ecfa;
+		}
+		label.field-label {
+			display: block;
+			font-size: 12px;
+			color: #93a4c2;
+			margin-bottom: 5px;
+		}
+		input[type="text"] {
+			width: 100%;
+			padding: 9px 11px;
+			border-radius: 7px;
+			border: 1px solid #324361;
+			background: #111824;
+			color: #eef2f8;
+			font-size: 13px;
+		}
+		input[type="text"]:focus {
+			outline: none;
+			border-color: #5b8ef0;
+		}
+		.mod-list {
+			display: grid;
+			gap: 8px;
+			margin-bottom: 14px;
+		}
+		.mod-empty {
+			font-size: 13px;
+			color: #7d8ca8;
+			padding: 8px 0;
+		}
+		.mod-item {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 10px;
+			padding: 10px 12px;
+			border-radius: 8px;
+			border: 1px solid #27354d;
+			background: #121a28;
+		}
+		.mod-item.active {
+			border-color: #4f88f2;
+			background: #18253d;
+		}
+		.mod-toggle {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			min-width: 0;
+			flex: 1;
+			cursor: pointer;
+		}
+		.mod-toggle input[type="checkbox"] {
+			width: 16px;
+			height: 16px;
+			accent-color: #4f88f2;
+			flex-shrink: 0;
+			cursor: pointer;
+		}
+		.section-actions {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+		.text-btn {
+			background: none;
+			border: 0;
+			padding: 0;
+			color: #8db3f2;
+			font-size: 12px;
+			cursor: pointer;
+		}
+		.text-btn:hover {
+			text-decoration: underline;
+		}
+		.mod-meta {
+			min-width: 0;
+			flex: 1;
+		}
+		.mod-title {
+			font-weight: 600;
+			font-size: 14px;
+			color: #f3f7ff;
+			display: flex;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 6px;
+		}
+		.mod-desc {
+			font-size: 12px;
+			color: #92a3c0;
+			margin-top: 2px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		.badge {
+			font-size: 11px;
+			font-weight: 600;
+			padding: 2px 7px;
+			border-radius: 999px;
+			background: #21304a;
+			color: #b4cdfa;
+		}
+		.badge.wasm {
+			background: #2b224a;
+			color: #c9b8ff;
+		}
+		.badge.dl {
+			background: #1a382f;
+			color: #8be2be;
+		}
+		.badge.warn {
+			background: #473318;
+			color: #ffd180;
+		}
+		.mod-actions {
+			display: flex;
+			gap: 6px;
+			flex-shrink: 0;
+		}
+		.dropzone {
+			border: 1.5px dashed #364a6e;
+			border-radius: 10px;
+			padding: 16px;
+			text-align: center;
+			background: rgba(20, 28, 43, 0.55);
+			transition: border-color 0.15s, background 0.15s;
+		}
+		.dropzone.dragover {
+			border-color: #ffd54f;
+			background: rgba(44, 107, 224, 0.18);
+		}
+		.dropzone-label {
+			font-size: 13px;
+			color: #cbd7ec;
+			margin-bottom: 10px;
+		}
+		.btn-row {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+			gap: 8px;
+		}
+		.btn {
+			cursor: pointer;
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			padding: 8px 14px;
+			border-radius: 7px;
+			border: 1px solid #3f5780;
+			background: #1e2d47;
+			color: #eef2f8;
+			font-size: 13px;
+			font-weight: 600;
+		}
+		.btn:hover {
+			background: #2a3e61;
+		}
+		.btn.small {
+			padding: 5px 10px;
+			font-size: 12px;
+		}
+		.btn.danger {
+			border-color: #6e3037;
+			background: #33181e;
+			color: #ffb8bf;
+		}
+		.btn.danger:hover {
+			background: #4b2029;
+		}
+		.btn:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+		#mod-status {
+			margin-top: 10px;
+			font-size: 12px;
+			color: #8fb4ff;
+			min-height: 16px;
+		}
+		#mod-status.error {
+			color: #ff8c94;
+		}
+		#mod-status.ok {
+			color: #7be3a8;
+		}
+		details.advanced {
+			margin-top: 14px;
+			border: 1px solid #232f42;
+			border-radius: 9px;
+			background: rgba(12, 16, 25, 0.6);
+		}
+		details.advanced summary {
+			cursor: pointer;
+			padding: 10px 14px;
+			font-size: 13px;
+			font-weight: 600;
+			color: #9fb1cf;
+			user-select: none;
+		}
+		details.advanced summary:hover {
+			color: #dbe6fa;
+		}
+		.advanced-body {
+			padding: 4px 14px 14px;
+			display: grid;
+			gap: 10px;
+		}
+		.url-row {
+			display: flex;
+			gap: 8px;
+		}
+		.url-row input {
+			flex: 1;
+		}
+		.footer {
+			margin-top: 18px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			font-size: 12px;
+			color: #7484a1;
+		}
+		.footer a,
+		.footer button.link-btn {
+			color: #8db3f2;
+			text-decoration: none;
+			background: none;
+			border: 0;
+			padding: 0;
+			font: inherit;
+			cursor: pointer;
+		}
+		.footer a:hover,
+		.footer button.link-btn:hover {
+			text-decoration: underline;
+		}
+		.modal-backdrop {
+			position: fixed;
+			inset: 0;
+			background: rgba(5, 8, 14, 0.78);
+			display: none;
+			align-items: center;
+			justify-content: center;
+			padding: 20px;
+			z-index: 50;
+		}
+		.modal-backdrop.open {
+			display: flex;
+		}
+		.modal {
+			max-width: 460px;
+			width: 100%;
+			background: #141a26;
+			border: 1px solid #30405c;
+			border-radius: 12px;
+			padding: 22px;
+			box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75);
+		}
+		.modal-head {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 14px;
+		}
+		.modal-head h2 {
+			margin: 0;
+			font-size: 16px;
+			color: #f0f5ff;
+		}
+		.diag-grid {
+			display: grid;
+			gap: 8px;
+			margin-bottom: 14px;
+		}
+		.diag-row {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 12px;
+			padding: 8px 10px;
+			border-radius: 7px;
+			background: #0e131d;
+			border: 1px solid #222e42;
+			font-size: 13px;
+		}
+		.diag-key {
+			color: #93a4c2;
+		}
+		.diag-val {
+			color: #eef2f8;
+			font-weight: 600;
+			text-align: right;
+			word-break: break-all;
+		}
+		.diag-val.ok {
+			color: #7be3a8;
+		}
+		.diag-val.err {
+			color: #ff8c94;
+		}
+		.diag-error {
+			display: none;
+			padding: 9px 11px;
+			border-radius: 7px;
+			background: rgba(120, 32, 42, 0.35);
+			border: 1px solid #6e3037;
+			color: #ffb8bf;
+			font-size: 12px;
+			margin-bottom: 14px;
+			word-break: break-word;
+		}
+		.modal-actions {
+			display: flex;
+			justify-content: flex-end;
+			gap: 8px;
+		}
+		#opfs-pill {
+			display: none;
+		}
+		#opfs-pill.warn {
+			display: inline-block;
+			background: #4a2328;
+			color: #ffb0b8;
 		}
 	</style>
 </head>
 <body>
 	<div class="card">
-		<h1>OpenJK WebAssembly</h1>
-		<p>Clean upstream port using Emscripten side modules (<code>SIDE_MODULE=2</code>), GL4ES WebGL2, OpenAL WebAudio, and hybrid WebTransport.</p>
-		<div class="links">
-			<a href="openjk_sp.wasm32.html">
-				Jedi Academy — Singleplayer
-				<small>Select your local GameData/base folder or .pk3 files in the browser</small>
+		<div class="header">
+			<h1>Jedi Academy</h1>
+			<span class="subtitle">OpenJK Web</span>
+		</div>
+
+		<div class="launch-grid">
+			<a id="mp-launch-link" class="launch-btn primary" href="openjk.wasm32.html">
+				Play Multiplayer
+				<small id="mp-launch-desc">Base Game</small>
 			</a>
-			<a href="openjk.wasm32.html">
-				Jedi Academy — Multiplayer
-				<small>Select your local GameData/base folder or .pk3 files + WebTransport netplay</small>
-			</a>
-			<a href="test_wt.html">
-				WebTransport Diagnostics
-				<small>Verify HTTP/3 WebTransport handshake &amp; Virtual IP assignment</small>
+			<a class="launch-btn" href="openjk_sp.wasm32.html">
+				Play Singleplayer
+				<small>Campaign &amp; missions</small>
 			</a>
 		</div>
+
+		<div class="section">
+			<div class="section-head">
+				<span class="section-title">Multiplayer Mods</span>
+				<div class="section-actions">
+					<button id="toggle-all-btn" class="text-btn" type="button" style="display: none;">Disable all</button>
+					<span id="opfs-pill" class="badge">Storage Unavailable</span>
+				</div>
+			</div>
+
+			<div id="mod-list" class="mod-list"></div>
+
+			<div id="mod-dropzone" class="dropzone">
+				<div class="dropzone-label">Drop a mod <strong>.zip</strong>, <strong>.pk3</strong>, or folder here to install</div>
+				<div class="btn-row">
+					<label class="btn">
+						Choose Files
+						<input id="mod-files-input" type="file" multiple accept=".zip,.pk3,.wasm,.cfg,.txt" hidden>
+					</label>
+					<label class="btn">
+						Choose Folder
+						<input id="mod-folder-input" type="file" webkitdirectory directory multiple hidden>
+					</label>
+				</div>
+			</div>
+
+			<div id="mod-status"></div>
+
+			<details class="advanced">
+				<summary>Advanced import options (custom folder name, URL)</summary>
+				<div class="advanced-body">
+					<div>
+						<label class="field-label" for="mod-name-input">Override mod folder name (optional)</label>
+						<input id="mod-name-input" type="text" placeholder="Auto-detected from .zip or folder">
+					</div>
+					<div>
+						<label class="field-label" for="mod-url-input">Import from URL (.zip or .pk3)</label>
+						<div class="url-row">
+							<input id="mod-url-input" type="text" placeholder="https://example.com/mod.zip">
+							<button id="mod-url-btn" class="btn" type="button">Import</button>
+						</div>
+					</div>
+				</div>
+			</details>
+		</div>
+
+		<div class="footer">
+			<span>Mods are saved locally in your browser.</span>
+			<button id="diag-open-btn" class="link-btn" type="button">Network Diagnostics</button>
+		</div>
 	</div>
+
+	<div id="diag-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="diag-title">
+		<div class="modal">
+			<div class="modal-head">
+				<h2 id="diag-title">Network Diagnostics</h2>
+				<span id="diag-badge" class="badge">Idle</span>
+			</div>
+			<div class="diag-grid">
+				<div class="diag-row"><span class="diag-key">WebTransport</span><span id="diag-wt" class="diag-val">—</span></div>
+				<div class="diag-row"><span class="diag-key">Relay Endpoint</span><span id="diag-endpoint" class="diag-val">—</span></div>
+				<div class="diag-row"><span class="diag-key">Virtual IP</span><span id="diag-vip" class="diag-val">—</span></div>
+				<div class="diag-row"><span class="diag-key">Handshake</span><span id="diag-rtt" class="diag-val">—</span></div>
+				<div class="diag-row"><span class="diag-key">Local Storage (OPFS)</span><span id="diag-opfs" class="diag-val">—</span></div>
+			</div>
+			<div id="diag-error" class="diag-error"></div>
+			<div class="modal-actions">
+				<button id="diag-retest-btn" class="btn small" type="button">Retest</button>
+				<button id="diag-close-btn" class="btn small" type="button">Close</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		(function () {
+			var RESERVED_NAMES = {
+				base: true, saves: true, dev: true, tmp: true,
+				proc: true, home: true, lib: true, usr: true, etc: true
+			};
+			var ASSET_SUBDIRS = {
+				maps: true, models: true, textures: true, shaders: true,
+				sound: true, scripts: true, ui: true, ext_data: true,
+				gfx: true, strings: true, botfiles: true, icons: true,
+				fonts: true, music: true, video: true, demos: true
+			};
+
+			var mpLaunchLink = document.getElementById('mp-launch-link');
+			var mpLaunchDesc = document.getElementById('mp-launch-desc');
+			var opfsPill = document.getElementById('opfs-pill');
+			var toggleAllBtn = document.getElementById('toggle-all-btn');
+			var modListEl = document.getElementById('mod-list');
+			var modNameInput = document.getElementById('mod-name-input');
+			var modDropzone = document.getElementById('mod-dropzone');
+			var modFilesInput = document.getElementById('mod-files-input');
+			var modFolderInput = document.getElementById('mod-folder-input');
+			var modUrlInput = document.getElementById('mod-url-input');
+			var modUrlBtn = document.getElementById('mod-url-btn');
+			var modStatusEl = document.getElementById('mod-status');
+
+			var installedMods = [];
+			var enabledMods = new Set();
+
+			function loadEnabledMods() {
+				enabledMods = new Set();
+				try {
+					var raw = localStorage.getItem('openjk_mp_enabled_mods');
+					if (raw) {
+						var arr = JSON.parse(raw);
+						if (Array.isArray(arr)) {
+							arr.forEach(function (n) { if (n) enabledMods.add(String(n)); });
+							return;
+						}
+					}
+					var legacy = localStorage.getItem('openjk_mp_selected_mod');
+					if (legacy) enabledMods.add(legacy);
+				} catch (e) { }
+			}
+
+			function saveEnabledMods() {
+				try {
+					localStorage.setItem('openjk_mp_enabled_mods', JSON.stringify(Array.from(enabledMods)));
+				} catch (e) { }
+			}
+
+			function setStatus(msg, cls) {
+				modStatusEl.textContent = msg || '';
+				modStatusEl.className = cls || '';
+			}
+
+			function sanitizeModName(raw) {
+				var s = String(raw || '').trim().replace(/^\/+|\/+$/g, '');
+				s = s.replace(/\.(zip|pk3|wasm)$/i, '');
+				s = s.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
+				if (!s || s.length > 48) return '';
+				if (!/^[a-zA-Z0-9]/.test(s)) s = 'mod_' + s;
+				if (RESERVED_NAMES[s.toLowerCase()]) return '';
+				return s;
+			}
+
+			function formatBytes(n) {
+				if (n < 1024) return n + ' B';
+				if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+				return (n / (1024 * 1024)).toFixed(2) + ' MB';
+			}
+
+			function isNativeBinaryPath(relPath) {
+				var base = String(relPath || '').replace(/\\/g, '/').split('/').pop() || '';
+				return /\.(dll|so|dylib|exe|pdb)$/i.test(base) || /(_mac|jampgamex86)\.pk3$/i.test(base);
+			}
+
+			function zipBufferContainsNativeBinary(bytes) {
+				try {
+					var dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+					var len = bytes.byteLength;
+					if (len < 22) return false;
+					var minStart = Math.max(0, len - 65557);
+					var eocd = -1;
+					for (var p = len - 22; p >= minStart; p--) {
+						if (dv.getUint32(p, true) === 0x06054b50) { eocd = p; break; }
+					}
+					if (eocd < 0) return false;
+					var totalEntries = dv.getUint16(eocd + 10, true);
+					var ofs = dv.getUint32(eocd + 16, true);
+					var decoder = new TextDecoder('utf-8');
+					for (var i = 0; i < totalEntries; i++) {
+						if (ofs + 46 > len || dv.getUint32(ofs, true) !== 0x02014b50) break;
+						var nameLen = dv.getUint16(ofs + 28, true);
+						var extraLen = dv.getUint16(ofs + 30, true);
+						var commentLen = dv.getUint16(ofs + 32, true);
+						var name = decoder.decode(bytes.subarray(ofs + 46, ofs + 46 + nameLen));
+						ofs += 46 + nameLen + extraLen + commentLen;
+						if (/\.(dll|so|dylib|bundle)$/i.test(name)) return true;
+					}
+				} catch (e) { }
+				return false;
+			}
+
+			function shouldSkipEntry(relPath) {
+				var norm = String(relPath || '').replace(/\\/g, '/');
+				if (!norm || norm.endsWith('/')) return true;
+				if (norm.indexOf('..') !== -1 || norm.startsWith('/')) return true;
+				if (norm.indexOf('__MACOSX/') !== -1) return true;
+				var base = norm.split('/').pop();
+				if (!base || base === '.DS_Store' || base === 'Thumbs.db') return true;
+				if (/\.(dll|so|dylib|exe|pdb|bat|msi|sh|rtf|doc)$/i.test(base)) return true;
+				if (/(_mac|jampgamex86)\.pk3$/i.test(base)) return true;
+				return false;
+			}
+
+			async function getOpfsRoot() {
+				if (!navigator.storage || !navigator.storage.getDirectory) return null;
+				return await navigator.storage.getDirectory();
+			}
+
+			async function getSubDir(parent, parts, create) {
+				var dir = parent;
+				for (var i = 0; i < parts.length; i++) {
+					if (!parts[i]) continue;
+					dir = await dir.getDirectoryHandle(parts[i], { create: create });
+				}
+				return dir;
+			}
+
+			async function writeOpfsModFile(modName, relPath, bytes) {
+				var root = await getOpfsRoot();
+				if (!root) throw new Error('Browser storage is unavailable.');
+				var parts = relPath.replace(/\\/g, '/').replace(/^\/+/, '').split('/').filter(Boolean);
+				if (parts.length === 0) return;
+				var fileName = parts.pop();
+				var dir = await getSubDir(root, ['openjk-mods', modName].concat(parts), true);
+				var fh = await dir.getFileHandle(fileName, { create: true });
+				var w = await fh.createWritable();
+				await w.write(bytes);
+				await w.close();
+			}
+
+			async function inflateRawBytes(compBytes) {
+				if (typeof DecompressionStream !== 'function') {
+					throw new Error('This browser cannot extract .zip files.');
+				}
+				var stream = new Blob([compBytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+				var ab = await new Response(stream).arrayBuffer();
+				return new Uint8Array(ab);
+			}
+
+			async function extractZipArchive(arrayBuffer) {
+				var bytes = new Uint8Array(arrayBuffer);
+				var dv = new DataView(arrayBuffer);
+				var len = bytes.length;
+				if (len < 22) throw new Error('Invalid .zip file.');
+
+				var minStart = Math.max(0, len - 65557);
+				var eocd = -1;
+				for (var p = len - 22; p >= minStart; p--) {
+					if (dv.getUint32(p, true) === 0x06054b50) {
+						eocd = p;
+						break;
+					}
+				}
+				if (eocd < 0) throw new Error('Invalid .zip archive.');
+
+				var totalEntries = dv.getUint16(eocd + 10, true);
+				var cdOffset = dv.getUint32(eocd + 16, true);
+				var decoder = new TextDecoder('utf-8');
+				var entries = [];
+				var hasNativeBinaries = false;
+				var ofs = cdOffset;
+
+				for (var i = 0; i < totalEntries; i++) {
+					if (ofs + 46 > len || dv.getUint32(ofs, true) !== 0x02014b50) {
+						throw new Error('Corrupt .zip archive.');
+					}
+					var method = dv.getUint16(ofs + 10, true);
+					var compSize = dv.getUint32(ofs + 20, true);
+					var nameLen = dv.getUint16(ofs + 28, true);
+					var extraLen = dv.getUint16(ofs + 30, true);
+					var commentLen = dv.getUint16(ofs + 32, true);
+					var lfhOfs = dv.getUint32(ofs + 42, true);
+					var name = decoder.decode(bytes.subarray(ofs + 46, ofs + 46 + nameLen)).replace(/\\/g, '/');
+					ofs += 46 + nameLen + extraLen + commentLen;
+
+					if (isNativeBinaryPath(name)) {
+						hasNativeBinaries = true;
+					}
+					if (shouldSkipEntry(name)) continue;
+
+					if (lfhOfs + 30 > len || dv.getUint32(lfhOfs, true) !== 0x04034b50) {
+						throw new Error('Corrupt .zip entry: ' + name);
+					}
+					var lfhNameLen = dv.getUint16(lfhOfs + 26, true);
+					var lfhExtraLen = dv.getUint16(lfhOfs + 28, true);
+					var dataStart = lfhOfs + 30 + lfhNameLen + lfhExtraLen;
+					var compSlice = bytes.subarray(dataStart, dataStart + compSize);
+					var outBytes;
+					if (method === 0) {
+						outBytes = new Uint8Array(compSlice);
+					} else if (method === 8) {
+						outBytes = await inflateRawBytes(compSlice);
+					} else {
+						throw new Error('Unsupported .zip compression method (' + method + ') for ' + name);
+					}
+					if (/\.pk3$/i.test(name) && zipBufferContainsNativeBinary(outBytes)) {
+						hasNativeBinaries = true;
+					}
+					entries.push({ path: name, bytes: outBytes });
+				}
+				return { entries: entries, hasNativeBinaries: hasNativeBinaries };
+			}
+
+			function normalizeExtractedEntries(entries, fallbackModName) {
+				if (entries.length === 0) return { modName: '', items: [] };
+
+				var splitPaths = entries.map(function (e) {
+					return e.path.replace(/^\/+/, '').split('/').filter(Boolean);
+				});
+
+				var allGameData = splitPaths.every(function (p) {
+					return p.length >= 2 && p[0].toLowerCase() === 'gamedata';
+				});
+				if (allGameData) {
+					splitPaths = splitPaths.map(function (p) { return p.slice(1); });
+				}
+
+				var inferred = '';
+				var allNested = splitPaths.every(function (p) { return p.length >= 2; });
+				if (allNested) {
+					var firstTop = splitPaths[0][0];
+					var sameTop = splitPaths.every(function (p) {
+						return p[0].toLowerCase() === firstTop.toLowerCase();
+					});
+					if (sameTop && firstTop.toLowerCase() === 'base') {
+						// Strip leading base/ so packaged base/*.pk3 files mount at the mod root
+						splitPaths = splitPaths.map(function (p) { return p.slice(1); });
+					} else if (sameTop && !ASSET_SUBDIRS[firstTop.toLowerCase()] && !RESERVED_NAMES[firstTop.toLowerCase()]) {
+						inferred = sanitizeModName(firstTop);
+						if (inferred) {
+							splitPaths = splitPaths.map(function (p) { return p.slice(1); });
+						}
+					}
+				}
+
+				var explicit = sanitizeModName(modNameInput.value);
+				var finalMod = explicit || inferred || sanitizeModName(fallbackModName);
+				var items = [];
+				var seenPk3 = Object.create(null);
+				for (var i = 0; i < entries.length; i++) {
+					var rel = splitPaths[i].join('/');
+					if (!rel) continue;
+					// Hoist nested .pk3 files (e.g. japlus/japlus_sabers.pk3, base/japlus_gla_anims.pk3) to mod root
+					if (/\.pk3$/i.test(rel) && rel.indexOf('/') !== -1) {
+						var base = splitPaths[i][splitPaths[i].length - 1];
+						var key = base.toLowerCase();
+						if (!seenPk3[key]) {
+							seenPk3[key] = true;
+							rel = base;
+						}
+					} else if (/\.pk3$/i.test(rel)) {
+						seenPk3[rel.toLowerCase()] = true;
+					}
+					items.push({ path: rel, bytes: entries[i].bytes });
+				}
+				return { modName: finalMod, items: items };
+			}
+
+			async function importSingleZip(zipFile, indexLabel) {
+				setStatus('Extracting ' + indexLabel + zipFile.name + '...');
+				var ab = await zipFile.arrayBuffer();
+				var extracted = await extractZipArchive(ab);
+				var rawEntries = extracted.entries;
+				if (rawEntries.length === 0) {
+					throw new Error('No supported mod files found inside ' + zipFile.name);
+				}
+				var norm = normalizeExtractedEntries(rawEntries, zipFile.name);
+				if (!norm.modName) {
+					throw new Error('Could not infer a valid mod name from ' + zipFile.name + ' (set one in Advanced options)');
+				}
+				var hasWasm = norm.items.some(function (it) { return /\.wasm$/i.test(it.path); });
+				for (var zi = 0; zi < norm.items.length; zi++) {
+					setStatus('Installing ' + indexLabel + norm.modName + ' (' + (zi + 1) + '/' + norm.items.length + ')...');
+					await writeOpfsModFile(norm.modName, norm.items[zi].path, norm.items[zi].bytes);
+				}
+				if (extracted.hasNativeBinaries && !hasWasm) {
+					await writeOpfsModFile(norm.modName, '.native_code_unsupported', new TextEncoder().encode('1'));
+				}
+				return {
+					modName: norm.modName,
+					fileCount: norm.items.length,
+					nativeOnlyWarning: extracted.hasNativeBinaries && !hasWasm
+				};
+			}
+
+			async function importFileList(fileList) {
+				if (!fileList || fileList.length === 0) return;
+				var files = Array.prototype.slice.call(fileList);
+
+				var zipFiles = [];
+				var looseFiles = [];
+				for (var idx = 0; idx < files.length; idx++) {
+					if (/\.zip$/i.test(files[idx].name)) {
+						zipFiles.push(files[idx]);
+					} else {
+						looseFiles.push(files[idx]);
+					}
+				}
+
+				var installed = [];
+				var nativeWarned = [];
+				var errors = [];
+
+				for (var z = 0; z < zipFiles.length; z++) {
+					var label = zipFiles.length > 1 ? ('[' + (z + 1) + '/' + zipFiles.length + '] ') : '';
+					try {
+						var res = await importSingleZip(zipFiles[z], label);
+						if (installed.indexOf(res.modName) === -1) {
+							installed.push(res.modName);
+						}
+						if (res.nativeOnlyWarning && nativeWarned.indexOf(res.modName) === -1) {
+							nativeWarned.push(res.modName);
+						}
+					} catch (err) {
+						errors.push(zipFiles[z].name + ': ' + err.message);
+					}
+				}
+
+				if (looseFiles.length > 0) {
+					var collected = [];
+					for (var i = 0; i < looseFiles.length; i++) {
+						var f = looseFiles[i];
+						var rel = (f.webkitRelativePath || f.name).replace(/\\/g, '/');
+						if (shouldSkipEntry(rel)) continue;
+						setStatus('Reading ' + f.name + '...');
+						var buf = new Uint8Array(await f.arrayBuffer());
+						collected.push({ path: rel, bytes: buf });
+					}
+					if (collected.length > 0) {
+						var fallback = looseFiles[0].webkitRelativePath
+							? looseFiles[0].webkitRelativePath.split('/')[0]
+							: looseFiles[0].name;
+						var normLoose = normalizeExtractedEntries(collected, fallback);
+						if (!normLoose.modName) {
+							errors.push('Enter a mod name in Advanced options before installing loose files.');
+						} else {
+							for (var li = 0; li < normLoose.items.length; li++) {
+								setStatus('Installing ' + normLoose.modName + ' (' + (li + 1) + '/' + normLoose.items.length + ')...');
+								await writeOpfsModFile(normLoose.modName, normLoose.items[li].path, normLoose.items[li].bytes);
+							}
+							if (installed.indexOf(normLoose.modName) === -1) {
+								installed.push(normLoose.modName);
+							}
+						}
+					} else if (zipFiles.length === 0) {
+						errors.push('No supported mod files found.');
+					}
+				}
+
+				if (installed.length > 0) {
+					var summary = installed.length === 1
+						? ('Installed "' + installed[0] + '".')
+						: ('Installed ' + installed.length + ' mods: ' + installed.join(', ') + '.');
+					if (nativeWarned.length > 0) {
+						summary += ' Note: ' + nativeWarned.join(', ') + ' uses native x86 DLL/SO code (only its .pk3 assets can load in the browser).';
+					}
+					if (errors.length > 0) {
+						setStatus(summary + ' Failed: ' + errors.join(' | '), 'error');
+					} else {
+						setStatus(summary, nativeWarned.length > 0 ? '' : 'ok');
+					}
+					await refreshMods(installed);
+				} else if (errors.length > 0) {
+					setStatus(errors.join(' | '), 'error');
+				}
+			}
+
+			async function importFromUrl() {
+				var rawUrl = (modUrlInput.value || '').trim();
+				if (!rawUrl) {
+					setStatus('Enter a URL to a .zip or .pk3 file.', 'error');
+					return;
+				}
+				modUrlBtn.disabled = true;
+				try {
+					setStatus('Downloading ' + rawUrl + '...');
+					var resp = await fetch(rawUrl);
+					if (!resp.ok) throw new Error('HTTP ' + resp.status);
+					var ab = await resp.arrayBuffer();
+					var urlPath = new URL(rawUrl, window.location.href).pathname;
+					var fileName = decodeURIComponent(urlPath.split('/').pop() || 'mod.pk3');
+					if (/\.zip$/i.test(fileName)) {
+						var extracted = await extractZipArchive(ab);
+						var rawEntries = extracted.entries;
+						if (rawEntries.length === 0) {
+							setStatus('No mod files found in ' + fileName, 'error');
+							return;
+						}
+						var norm = normalizeExtractedEntries(rawEntries, fileName);
+						if (!norm.modName) {
+							setStatus('Enter a valid mod name in Advanced options.', 'error');
+							return;
+						}
+						var hasWasm = norm.items.some(function (it) { return /\.wasm$/i.test(it.path); });
+						for (var i = 0; i < norm.items.length; i++) {
+							await writeOpfsModFile(norm.modName, norm.items[i].path, norm.items[i].bytes);
+						}
+						if (extracted.hasNativeBinaries && !hasWasm) {
+							await writeOpfsModFile(norm.modName, '.native_code_unsupported', new TextEncoder().encode('1'));
+						}
+						setStatus('Installed "' + norm.modName + '" (' + norm.items.length + ' files).', 'ok');
+						await refreshMods([norm.modName]);
+					} else {
+						var modName = sanitizeModName(modNameInput.value) || sanitizeModName(fileName);
+						if (!modName) {
+							setStatus('Enter a valid mod name in Advanced options.', 'error');
+							return;
+						}
+						if (!/\.(pk3|wasm|cfg|txt)$/i.test(fileName)) {
+							fileName += '.pk3';
+						}
+						await writeOpfsModFile(modName, fileName, new Uint8Array(ab));
+						setStatus('Installed "' + modName + '".', 'ok');
+						await refreshMods([modName]);
+					}
+				} catch (err) {
+					setStatus('Download failed: ' + err.message, 'error');
+				} finally {
+					modUrlBtn.disabled = false;
+				}
+			}
+
+			async function inspectModDir(dirHandle, source) {
+				var info = {
+					name: dirHandle.name,
+					source: source,
+					pk3Count: 0,
+					wasmFiles: [],
+					nativeCodeUnsupported: false,
+					fileCount: 0,
+					totalBytes: 0,
+					description: ''
+				};
+				async function walk(handle, prefix) {
+					for await (var entry of handle.entries()) {
+						var name = entry[0];
+						var h = entry[1];
+						var rel = prefix ? (prefix + '/' + name) : name;
+						if (h.kind === 'directory') {
+							await walk(h, rel);
+						} else if (h.kind === 'file') {
+							if (name === '.native_code_unsupported') {
+								info.nativeCodeUnsupported = true;
+								continue;
+							}
+							var f = await h.getFile();
+							info.fileCount++;
+							info.totalBytes += f.size;
+							if (/\.pk3$/i.test(name)) info.pk3Count++;
+							if (/\.wasm$/i.test(name)) info.wasmFiles.push(name);
+							if (rel.toLowerCase() === 'description.txt' && !info.description) {
+								var txt = (await f.text()).trim().replace(/\s+/g, ' ');
+								info.description = txt.slice(0, 120);
+							}
+						}
+					}
+				}
+				await walk(dirHandle, '');
+				return info;
+			}
+
+			async function scanInstalledMods() {
+				var root = await getOpfsRoot();
+				if (!root) {
+					opfsPill.className = 'badge warn';
+					return [];
+				}
+				opfsPill.className = 'badge';
+
+				var byName = Object.create(null);
+
+				try {
+					var modsDir = await root.getDirectoryHandle('openjk-mods', { create: false });
+					for await (var entry of modsDir.entries()) {
+						if (entry[1].kind !== 'directory') continue;
+						var name = entry[0];
+						if (RESERVED_NAMES[name.toLowerCase()]) continue;
+						var info = await inspectModDir(entry[1], 'imported');
+						if (info.fileCount > 0) {
+							byName[name.toLowerCase()] = info;
+						}
+					}
+				} catch (e) { }
+
+				try {
+					var savesDir = await root.getDirectoryHandle('openjk-saves', { create: false });
+					for await (var sEntry of savesDir.entries()) {
+						if (sEntry[1].kind !== 'directory') continue;
+						var sName = sEntry[0];
+						if (RESERVED_NAMES[sName.toLowerCase()]) continue;
+						var sInfo = await inspectModDir(sEntry[1], 'downloaded');
+						if (sInfo.pk3Count === 0 && sInfo.wasmFiles.length === 0) continue;
+						var key = sName.toLowerCase();
+						if (byName[key]) {
+							byName[key].pk3Count += sInfo.pk3Count;
+							byName[key].fileCount += sInfo.fileCount;
+							byName[key].totalBytes += sInfo.totalBytes;
+							byName[key].wasmFiles = byName[key].wasmFiles.concat(sInfo.wasmFiles);
+							byName[key].hasDownloaded = true;
+						} else {
+							byName[key] = sInfo;
+						}
+					}
+				} catch (e) { }
+
+				return Object.keys(byName).sort().map(function (k) { return byName[k]; });
+			}
+
+			async function deleteMod(modInfo) {
+				var root = await getOpfsRoot();
+				if (!root) return;
+				try {
+					var modsDir = await root.getDirectoryHandle('openjk-mods', { create: false });
+					await modsDir.removeEntry(modInfo.name, { recursive: true });
+				} catch (e) { }
+				if (modInfo.source === 'downloaded' || modInfo.hasDownloaded) {
+					try {
+						var savesDir = await root.getDirectoryHandle('openjk-saves', { create: false });
+						await savesDir.removeEntry(modInfo.name, { recursive: true });
+					} catch (e) { }
+				}
+				enabledMods.delete(modInfo.name);
+				saveEnabledMods();
+				setStatus('Removed "' + modInfo.name + '".', 'ok');
+				await refreshMods([]);
+			}
+
+			function isCodeMod(m) {
+				return m.wasmFiles && m.wasmFiles.length > 0;
+			}
+
+			function updateLaunchHref() {
+				var activeCodeMod = '';
+				var activeAssetCount = 0;
+
+				installedMods.forEach(function (m) {
+					if (!enabledMods.has(m.name)) return;
+					if (isCodeMod(m)) {
+						if (!activeCodeMod) activeCodeMod = m.name;
+					} else {
+						activeAssetCount++;
+					}
+				});
+
+				var qs = new URLSearchParams();
+				if (activeCodeMod) qs.set('mod', activeCodeMod);
+
+				var query = qs.toString();
+				mpLaunchLink.href = 'openjk.wasm32.html' + (query ? ('?' + query) : '');
+
+				if (activeCodeMod && activeAssetCount > 0) {
+					mpLaunchDesc.textContent = activeCodeMod + ' + ' + activeAssetCount + (activeAssetCount === 1 ? ' mod' : ' mods');
+				} else if (activeCodeMod) {
+					mpLaunchDesc.textContent = 'Mod: ' + activeCodeMod;
+				} else if (activeAssetCount > 0) {
+					mpLaunchDesc.textContent = activeAssetCount + (activeAssetCount === 1 ? ' mod enabled' : ' mods enabled');
+				} else {
+					mpLaunchDesc.textContent = 'Base Game';
+				}
+
+				saveEnabledMods();
+
+				var cards = modListEl.querySelectorAll('.mod-item');
+				for (var i = 0; i < cards.length; i++) {
+					var name = cards[i].getAttribute('data-mod');
+					var on = enabledMods.has(name);
+					cards[i].classList.toggle('active', on);
+					var cb = cards[i].querySelector('input[type="checkbox"]');
+					if (cb) cb.checked = on;
+				}
+
+				if (installedMods.length >= 2) {
+					toggleAllBtn.style.display = 'inline';
+					var anyOff = installedMods.some(function (m) { return !enabledMods.has(m.name) && !isCodeMod(m); });
+					toggleAllBtn.textContent = anyOff ? 'Enable all' : 'Disable all';
+				} else {
+					toggleAllBtn.style.display = 'none';
+				}
+			}
+
+			function setModEnabled(modInfo, checked) {
+				if (checked) {
+					// OpenJK only runs one fs_game code module at a time, so swap if another code mod was active
+					if (isCodeMod(modInfo)) {
+						installedMods.forEach(function (other) {
+							if (other.name !== modInfo.name && isCodeMod(other)) {
+								enabledMods.delete(other.name);
+							}
+						});
+					}
+					enabledMods.add(modInfo.name);
+				} else {
+					enabledMods.delete(modInfo.name);
+				}
+				updateLaunchHref();
+			}
+
+			function renderModList() {
+				modListEl.innerHTML = '';
+				if (installedMods.length === 0) {
+					var empty = document.createElement('div');
+					empty.className = 'mod-empty';
+					empty.textContent = 'No mods installed yet.';
+					modListEl.appendChild(empty);
+					updateLaunchHref();
+					return;
+				}
+
+				installedMods.forEach(function (m) {
+					var item = document.createElement('div');
+					item.className = 'mod-item';
+					item.setAttribute('data-mod', m.name);
+
+					var label = document.createElement('label');
+					label.className = 'mod-toggle';
+
+					var cb = document.createElement('input');
+					cb.type = 'checkbox';
+					cb.checked = enabledMods.has(m.name);
+					cb.onchange = function () {
+						setModEnabled(m, cb.checked);
+					};
+					label.appendChild(cb);
+
+					var meta = document.createElement('div');
+					meta.className = 'mod-meta';
+
+					var title = document.createElement('div');
+					title.className = 'mod-title';
+					var nameSpan = document.createElement('span');
+					nameSpan.textContent = m.name;
+					title.appendChild(nameSpan);
+
+					if (isCodeMod(m)) {
+						var bWasm = document.createElement('span');
+						bWasm.className = 'badge wasm';
+						bWasm.textContent = 'Code Mod';
+						bWasm.title = m.wasmFiles.join(', ');
+						title.appendChild(bWasm);
+					} else if (m.nativeCodeUnsupported) {
+						var bWarn = document.createElement('span');
+						bWarn.className = 'badge warn';
+						bWarn.textContent = 'Assets Only (x86 code)';
+						bWarn.title = 'This mod contains native x86 DLL/SO code which cannot run in WebAssembly. Only its .pk3 assets will load.';
+						title.appendChild(bWarn);
+					}
+					if (m.source === 'downloaded') {
+						var bDl = document.createElement('span');
+						bDl.className = 'badge dl';
+						bDl.textContent = 'Auto-Downloaded';
+						title.appendChild(bDl);
+					}
+					var bSz = document.createElement('span');
+					bSz.className = 'badge';
+					bSz.textContent = formatBytes(m.totalBytes);
+					title.appendChild(bSz);
+					meta.appendChild(title);
+
+					if (m.description) {
+						var desc = document.createElement('div');
+						desc.className = 'mod-desc';
+						desc.textContent = m.description;
+						meta.appendChild(desc);
+					}
+
+					label.appendChild(meta);
+
+					var actions = document.createElement('div');
+					actions.className = 'mod-actions';
+
+					var delBtn = document.createElement('button');
+					delBtn.type = 'button';
+					delBtn.className = 'btn small danger';
+					delBtn.textContent = 'Remove';
+					delBtn.onclick = function () {
+						deleteMod(m);
+					};
+					actions.appendChild(delBtn);
+
+					item.appendChild(label);
+					item.appendChild(actions);
+					modListEl.appendChild(item);
+				});
+
+				updateLaunchHref();
+			}
+
+			async function refreshMods(newlyInstalled) {
+				installedMods = await scanInstalledMods();
+				var present = new Set(installedMods.map(function (m) { return m.name; }));
+				// Drop stale entries
+				Array.from(enabledMods).forEach(function (n) {
+					if (!present.has(n)) enabledMods.delete(n);
+				});
+				// Auto-enable newly installed mods
+				(newlyInstalled || []).forEach(function (n) {
+					var match = installedMods.find(function (m) { return m.name === n; });
+					if (match) setModEnabled(match, true);
+				});
+				renderModList();
+			}
+
+			toggleAllBtn.addEventListener('click', function () {
+				var anyOff = installedMods.some(function (m) { return !enabledMods.has(m.name) && !isCodeMod(m); });
+				if (anyOff) {
+					installedMods.forEach(function (m) {
+						if (!isCodeMod(m)) enabledMods.add(m.name);
+					});
+				} else {
+					enabledMods.clear();
+				}
+				updateLaunchHref();
+			});
+
+			modFilesInput.addEventListener('change', function (e) {
+				importFileList(e.target.files).catch(function (err) {
+					setStatus('Install failed: ' + err.message, 'error');
+				}).finally(function () {
+					modFilesInput.value = '';
+				});
+			});
+
+			modFolderInput.addEventListener('change', function (e) {
+				importFileList(e.target.files).catch(function (err) {
+					setStatus('Install failed: ' + err.message, 'error');
+				}).finally(function () {
+					modFolderInput.value = '';
+				});
+			});
+
+			modUrlBtn.addEventListener('click', importFromUrl);
+
+			modDropzone.addEventListener('dragover', function (e) {
+				e.preventDefault();
+				modDropzone.classList.add('dragover');
+			});
+			modDropzone.addEventListener('dragleave', function () {
+				modDropzone.classList.remove('dragover');
+			});
+			modDropzone.addEventListener('drop', function (e) {
+				e.preventDefault();
+				modDropzone.classList.remove('dragover');
+				if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+					importFileList(e.dataTransfer.files).catch(function (err) {
+						setStatus('Install failed: ' + err.message, 'error');
+					});
+				}
+			});
+
+			loadEnabledMods();
+			refreshMods([]).catch(function (err) {
+				setStatus('Could not read saved mods: ' + err.message, 'error');
+			});
+
+			// Network Diagnostics Modal
+			var diagModal = document.getElementById('diag-modal');
+			var diagOpenBtn = document.getElementById('diag-open-btn');
+			var diagCloseBtn = document.getElementById('diag-close-btn');
+			var diagRetestBtn = document.getElementById('diag-retest-btn');
+			var diagBadge = document.getElementById('diag-badge');
+			var diagWt = document.getElementById('diag-wt');
+			var diagEndpoint = document.getElementById('diag-endpoint');
+			var diagVip = document.getElementById('diag-vip');
+			var diagRtt = document.getElementById('diag-rtt');
+			var diagOpfs = document.getElementById('diag-opfs');
+			var diagError = document.getElementById('diag-error');
+			var activeDiagTransport = null;
+
+			function closeDiagTransport() {
+				if (activeDiagTransport) {
+					try { activeDiagTransport.close(); } catch (e) { }
+					activeDiagTransport = null;
+				}
+			}
+
+			async function runNetworkDiagnostics() {
+				closeDiagTransport();
+				diagRetestBtn.disabled = true;
+				diagBadge.textContent = 'Testing...';
+				diagBadge.className = 'badge';
+				diagWt.textContent = 'Connecting...';
+				diagWt.className = 'diag-val';
+				diagEndpoint.textContent = '—';
+				diagVip.textContent = '—';
+				diagRtt.textContent = '—';
+				diagError.style.display = 'none';
+				diagError.textContent = '';
+
+				var opfsOk = !!(navigator.storage && navigator.storage.getDirectory);
+				diagOpfs.textContent = opfsOk ? 'Available' : 'Unavailable';
+				diagOpfs.className = 'diag-val ' + (opfsOk ? 'ok' : 'err');
+
+				if (typeof WebTransport !== 'function') {
+					diagBadge.textContent = 'Unsupported';
+					diagWt.textContent = 'Not supported in this browser';
+					diagWt.className = 'diag-val err';
+					diagRetestBtn.disabled = false;
+					return;
+				}
+
+				var started = performance.now();
+				try {
+					var loc = window.location;
+					var fallbackPort = loc.port === '8080' ? '8443' : (loc.port || '443');
+					var resp = await fetch('/wt-server-certificate-hashes?t=' + Date.now());
+					if (!resp.ok) throw new Error('Cert hash endpoint returned HTTP ' + resp.status);
+					var data = await resp.json();
+					var quicPort = data.quicPort || fallbackPort;
+					var wtUrl = 'https://' + loc.hostname + ':' + quicPort + '/jamp';
+					diagEndpoint.textContent = wtUrl;
+
+					var hashes = (data.hashes || []).map(function (hex) {
+						var bytes = new Uint8Array(hex.length / 2);
+						for (var i = 0; i < hex.length; i += 2) {
+							bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+						}
+						return { algorithm: 'sha-256', value: bytes.buffer };
+					});
+
+					var opts = hashes.length > 0 ? { serverCertificateHashes: hashes } : {};
+					var transport = new WebTransport(wtUrl, opts);
+					activeDiagTransport = transport;
+					await transport.ready;
+
+					var reader = transport.incomingUnidirectionalStreams.getReader();
+					var streamRes = await reader.read();
+					if (streamRes.done || !streamRes.value) throw new Error('Relay closed before sending Virtual IP');
+					var sr = streamRes.value.getReader();
+					var vipBuf = new Uint8Array(0);
+					while (vipBuf.length < 4) {
+						var chunk = await sr.read();
+						if (chunk.done || !chunk.value) break;
+						var merged = new Uint8Array(vipBuf.length + chunk.value.length);
+						merged.set(vipBuf, 0);
+						merged.set(chunk.value, vipBuf.length);
+						vipBuf = merged;
+					}
+					if (vipBuf.length < 4) throw new Error('Received incomplete Virtual IP');
+
+					var vip = Array.from(vipBuf.slice(0, 4)).join('.');
+					var elapsed = Math.round(performance.now() - started);
+
+					diagBadge.textContent = 'Connected';
+					diagBadge.className = 'badge dl';
+					diagWt.textContent = 'Connected';
+					diagWt.className = 'diag-val ok';
+					diagVip.textContent = vip;
+					diagRtt.textContent = elapsed + ' ms';
+					closeDiagTransport();
+				} catch (err) {
+					closeDiagTransport();
+					diagBadge.textContent = 'Failed';
+					diagWt.textContent = 'Failed';
+					diagWt.className = 'diag-val err';
+					diagError.textContent = (err && err.message) ? err.message : String(err);
+					diagError.style.display = 'block';
+				} finally {
+					diagRetestBtn.disabled = false;
+				}
+			}
+
+			function openDiagModal() {
+				diagModal.classList.add('open');
+				runNetworkDiagnostics();
+			}
+
+			function closeDiagModal() {
+				diagModal.classList.remove('open');
+				closeDiagTransport();
+			}
+
+			diagOpenBtn.addEventListener('click', openDiagModal);
+			diagCloseBtn.addEventListener('click', closeDiagModal);
+			diagRetestBtn.addEventListener('click', runNetworkDiagnostics);
+			diagModal.addEventListener('click', function (e) {
+				if (e.target === diagModal) closeDiagModal();
+			});
+			document.addEventListener('keydown', function (e) {
+				if (e.key === 'Escape' && diagModal.classList.contains('open')) {
+					closeDiagModal();
+				}
+			});
+		})();
+	</script>
 </body>
 </html>

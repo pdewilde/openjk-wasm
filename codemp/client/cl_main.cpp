@@ -784,6 +784,7 @@ void CL_Disconnect( qboolean showMainMenu ) {
 
 #ifdef __EMSCRIPTEN__
 	cls.wasmPrefetchPending = qfalse;
+	Sys_WasmSyncBrowserUrl( Cvar_VariableString( "fs_game" ), "", "" );
 #endif
 
 	// shutting down the client so enter full screen ui mode
@@ -1396,6 +1397,21 @@ void CL_DownloadsComplete( void ) {
 	// initialize the CGame
 	cls.cgameStarted = qtrue;
 	CL_InitCGame();
+
+#ifdef __EMSCRIPTEN__
+	{
+		const char *fsGame = Cvar_VariableString( "fs_game" );
+		const char *info = cl.gameState.stringData + cl.gameState.stringOffsets[CS_SERVERINFO];
+		const char *mapname = Info_ValueForKey( info, "mapname" );
+		if ( com_sv_running->integer ) {
+			Sys_WasmSyncBrowserUrl( fsGame, "", mapname );
+		} else if ( cls.servername[0] && Q_stricmp( cls.servername, "localhost" ) ) {
+			Sys_WasmSyncBrowserUrl( fsGame, cls.servername, "" );
+		} else {
+			Sys_WasmSyncBrowserUrl( fsGame, "", mapname );
+		}
+	}
+#endif
 
 	// set pure checksums
 	CL_SendPureChecksums();

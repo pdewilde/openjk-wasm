@@ -9,6 +9,7 @@ extern "C" {
 
 void Sys_WasmPersistSavePath(const char *osPath);
 void Sys_WasmRemoveSavePath(const char *osPath);
+void Sys_WasmSyncBrowserUrl(const char *fsGame, const char *connectAddr, const char *mapName);
 
 /* Returns 1 if map assets are ready synchronously, 0 if async prefetch started (defer cmd). */
 int Sys_WasmEnsureMapAssets(const char *mapName, const char *retryCmd);
@@ -31,6 +32,9 @@ int Sys_WasmFetchManifestEntry(const char *pakBasename, const char *qpath,
 
 static inline void Sys_WasmPersistSavePath(const char *osPath) { (void)osPath; }
 static inline void Sys_WasmRemoveSavePath(const char *osPath) { (void)osPath; }
+static inline void Sys_WasmSyncBrowserUrl(const char *fsGame, const char *connectAddr, const char *mapName) {
+	(void)fsGame; (void)connectAddr; (void)mapName;
+}
 static inline int Sys_WasmEnsureMapAssets(const char *mapName, const char *retryCmd) { (void)mapName; (void)retryCmd; return 1; }
 static inline int Sys_WasmIsMapPrefetchActive(void) { return 0; }
 static inline int Sys_WasmConsumePendingCommand(char *outBuf, int outBufSize) { (void)outBuf; (void)outBufSize; return 0; }

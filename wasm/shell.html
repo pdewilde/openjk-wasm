@@ -36,9 +36,10 @@
 		}
 		#canvas {
 			display: block;
-			width: 100vw;
-			height: 100vh;
-			object-fit: contain;
+			max-width: 100vw;
+			max-height: 100vh;
+			width: auto;
+			height: auto;
 			border: 0;
 			outline: none;
 		}
@@ -164,20 +165,24 @@
 	<div id="prefetch-banner"></div>
 	<div id="asset-picker">
 		<div class="picker-card">
-			<h1>OpenJK WebAssembly</h1>
-			<p>Select your local Jedi Academy <code>GameData/base</code> folder (or individual <code>assets*.pk3</code> files) to mount into WasmFS and launch.</p>
+			<h1>Load Jedi Academy Game Files</h1>
+			<p>Select your local Jedi Academy <code>GameData/base</code> folder (containing <code>assets0.pk3</code>&ndash;<code>assets3.pk3</code>) to launch. On Steam, look in <code>Steam/steamapps/common/Jedi Academy/GameData/base</code>.</p>
 			<div class="picker-actions">
 				<label class="picker-btn primary">
 					Select <code>base/</code> Folder
 					<input id="folder-input" type="file" webkitdirectory directory multiple hidden>
 				</label>
 				<label class="picker-btn">
-					Select <code>.pk3</code> Files
+					Select <code>assets*.pk3</code> Files
 					<input id="files-input" type="file" multiple accept=".pk3,.cfg" hidden>
 				</label>
 			</div>
+			<label class="picker-hint" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;color:#cbd7ec;">
+				<input id="save-base-checkbox" type="checkbox" checked>
+				Save game files in this browser so I don't have to pick them next time
+			</label>
 			<div id="picker-progress"></div>
-			<div class="picker-hint">Press <code>Ctrl + `</code> at any time to toggle engine logs.</div>
+			<div class="picker-hint">Your files stay 100% local in your browser &mdash; nothing is uploaded. Press <code>Alt + Enter</code> for fullscreen or <code>Ctrl + `</code> for logs. <a href="index.html">Back to launcher</a></div>
 			<div id="hosted-login-hint" class="picker-hint" style="display:none;">Have hosted asset access? <a id="hosted-login-link" href="/base/login">Sign in</a></div>
 		</div>
 	</div>
@@ -206,6 +211,36 @@
 		var maxLogLines = 500;
 		var gameRunning = false;
 		window.__openjkLogs = [];
+
+		var lastCanvasW = 0;
+		var lastCanvasH = 0;
+
+		window.__openjkFitCanvas = function (w, h) {
+			if (w > 0 && h > 0) {
+				lastCanvasW = w;
+				lastCanvasH = h;
+			}
+			var cw = lastCanvasW || (canvasElement ? canvasElement.width : 0);
+			var ch = lastCanvasH || (canvasElement ? canvasElement.height : 0);
+			if (!canvasElement || cw <= 0 || ch <= 0) return;
+			var vw = Math.max(1, window.innerWidth || document.documentElement.clientWidth || cw);
+			var vh = Math.max(1, window.innerHeight || document.documentElement.clientHeight || ch);
+			var aspect = cw / ch;
+			var cssW, cssH;
+			if (vw / vh > aspect) {
+				cssH = vh;
+				cssW = Math.round(vh * aspect);
+			} else {
+				cssW = vw;
+				cssH = Math.round(vw / aspect);
+			}
+			canvasElement.style.width = cssW + 'px';
+			canvasElement.style.height = cssH + 'px';
+		};
+
+		window.addEventListener('resize', function () {
+			window.__openjkFitCanvas(0, 0);
+		});
 
 		window.__openjkSetGamma = function (gamma) {
 			var g = Number(gamma);
@@ -243,8 +278,14 @@
 			}
 		}
 
-		document.addEventListener('fullscreenchange', syncKeyboardLock);
-		document.addEventListener('webkitfullscreenchange', syncKeyboardLock);
+		document.addEventListener('fullscreenchange', function () {
+			syncKeyboardLock();
+			window.__openjkFitCanvas(0, 0);
+		});
+		document.addEventListener('webkitfullscreenchange', function () {
+			syncKeyboardLock();
+			window.__openjkFitCanvas(0, 0);
+		});
 
 		window.addEventListener('beforeunload', function (e) {
 			if (!gameRunning) return;
@@ -349,6 +390,61 @@
 			return null;
 		}
 
+		async function saveOpfsBaseFile(relPath, bytes) {
+			var norm = String(relPath || '').replace(/\\/g, '/').replace(/^\/+/, '');
+			if (!norm || norm.indexOf('..') !== -1) return;
+			var parts = norm.split('/').filter(Boolean);
+			var fileName = parts.pop();
+			var dir = await getOpfsDir('openjk-base', parts, true);
+			if (!dir) return;
+			var fh = await dir.getFileHandle(fileName, { create: true });
+			var w = await fh.createWritable();
+			await w.write(bytes);
+			await w.close();
+		}
+
+		async function hydrateOpfsBaseAssets() {
+			var fs = getWasmFs();
+			var foundAssets0 = false;
+			var loadedCount = 0;
+			try {
+				var baseDir = await getOpfsDir('openjk-base', null, false);
+				if (!baseDir) return false;
+				var entries = [];
+				async function collect(dirHandle, prefix) {
+					for await (var entry of dirHandle.entries()) {
+						var name = entry[0];
+						var handle = entry[1];
+						var rel = prefix ? (prefix + '/' + name) : name;
+						if (handle.kind === 'directory') {
+							await collect(handle, rel);
+						} else if (handle.kind === 'file') {
+							if (/\.wasm$/i.test(name)) continue;
+							entries.push({ rel: rel, handle: handle });
+							if (rel.toLowerCase() === 'assets0.pk3') foundAssets0 = true;
+						}
+					}
+				}
+				await collect(baseDir, '');
+				if (!foundAssets0) return false;
+				ensureDirTree(fs, '/base');
+				for (var i = 0; i < entries.length; i++) {
+					var item = entries[i];
+					Module.setStatus('Loading saved game files (' + (i + 1) + '/' + entries.length + '): ' + item.rel);
+					var file = await item.handle.getFile();
+					var bytes = new Uint8Array(await file.arrayBuffer());
+					writeWasmFile(fs, '/base/' + item.rel, bytes);
+					loadedCount++;
+				}
+			} catch (err) {
+				if (!err || err.name !== 'NotFoundError') {
+					console.warn('OPFS base asset hydration skipped:', err);
+				}
+				return false;
+			}
+			return foundAssets0 && loadedCount > 0;
+		}
+
 		function mountSelectedFiles(fileList, launchArgs) {
 			var fs = typeof FS !== 'undefined' ? FS : Module.FS;
 			var selected = [];
@@ -356,28 +452,37 @@
 				var f = fileList[i];
 				var rel = resolveRelativeBasePath(f);
 				if (!rel) continue;
-				if (/\.dll$|\.so$|\.dylib$|\.exe$/i.test(rel)) continue;
-				selected.push({ file: f, dest: '/base/' + rel });
+				if (/\.dll$|\.so$|\.dylib$|\.exe$|\.wasm$/i.test(rel)) continue;
+				selected.push({ file: f, rel: rel, dest: '/base/' + rel });
 			}
 			if (selected.length === 0) {
 				progressElement.textContent = 'No base/ files or .pk3 files found in selection.';
 				return;
 			}
+			var saveCb = document.getElementById('save-base-checkbox');
+			var shouldSaveOpfs = !!(saveCb && saveCb.checked);
 			folderInput.disabled = true;
 			filesInput.disabled = true;
 			(async function () {
 				for (var j = 0; j < selected.length; j++) {
 					var item = selected[j];
-					progressElement.textContent = 'Mounting ' + (j + 1) + '/' + selected.length + ': ' + item.dest;
+					progressElement.textContent = 'Loading ' + (j + 1) + '/' + selected.length + ': ' + item.rel;
 					ensureParentDirTree(fs, item.dest);
-					var buf = await item.file.arrayBuffer();
-					fs.writeFile(item.dest, new Uint8Array(buf));
+					var buf = new Uint8Array(await item.file.arrayBuffer());
+					fs.writeFile(item.dest, buf);
+					if (shouldSaveOpfs) {
+						try {
+							await saveOpfsBaseFile(item.rel, buf);
+						} catch (saveErr) {
+							console.warn('Could not persist base file to OPFS:', saveErr);
+						}
+					}
 				}
 				pickerElement.style.display = 'none';
 				canvasElement.focus();
 				startOpenJK(launchArgs);
 			})().catch(function (err) {
-				progressElement.textContent = 'Failed to mount assets: ' + err;
+				progressElement.textContent = 'Failed to load game files: ' + err;
 				folderInput.disabled = false;
 				filesInput.disabled = false;
 			});
@@ -1116,6 +1221,24 @@
 					if (modParam) {
 						args.push('+set', 'fs_game', modParam);
 					}
+					var resParam = (params.get('res') || '').trim().toLowerCase();
+					if (resParam === 'auto43') {
+						args.push('+set', 'r_mode', '-2');
+					} else if (resParam === 'window') {
+						var ww = Math.max(640, Math.floor(window.innerWidth || 1280));
+						var wh = Math.max(480, Math.floor(window.innerHeight || 720));
+						var sc = Math.max(1, Math.ceil(ww / 1920), Math.ceil(wh / 1080));
+						ww = Math.max(640, Math.floor(ww / sc) & ~3);
+						wh = Math.max(480, Math.floor(wh / sc) & ~3);
+						args.push('+set', 'r_mode', '-1', '+set', 'r_customwidth', String(ww), '+set', 'r_customheight', String(wh));
+					} else {
+						var resMatch = /^(\d{3,4})x(\d{3,4})$/.exec(resParam);
+						if (resMatch) {
+							var rw = Math.min(3840, Math.max(320, parseInt(resMatch[1], 10)));
+							var rh = Math.min(2160, Math.max(240, parseInt(resMatch[2], 10)));
+							args.push('+set', 'r_mode', '-1', '+set', 'r_customwidth', String(rw), '+set', 'r_customheight', String(rh));
+						}
+					}
 					var allowDl = params.get('allowdownload');
 					if (allowDl === '1' || allowDl === 'true') {
 						args.push('+set', 'cl_allowDownload', '1');
@@ -1157,7 +1280,13 @@
 						return hasHostedBaseAssets().then(function (hosted) {
 							if (hosted) {
 								startOpenJK(args);
-							} else {
+								return;
+							}
+							return hydrateOpfsBaseAssets().then(function (savedReady) {
+								if (savedReady) {
+									startOpenJK(args);
+									return;
+								}
 								Module.setStatus('');
 								if (hostedAuthRequired) {
 									var loginHint = document.getElementById('hosted-login-hint');
@@ -1171,7 +1300,7 @@
 								pickerElement.style.display = 'flex';
 								folderInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };
 								filesInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };
-							}
+							});
 						});
 					})
 					.catch(function (err) {

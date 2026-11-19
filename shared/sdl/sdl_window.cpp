@@ -394,30 +394,38 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 #ifdef __EMSCRIPTEN__
 		int vw = EM_ASM_INT({ return Math.max(0, Math.floor(window.innerWidth || 0)); });
 		int vh = EM_ASM_INT({ return Math.max(0, Math.floor(window.innerHeight || 0)); });
-		if ( vw >= 640 && vh >= 480 )
+		if ( vw >= 320 && vh >= 240 )
 		{
-			// Integer-downscale very large browser viewports (> 1920x1080) to keep GL4ES fillrate fast and sharp.
-			int scaleW = (vw + 1919) / 1920;
-			int scaleH = (vh + 1079) / 1080;
+			// Fit the largest 4:3 frame inside the browser viewport (matches classic Jedi Academy HUD/menu aspect).
+			int fitW, fitH;
+			if ( vw * 3 >= vh * 4 )
+			{
+				fitH = vh;
+				fitW = (vh * 4) / 3;
+			}
+			else
+			{
+				fitW = vw;
+				fitH = (vw * 3) / 4;
+			}
+			// Integer-downscale very large 4:3 viewports (> 1600x1200) to keep GL4ES fillrate fast and sharp.
+			int scaleW = (fitW + 1599) / 1600;
+			int scaleH = (fitH + 1199) / 1200;
 			int scale = scaleW > scaleH ? scaleW : scaleH;
 			if ( scale < 1 ) scale = 1;
-			vw = (vw / scale) & ~1;
-			vh = (vh / scale) & ~1;
-			if ( vw < 640 ) vw = 640;
-			if ( vh < 480 ) vh = 480;
-			glConfig->vidWidth = vw;
-			glConfig->vidHeight = vh;
-			displayAspect = (float)vw / (float)vh;
-		}
-		else if ( desktopMode.h > 0 )
-		{
-			glConfig->vidWidth = desktopMode.w;
-			glConfig->vidHeight = desktopMode.h;
+			fitW = (fitW / scale) & ~3;
+			fitH = (fitH / scale) & ~3;
+			if ( fitW < 640 ) fitW = 640;
+			if ( fitH < 480 ) fitH = 480;
+			glConfig->vidWidth = fitW;
+			glConfig->vidHeight = fitH;
+			displayAspect = (float)fitW / (float)fitH;
 		}
 		else
 		{
-			glConfig->vidWidth = 1280;
-			glConfig->vidHeight = 720;
+			glConfig->vidWidth = 1024;
+			glConfig->vidHeight = 768;
+			displayAspect = 4.0f / 3.0f;
 		}
 #else
 		// use desktop video resolution
@@ -635,6 +643,11 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 				SDL_SetWindowSize( screen, glConfig->vidWidth, glConfig->vidHeight );
 			}
 			emscripten_set_canvas_element_size( "#canvas", glConfig->vidWidth, glConfig->vidHeight );
+			EM_ASM({
+				if (typeof window.__openjkFitCanvas === 'function') {
+					window.__openjkFitCanvas($0, $1);
+				}
+			}, glConfig->vidWidth, glConfig->vidHeight);
 #else
 			if( ( screen = SDL_CreateWindow( windowTitle, x, y,
 					glConfig->vidWidth, glConfig->vidHeight, flags ) ) == NULL )

@@ -403,6 +403,28 @@
 			await w.close();
 		}
 
+		async function hydrateParentSessionBaseAssets() {
+			var list = null;
+			try {
+				if (window.parent && window.parent !== window && Array.isArray(window.parent.__openjkSessionBaseFiles)) {
+					list = window.parent.__openjkSessionBaseFiles;
+				}
+			} catch (e) { }
+			if (!list || list.length === 0) return false;
+			var has0 = list.some(function (it) { return it && it.rel && it.rel.toLowerCase() === 'assets0.pk3'; });
+			if (!has0) return false;
+			var fs = getWasmFs();
+			ensureDirTree(fs, '/base');
+			for (var i = 0; i < list.length; i++) {
+				var item = list[i];
+				if (!item || !item.file || !item.rel || /\.wasm$/i.test(item.rel)) continue;
+				Module.setStatus('Loading game files (' + (i + 1) + '/' + list.length + '): ' + item.rel);
+				var buf = new Uint8Array(await item.file.arrayBuffer());
+				writeWasmFile(fs, '/base/' + item.rel, buf);
+			}
+			return true;
+		}
+
 		async function hydrateOpfsBaseAssets() {
 			var fs = getWasmFs();
 			var foundAssets0 = false;
@@ -1292,32 +1314,38 @@
 									startOpenJK(args);
 									return;
 								}
-								Module.setStatus('');
-								if (hostedAuthRequired) {
-									var loginHint = document.getElementById('hosted-login-hint');
-									var loginLink = document.getElementById('hosted-login-link');
-									if (loginLink) {
-										var nextPath = window.location.pathname + window.location.search;
-										loginLink.href = '/base/login?next=' + encodeURIComponent(nextPath);
+								return hydrateParentSessionBaseAssets().then(function (sessionReady) {
+									if (sessionReady) {
+										startOpenJK(args);
+										return;
 									}
-									if (loginHint) loginHint.style.display = 'block';
-								}
-								var saveRow = document.getElementById('save-base-checkbox');
-								if (saveRow && saveRow.parentElement) {
-									getOpfsDir('openjk-base', null, false).catch(function () { return null; });
-									if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.getDirectory) {
-										navigator.storage.getDirectory().catch(function () {
+									Module.setStatus('');
+									if (hostedAuthRequired) {
+										var loginHint = document.getElementById('hosted-login-hint');
+										var loginLink = document.getElementById('hosted-login-link');
+										if (loginLink) {
+											var nextPath = window.location.pathname + window.location.search;
+											loginLink.href = '/base/login?next=' + encodeURIComponent(nextPath);
+										}
+										if (loginHint) loginHint.style.display = 'block';
+									}
+									var saveRow = document.getElementById('save-base-checkbox');
+									if (saveRow && saveRow.parentElement) {
+										getOpfsDir('openjk-base', null, false).catch(function () { return null; });
+										if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.getDirectory) {
+											navigator.storage.getDirectory().catch(function () {
+												saveRow.checked = false;
+												saveRow.parentElement.style.display = 'none';
+											});
+										} else {
 											saveRow.checked = false;
 											saveRow.parentElement.style.display = 'none';
-										});
-									} else {
-										saveRow.checked = false;
-										saveRow.parentElement.style.display = 'none';
+										}
 									}
-								}
-								pickerElement.style.display = 'flex';
-								folderInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };
-								filesInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };
+									pickerElement.style.display = 'flex';
+									folderInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };
+									filesInput.onchange = function (e) { mountSelectedFiles(e.target.files, args); };
+								});
 							});
 						});
 					})

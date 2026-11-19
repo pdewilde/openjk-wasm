@@ -309,7 +309,7 @@
 			border-top: 1px solid rgba(72, 102, 148, 0.28);
 		}
 		.gamefiles-box {
-			margin-top: 16px;
+			margin-bottom: 16px;
 			padding: 15px 16px;
 			border-radius: 10px;
 			border: 1px solid rgba(255, 213, 79, 0.28);
@@ -760,24 +760,6 @@
 		</div>
 		<div class="saber-divider" aria-hidden="true"></div>
 
-		<div class="launch-grid">
-			<a id="mp-launch-link" class="launch-btn mp" href="openjk.wasm32.html">
-				<img class="launch-icon" src="icons/mp128.png" alt="" width="48" height="48">
-				<span class="launch-copy">
-					<span class="launch-title">Play Multiplayer</span>
-					<small id="mp-launch-desc">Base Game</small>
-				</span>
-			</a>
-			<a id="sp-launch-link" class="launch-btn sp" href="openjk_sp.wasm32.html">
-				<span class="badge warn launch-badge">Untested</span>
-				<img class="launch-icon" src="icons/sp128.png" alt="" width="48" height="48">
-				<span class="launch-copy">
-					<span class="launch-title">Play Singleplayer</span>
-					<small id="sp-launch-desc">Campaign (likely has bugs)</small>
-				</span>
-			</a>
-		</div>
-
 		<div id="gamefiles-box" class="gamefiles-box" style="display: none;">
 			<div class="gamefiles-head">
 				<span id="gamefiles-title" class="gamefiles-title">Step 1 &middot; Load Your Jedi Academy Files</span>
@@ -801,6 +783,24 @@
 			</div>
 			<div id="base-status"></div>
 			<div class="gamefiles-note">Your game files stay 100% local in your browser &mdash; nothing is uploaded to a server.</div>
+		</div>
+
+		<div class="launch-grid">
+			<a id="mp-launch-link" class="launch-btn mp" href="openjk.wasm32.html">
+				<img class="launch-icon" src="icons/mp128.png" alt="" width="48" height="48">
+				<span class="launch-copy">
+					<span class="launch-title">Play Multiplayer</span>
+					<small id="mp-launch-desc">Base Game</small>
+				</span>
+			</a>
+			<a id="sp-launch-link" class="launch-btn sp" href="openjk_sp.wasm32.html">
+				<span class="badge warn launch-badge">Untested</span>
+				<img class="launch-icon" src="icons/sp128.png" alt="" width="48" height="48">
+				<span class="launch-copy">
+					<span class="launch-title">Play Singleplayer</span>
+					<small id="sp-launch-desc">Campaign (likely has bugs)</small>
+				</span>
+			</a>
 		</div>
 
 		<div class="section">
@@ -1017,6 +1017,8 @@
 				return info;
 			}
 
+			var sessionBaseFiles = [];
+
 			async function refreshSavedBaseUi(hostedAvailable) {
 				if (!gamefilesBox) return;
 				if (hostedAvailable) {
@@ -1025,24 +1027,28 @@
 				}
 				gamefilesBox.style.display = 'block';
 				var root = await getOpfsRoot();
-				var actionsEl = gamefilesBox.querySelector('.gamefiles-actions');
-				if (!root) {
-					gamefilesBox.classList.remove('ready');
-					gamefilesTitle.textContent = 'Step 1 · Load Your Jedi Academy Files';
-					baseBadge.className = 'badge warn';
-					baseBadge.textContent = 'Select on Launch';
-					gamefilesHelp.innerHTML = 'Private browsing disables saving files ahead of time. Click <strong>Play Multiplayer</strong> or <strong>Play Singleplayer</strong> above, then select your local Jedi Academy <code>GameData/base</code> folder (<code>assets0.pk3</code>&ndash;<code>assets3.pk3</code>) when prompted. On Steam, look in <code>Steam/steamapps/common/Jedi Academy/GameData/base</code>.';
-					if (actionsEl) actionsEl.style.display = 'none';
-					return;
+				var info;
+				if (root) {
+					info = await inspectSavedBaseAssets();
+				} else {
+					var totalBytes = 0;
+					var has0 = false;
+					for (var i = 0; i < sessionBaseFiles.length; i++) {
+						totalBytes += sessionBaseFiles[i].file.size;
+						if (sessionBaseFiles[i].rel.toLowerCase() === 'assets0.pk3' && sessionBaseFiles[i].file.size > 0) {
+							has0 = true;
+						}
+					}
+					info = { count: sessionBaseFiles.length, totalBytes: totalBytes, hasAssets0: has0 };
 				}
-				if (actionsEl) actionsEl.style.display = 'flex';
-				var info = await inspectSavedBaseAssets();
 				if (info.hasAssets0) {
 					gamefilesBox.classList.add('ready');
 					gamefilesTitle.textContent = 'Game Files Ready';
 					baseBadge.className = 'badge dl';
-					baseBadge.textContent = info.count + (info.count === 1 ? ' file' : ' files') + ' · ' + formatBytes(info.totalBytes);
-					gamefilesHelp.innerHTML = 'Your Jedi Academy <code>base/</code> files are saved in your browser. Click <strong>Play Multiplayer</strong> or <strong>Play Singleplayer</strong> above to launch immediately.';
+					baseBadge.textContent = info.count + (info.count === 1 ? ' file' : ' files') + ' · ' + formatBytes(info.totalBytes) + (root ? '' : ' (Session)');
+					gamefilesHelp.innerHTML = root
+						? 'Your Jedi Academy <code>base/</code> files are saved in your browser. Click <strong>Play Multiplayer</strong> or <strong>Play Singleplayer</strong> below to launch immediately.'
+						: 'Your Jedi Academy <code>base/</code> files are loaded for this private session. Click <strong>Play Multiplayer</strong> or <strong>Play Singleplayer</strong> below to launch.';
 					baseClearBtn.style.display = 'inline-flex';
 				} else {
 					gamefilesBox.classList.remove('ready');
@@ -1056,11 +1062,6 @@
 
 			async function importBaseFiles(fileList) {
 				if (!fileList || fileList.length === 0) return;
-				var root = await getOpfsRoot();
-				if (!root) {
-					setBaseStatus('Browser storage is unavailable here—click Play above to select your base/ folder directly.', 'error');
-					return;
-				}
 				var selected = [];
 				for (var i = 0; i < fileList.length; i++) {
 					var f = fileList[i];
@@ -1072,6 +1073,23 @@
 				}
 				if (selected.length === 0) {
 					setBaseStatus('No .pk3 game files found. Please select your Jedi Academy GameData/base folder (containing assets0.pk3–assets3.pk3).', 'error');
+					return;
+				}
+				var root = await getOpfsRoot();
+				if (!root) {
+					// Private browsing fallback: hold File handles in session memory and pass to the game frame on launch
+					var byKey = Object.create(null);
+					sessionBaseFiles.forEach(function (it) { byKey[it.rel.toLowerCase()] = it; });
+					selected.forEach(function (it) { byKey[it.rel.toLowerCase()] = it; });
+					sessionBaseFiles = Object.keys(byKey).map(function (k) { return byKey[k]; });
+					window.__openjkSessionBaseFiles = sessionBaseFiles;
+					await refreshSavedBaseUi(false);
+					var has0 = sessionBaseFiles.some(function (it) { return it.rel.toLowerCase() === 'assets0.pk3'; });
+					if (has0) {
+						setBaseStatus('Loaded for this private session! Click Play Multiplayer or Play Singleplayer below.', 'ok');
+					} else {
+						setBaseStatus('Loaded ' + selected.length + ' file(s), but assets0.pk3 is still missing.', 'error');
+					}
 					return;
 				}
 				baseFolderInput.disabled = true;
@@ -1096,7 +1114,7 @@
 					var info = await inspectSavedBaseAssets();
 					await refreshSavedBaseUi(false);
 					if (info.hasAssets0) {
-						setBaseStatus('Saved! Click Play Multiplayer or Play Singleplayer above.', 'ok');
+						setBaseStatus('Saved! Click Play Multiplayer or Play Singleplayer below.', 'ok');
 					} else {
 						setBaseStatus('Saved ' + selected.length + ' file(s), but assets0.pk3 is still missing. Make sure you include assets0.pk3–assets3.pk3.', 'error');
 					}
@@ -1110,14 +1128,41 @@
 			}
 
 			async function clearSavedBaseFiles() {
+				sessionBaseFiles = [];
+				window.__openjkSessionBaseFiles = [];
 				var root = await getOpfsRoot();
-				if (!root) return;
-				try {
-					await root.removeEntry('openjk-base', { recursive: true });
-				} catch (e) { }
+				if (root) {
+					try {
+						await root.removeEntry('openjk-base', { recursive: true });
+					} catch (e) { }
+				}
 				setBaseStatus('Cleared saved game files.', '');
 				await refreshSavedBaseUi(false);
 			}
+
+			function launchInSessionFrame(href) {
+				var existing = document.getElementById('openjk-session-frame');
+				if (existing) existing.remove();
+				var iframe = document.createElement('iframe');
+				iframe.id = 'openjk-session-frame';
+				iframe.src = href;
+				iframe.allow = 'fullscreen; pointer-lock; keyboard-lock; autoplay';
+				iframe.setAttribute('allowfullscreen', '');
+				iframe.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;border:0;z-index:999;background:#000;';
+				document.body.style.overflow = 'hidden';
+				document.body.appendChild(iframe);
+				iframe.focus();
+			}
+
+			[mpLaunchLink, spLaunchLink].forEach(function (link) {
+				if (!link) return;
+				link.addEventListener('click', function (e) {
+					if (sessionBaseFiles.length > 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+						e.preventDefault();
+						launchInSessionFrame(link.href);
+					}
+				});
+			});
 
 			function sanitizeModName(raw) {
 				var s = String(raw || '').trim().replace(/^\/+|\/+$/g, '');

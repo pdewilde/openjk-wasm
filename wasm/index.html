@@ -6,6 +6,22 @@
 	<title>Star Wars: Jedi Academy — OpenJK Web</title>
 	<link rel="icon" href="favicon.ico">
 	<style>
+		:root {
+			--bg-wall: #e6ebf0;
+			--bg-wall-deep: #d9e0e8;
+			--shell-top: #ffffff;
+			--shell-bottom: #f3f6f9;
+			--bay-bg: #eef2f6;
+			--bay-border: #cfd7e2;
+			--ink-visor: #12151c;
+			--ink-body: #2d3442;
+			--ink-muted: #5d677a;
+			--ink-faint: #7c879b;
+			--accent-red: #d62828;
+			--accent-blue: #1d5fd6;
+			--accent-green: #0f8a52;
+			--accent-amber: #b45309;
+		}
 		* {
 			box-sizing: border-box;
 		}
@@ -19,158 +35,129 @@
 			align-items: center;
 			justify-content: center;
 			padding: 32px 16px;
-			background:
-				radial-gradient(ellipse 80% 55% at 50% 0%, rgba(36, 78, 155, 0.32) 0%, transparent 65%),
-				radial-gradient(ellipse 60% 45% at 85% 95%, rgba(168, 42, 54, 0.16) 0%, transparent 60%),
-				radial-gradient(ellipse 55% 40% at 15% 90%, rgba(28, 138, 92, 0.14) 0%, transparent 60%),
-				linear-gradient(180deg, #05070e 0%, #090d18 55%, #05070d 100%);
-			color: #eef2f8;
-			font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+			/* Tantive IV / Kamino clean architectural bulkhead backdrop */
+			background-color: var(--bg-wall);
+			background-image:
+				linear-gradient(90deg, rgba(18, 21, 28, 0.035) 1px, transparent 1px),
+				linear-gradient(180deg, rgba(18, 21, 28, 0.035) 1px, transparent 1px),
+				radial-gradient(ellipse 90% 60% at 50% 0%, #f6f8fb 0%, var(--bg-wall) 55%, var(--bg-wall-deep) 100%);
+			background-size: 96px 96px, 96px 96px, 100% 100%;
+			color: var(--ink-visor);
+			font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 			overflow-x: hidden;
-		}
-		/* Subtle multi-layer starfield */
-		body::before,
-		body::after {
-			content: "";
-			position: fixed;
-			inset: 0;
-			pointer-events: none;
-			z-index: 0;
-		}
-		body::before {
-			background-image:
-				radial-gradient(1.5px 1.5px at 8% 14%, rgba(255, 255, 255, 0.85), transparent),
-				radial-gradient(1px 1px at 19% 42%, rgba(200, 224, 255, 0.7), transparent),
-				radial-gradient(1.5px 1.5px at 31% 18%, rgba(255, 236, 179, 0.8), transparent),
-				radial-gradient(1px 1px at 44% 72%, rgba(255, 255, 255, 0.65), transparent),
-				radial-gradient(1.5px 1.5px at 58% 11%, rgba(205, 228, 255, 0.85), transparent),
-				radial-gradient(1px 1px at 67% 58%, rgba(255, 255, 255, 0.55), transparent),
-				radial-gradient(2px 2px at 79% 22%, rgba(255, 230, 160, 0.75), transparent),
-				radial-gradient(1px 1px at 88% 66%, rgba(190, 220, 255, 0.7), transparent),
-				radial-gradient(1.5px 1.5px at 93% 14%, rgba(255, 255, 255, 0.8), transparent),
-				radial-gradient(1px 1px at 14% 84%, rgba(255, 255, 255, 0.6), transparent),
-				radial-gradient(1.5px 1.5px at 49% 91%, rgba(205, 228, 255, 0.75), transparent),
-				radial-gradient(1px 1px at 74% 86%, rgba(255, 240, 195, 0.7), transparent);
-			opacity: 0.7;
-		}
-		body::after {
-			background-image:
-				radial-gradient(1px 1px at 24% 28%, rgba(255, 255, 255, 0.6), transparent),
-				radial-gradient(1.2px 1.2px at 52% 36%, rgba(180, 220, 255, 0.55), transparent),
-				radial-gradient(1px 1px at 84% 44%, rgba(255, 255, 255, 0.65), transparent),
-				radial-gradient(1.2px 1.2px at 36% 62%, rgba(255, 225, 150, 0.5), transparent),
-				radial-gradient(1px 1px at 62% 79%, rgba(255, 255, 255, 0.55), transparent),
-				radial-gradient(1px 1px at 11% 56%, rgba(195, 225, 255, 0.6), transparent);
-			animation: starTwinkle 6s ease-in-out infinite alternate;
-		}
-		@keyframes starTwinkle {
-			0% { opacity: 0.35; }
-			100% { opacity: 0.85; }
+			-webkit-font-smoothing: antialiased;
 		}
 		.card {
 			position: relative;
 			z-index: 1;
-			max-width: 660px;
+			max-width: 680px;
 			width: 100%;
-			background:
-				repeating-linear-gradient(
-					180deg,
-					rgba(140, 190, 255, 0.018) 0px,
-					rgba(140, 190, 255, 0.018) 1px,
-					transparent 1px,
-					transparent 4px
-				),
-				linear-gradient(180deg, rgba(16, 22, 35, 0.94) 0%, rgba(10, 14, 23, 0.97) 100%);
-			border: 1px solid rgba(92, 132, 196, 0.32);
-			border-radius: 14px;
-			padding: 28px 28px 24px;
+			background: linear-gradient(180deg, var(--shell-top) 0%, var(--shell-bottom) 100%);
+			border: 1.5px solid #c6cfd9;
+			border-radius: 16px;
+			overflow: hidden;
 			box-shadow:
-				0 28px 72px rgba(0, 0, 0, 0.82),
-				0 0 0 1px rgba(255, 213, 79, 0.06) inset,
-				0 0 42px rgba(56, 130, 246, 0.12);
-			backdrop-filter: blur(8px);
+				0 24px 60px rgba(18, 21, 28, 0.13),
+				0 4px 12px rgba(18, 21, 28, 0.06),
+				inset 0 1px 0 rgba(255, 255, 255, 0.95);
 		}
-		/* Subtle holoterminal gold corner accents */
-		.card::before,
-		.card::after {
+		/* Stormtrooper helmet brow / glossy obsidian visor header */
+		.header {
+			position: relative;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 16px;
+			padding: 20px 26px 18px;
+			background: linear-gradient(180deg, #1b1f29 0%, #101319 65%, #0c0e13 100%);
+			color: #ffffff;
+			border-bottom: 3px solid #090b0f;
+			box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+		}
+		/* Subtle visor gloss reflection strip */
+		.header::after {
 			content: "";
 			position: absolute;
-			width: 18px;
-			height: 18px;
-			pointer-events: none;
-		}
-		.card::before {
-			top: -1px;
-			left: -1px;
-			border-top: 2px solid rgba(255, 213, 79, 0.72);
-			border-left: 2px solid rgba(255, 213, 79, 0.72);
-			border-top-left-radius: 14px;
-		}
-		.card::after {
-			bottom: -1px;
-			right: -1px;
-			border-bottom: 2px solid rgba(92, 168, 255, 0.62);
-			border-right: 2px solid rgba(92, 168, 255, 0.62);
-			border-bottom-right-radius: 14px;
-		}
-		.header {
-			display: flex;
-			align-items: flex-start;
-			justify-content: space-between;
-			gap: 14px;
-			margin-bottom: 16px;
+			left: 26px;
+			right: 26px;
+			bottom: 0;
+			height: 2px;
+			background: linear-gradient(90deg, var(--accent-red) 0%, var(--accent-red) 36px, transparent 36px);
 		}
 		.brand {
 			min-width: 0;
 		}
 		.eyebrow {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 			font-size: 11px;
-			font-weight: 700;
-			letter-spacing: 0.24em;
+			font-weight: 600;
+			letter-spacing: 0.18em;
 			text-transform: uppercase;
-			color: #8ba8d6;
+			color: #9ba5b8;
 			margin-bottom: 4px;
+		}
+		.led-pip {
+			width: 7px;
+			height: 7px;
+			border-radius: 50%;
+			background: var(--accent-red);
+			box-shadow: 0 0 6px rgba(214, 40, 40, 0.75);
+			flex-shrink: 0;
 		}
 		h1 {
 			margin: 0;
-			font-size: 28px;
+			font-size: 25px;
 			font-weight: 800;
-			letter-spacing: 0.06em;
+			letter-spacing: 0.08em;
 			text-transform: uppercase;
-			background: linear-gradient(180deg, #fff1b3 0%, #ffd54f 52%, #d89b24 100%);
-			-webkit-background-clip: text;
-			background-clip: text;
-			color: transparent;
-			filter: drop-shadow(0 0 14px rgba(255, 204, 64, 0.28));
+			color: #ffffff;
 			line-height: 1.1;
 		}
 		.header-right {
 			display: flex;
-			flex-direction: column;
-			align-items: flex-end;
-			gap: 6px;
+			align-items: center;
+			gap: 14px;
 			flex-shrink: 0;
+		}
+		/* Molded helmet vent grille motif */
+		.vent-grille {
+			display: flex;
+			gap: 4px;
+			align-items: center;
+			padding: 0 4px;
+			opacity: 0.85;
+		}
+		.vent-grille span {
+			display: block;
+			width: 3px;
+			height: 18px;
+			border-radius: 2px;
+			background: #2b313e;
+			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.08);
+			transform: skewX(-14deg);
 		}
 		.github-pill {
 			display: inline-flex;
 			align-items: center;
 			gap: 6px;
-			padding: 6px 11px;
+			padding: 7px 12px;
 			border-radius: 999px;
-			border: 1px solid rgba(114, 152, 214, 0.36);
-			background: rgba(17, 25, 40, 0.85);
-			color: #c8daf8;
+			border: 1px solid rgba(255, 255, 255, 0.22);
+			background: rgba(255, 255, 255, 0.08);
+			color: #f3f6fa;
 			text-decoration: none;
 			font-size: 12px;
 			font-weight: 600;
 			letter-spacing: 0.02em;
-			transition: border-color 0.15s, background 0.15s, color 0.15s, box-shadow 0.15s;
+			transition: background 0.14s, border-color 0.14s, color 0.14s;
 		}
 		.github-pill:hover {
-			border-color: rgba(255, 213, 79, 0.65);
-			background: rgba(27, 39, 62, 0.95);
-			color: #fff;
-			box-shadow: 0 0 14px rgba(255, 213, 79, 0.16);
+			background: #ffffff;
+			border-color: #ffffff;
+			color: var(--ink-visor);
 		}
 		.github-pill svg {
 			width: 14px;
@@ -178,100 +165,97 @@
 			fill: currentColor;
 			flex-shrink: 0;
 		}
-		.subtitle {
-			font-size: 11px;
-			letter-spacing: 0.14em;
-			text-transform: uppercase;
-			color: #778db2;
-		}
-		/* Luminous lightsaber divider */
-		.saber-divider {
-			height: 2px;
-			margin: 0 0 20px;
-			border-radius: 999px;
-			background: linear-gradient(
-				90deg,
-				transparent 0%,
-				rgba(64, 156, 255, 0.85) 22%,
-				rgba(230, 245, 255, 0.98) 50%,
-				rgba(255, 213, 79, 0.85) 78%,
-				transparent 100%
-			);
-			box-shadow: 0 0 12px rgba(72, 164, 255, 0.55);
+		.card-body {
+			padding: 22px 26px 24px;
 		}
 		.launch-grid {
 			display: grid;
-			grid-template-columns: 1fr 1fr;
-			gap: 14px;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 12px;
 		}
-		@media (max-width: 540px) {
+		@media (max-width: 560px) {
 			.launch-grid {
-				grid-template-columns: 1fr;
+				grid-template-columns: minmax(0, 1fr);
 			}
 			.header {
 				flex-direction: column;
 				align-items: flex-start;
+				padding: 18px 20px 16px;
 			}
-			.header-right {
-				flex-direction: row;
-				align-items: center;
+			.card-body {
+				padding: 18px 20px 20px;
+			}
+			.vent-grille {
+				display: none;
 			}
 		}
 		a.launch-btn {
 			position: relative;
 			display: flex;
 			align-items: center;
-			gap: 14px;
-			padding: 15px 16px;
-			border-radius: 11px;
-			border: 1px solid rgba(90, 128, 188, 0.34);
-			background: linear-gradient(155deg, rgba(22, 33, 52, 0.92) 0%, rgba(13, 19, 31, 0.96) 100%);
-			color: #fff;
+			gap: 13px;
+			padding: 14px 15px;
+			border-radius: 12px;
 			text-decoration: none;
-			transition: transform 0.14s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+			transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 			overflow: hidden;
 		}
-		a.launch-btn::before {
-			content: "";
-			position: absolute;
-			top: 0;
-			left: 0;
-			right: 0;
-			height: 2px;
-			opacity: 0.85;
+		a.launch-btn:active {
+			transform: translateY(1px);
 		}
-		a.launch-btn.mp::before {
-			background: linear-gradient(90deg, #3b82f6 0%, #93c5fd 48%, #f87171 100%);
-		}
-		a.launch-btn.sp::before {
-			background: linear-gradient(90deg, #10b981 0%, #6ee7b7 50%, #34d399 100%);
-		}
+		/* Primary MP pad: high-contrast matte/gloss obsidian visor */
 		a.launch-btn.mp {
-			border-color: rgba(86, 144, 245, 0.48);
-			background: linear-gradient(145deg, rgba(24, 48, 89, 0.92) 0%, rgba(28, 22, 38, 0.94) 100%);
-			box-shadow: 0 8px 24px rgba(18, 52, 118, 0.28);
+			background: linear-gradient(180deg, #1d212b 0%, #11141a 100%);
+			border: 1.5px solid #11141a;
+			color: #ffffff;
+			box-shadow:
+				0 6px 16px rgba(17, 20, 26, 0.2),
+				inset 0 1px 0 rgba(255, 255, 255, 0.14);
 		}
 		a.launch-btn.mp:hover {
+			background: linear-gradient(180deg, #242936 0%, #141820 100%);
 			transform: translateY(-1px);
-			border-color: rgba(125, 179, 255, 0.82);
-			box-shadow: 0 10px 28px rgba(45, 115, 240, 0.35), 0 0 18px rgba(248, 113, 113, 0.16);
+			box-shadow:
+				0 10px 22px rgba(17, 20, 26, 0.26),
+				inset 0 1px 0 rgba(255, 255, 255, 0.2);
 		}
+		/* Secondary SP pad: molded white plastoid */
 		a.launch-btn.sp {
-			border-color: rgba(52, 180, 128, 0.38);
-			background: linear-gradient(145deg, rgba(16, 46, 38, 0.88) 0%, rgba(13, 21, 30, 0.96) 100%);
-			box-shadow: 0 8px 24px rgba(12, 74, 52, 0.22);
+			background: linear-gradient(180deg, #ffffff 0%, #f1f4f8 100%);
+			border: 1.5px solid #c7d0dc;
+			color: var(--ink-visor);
+			box-shadow:
+				0 2px 6px rgba(18, 21, 28, 0.06),
+				inset 0 1px 0 #ffffff;
 		}
 		a.launch-btn.sp:hover {
+			border-color: #12151c;
 			transform: translateY(-1px);
-			border-color: rgba(82, 224, 165, 0.72);
-			box-shadow: 0 10px 28px rgba(24, 180, 120, 0.28);
+			box-shadow:
+				0 8px 18px rgba(18, 21, 28, 0.1),
+				inset 0 1px 0 #ffffff;
 		}
-		.launch-icon {
+		.icon-housing {
 			width: 48px;
 			height: 48px;
-			object-fit: contain;
+			border-radius: 10px;
+			background: #0d1016;
+			border: 1px solid rgba(255, 255, 255, 0.12);
+			display: flex;
+			align-items: center;
+			justify-content: center;
 			flex-shrink: 0;
-			filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.65));
+			box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+		}
+		a.launch-btn.sp .icon-housing {
+			border-color: #1a1f29;
+			box-shadow: 0 2px 6px rgba(18, 21, 28, 0.18);
+		}
+		.launch-icon {
+			width: 38px;
+			height: 38px;
+			object-fit: contain;
+			display: block;
 		}
 		.launch-copy {
 			min-width: 0;
@@ -279,19 +263,21 @@
 			flex-direction: column;
 		}
 		.launch-title {
-			font-size: 16px;
+			font-size: 15.5px;
 			font-weight: 700;
-			letter-spacing: 0.02em;
-			color: #f7faff;
-			display: flex;
-			align-items: center;
-			flex-wrap: wrap;
-			gap: 6px;
+			letter-spacing: 0.01em;
+			line-height: 1.2;
+		}
+		a.launch-btn.mp .launch-title {
+			color: #ffffff;
+		}
+		a.launch-btn.sp .launch-title {
+			color: var(--ink-visor);
 		}
 		.launch-badge {
 			position: absolute;
-			top: 9px;
-			right: 10px;
+			top: 8px;
+			right: 9px;
 			font-size: 10px;
 			padding: 1px 6px;
 		}
@@ -301,28 +287,36 @@
 			font-size: 12px;
 			line-height: 1.35;
 			font-weight: 400;
-			color: #b7c9e6;
 		}
+		a.launch-btn.mp small {
+			color: #b4bece;
+		}
+		a.launch-btn.sp small {
+			color: var(--ink-muted);
+		}
+		/* Recessed plastoid seam divider */
 		.section {
 			margin-top: 22px;
 			padding-top: 18px;
-			border-top: 1px solid rgba(72, 102, 148, 0.28);
+			border-top: 1.5px solid #dde3ec;
+			box-shadow: inset 0 1px 0 #ffffff;
 		}
 		.gamefiles-box {
 			margin-bottom: 16px;
 			padding: 15px 16px;
-			border-radius: 10px;
-			border: 1px solid rgba(255, 213, 79, 0.28);
-			background: linear-gradient(180deg, rgba(28, 34, 48, 0.78) 0%, rgba(16, 21, 32, 0.88) 100%);
+			border-radius: 12px;
+			border: 1.5px solid var(--bay-border);
+			background: var(--bay-bg);
+			box-shadow: inset 0 1px 3px rgba(18, 21, 28, 0.05);
 			transition: border-color 0.15s, background 0.15s;
 		}
 		.gamefiles-box.ready {
-			border-color: rgba(52, 199, 138, 0.42);
-			background: linear-gradient(180deg, rgba(16, 40, 34, 0.65) 0%, rgba(13, 21, 28, 0.85) 100%);
+			border-color: #9dd4b8;
+			background: #eef8f3;
 		}
 		.gamefiles-box.dragover {
-			border-color: #ffd54f;
-			background: rgba(58, 92, 160, 0.26);
+			border-color: var(--ink-visor);
+			background: #e4ebf5;
 		}
 		.gamefiles-head {
 			display: flex;
@@ -332,30 +326,33 @@
 			margin-bottom: 8px;
 		}
 		.gamefiles-title {
-			font-size: 13px;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 12px;
 			font-weight: 700;
-			letter-spacing: 0.1em;
+			letter-spacing: 0.08em;
 			text-transform: uppercase;
-			color: #ffd966;
+			color: var(--ink-visor);
 		}
 		.gamefiles-box.ready .gamefiles-title {
-			color: #7be3a8;
+			color: var(--accent-green);
 		}
 		.gamefiles-help {
 			font-size: 12.5px;
-			line-height: 1.5;
-			color: #bacae3;
-			margin: 0 0 11px;
+			line-height: 1.55;
+			color: var(--ink-body);
+			margin: 0 0 12px;
 		}
 		.gamefiles-help code {
-			background: rgba(255, 255, 255, 0.08);
+			background: #ffffff;
+			border: 1px solid #d5dce6;
 			padding: 1px 5px;
 			border-radius: 4px;
 			font-size: 11.5px;
-			color: #e7f0ff;
+			color: var(--ink-visor);
 		}
 		.gamefiles-help a {
-			color: #8db3f2;
+			color: var(--accent-blue);
+			font-weight: 600;
 			text-decoration: none;
 		}
 		.gamefiles-help a:hover {
@@ -368,93 +365,118 @@
 			gap: 8px;
 		}
 		.btn.gold {
-			border-color: rgba(255, 213, 79, 0.55);
-			background: linear-gradient(180deg, rgba(166, 122, 24, 0.45) 0%, rgba(112, 80, 14, 0.55) 100%);
-			color: #fff3c4;
+			border-color: #12151c;
+			background: linear-gradient(180deg, #232834 0%, #12151c 100%);
+			color: #ffffff;
+			box-shadow: 0 2px 6px rgba(18, 21, 28, 0.16);
 		}
 		.btn.gold:hover {
-			background: linear-gradient(180deg, rgba(196, 146, 30, 0.58) 0%, rgba(136, 98, 18, 0.68) 100%);
-			border-color: rgba(255, 224, 115, 0.85);
+			background: linear-gradient(180deg, #2d3342 0%, #181c26 100%);
+			border-color: #000000;
+		}
+		.btn.gold code {
+			color: #e6ecf5;
 		}
 		#base-status {
 			margin-top: 9px;
 			font-size: 12px;
-			color: #8fb4ff;
+			font-weight: 500;
+			color: var(--accent-blue);
 			min-height: 15px;
 		}
 		#base-status.ok {
-			color: #7be3a8;
+			color: var(--accent-green);
 		}
 		#base-status.error {
-			color: #ff8c94;
+			color: var(--accent-red);
 		}
 		.gamefiles-note {
 			margin-top: 8px;
 			font-size: 11.5px;
-			color: #8295b5;
+			color: var(--ink-faint);
 		}
 		.section-head {
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
+			gap: 10px;
 			margin-bottom: 12px;
 		}
 		.section-title {
-			font-size: 13px;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 12px;
 			font-weight: 700;
-			letter-spacing: 0.12em;
+			letter-spacing: 0.1em;
 			text-transform: uppercase;
-			color: #cddbf2;
+			color: var(--ink-visor);
+		}
+		.section-title .muted {
+			font-family: system-ui, -apple-system, sans-serif;
+			font-weight: 400;
+			text-transform: none;
+			letter-spacing: 0;
+			color: var(--ink-faint);
 		}
 		label.field-label {
 			display: block;
 			font-size: 12px;
-			color: #93a4c2;
+			font-weight: 600;
+			color: var(--ink-body);
 			margin-bottom: 5px;
 		}
 		select,
 		input[type="text"] {
 			width: 100%;
 			padding: 9px 11px;
-			border-radius: 7px;
-			border: 1px solid #324361;
-			background: #0d1320;
-			color: #eef2f8;
+			border-radius: 8px;
+			border: 1.5px solid #cbd3df;
+			background: #ffffff;
+			color: var(--ink-visor);
 			font-size: 13px;
+			box-shadow: inset 0 1px 2px rgba(18, 21, 28, 0.04);
 		}
 		select:focus,
 		input[type="text"]:focus {
 			outline: none;
-			border-color: #5b8ef0;
-			box-shadow: 0 0 0 2px rgba(91, 142, 240, 0.18);
+			border-color: var(--ink-visor);
+			box-shadow: 0 0 0 2px rgba(18, 21, 28, 0.1);
 		}
 		.mod-list {
 			display: grid;
+			grid-template-columns: minmax(0, 1fr);
 			gap: 8px;
 			margin-bottom: 14px;
 		}
 		.mod-empty {
 			font-size: 13px;
-			color: #7d8ca8;
-			padding: 8px 0;
+			color: var(--ink-faint);
+			padding: 6px 0;
 		}
 		.mod-item {
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			gap: 10px;
-			padding: 10px 12px;
-			border-radius: 8px;
-			border: 1px solid #27354d;
-			background: #121a28;
+			gap: 12px;
+			min-width: 0;
+			max-width: 100%;
+			padding: 11px 13px;
+			border-radius: 10px;
+			border: 1.5px solid #d5dce6;
+			background: #ffffff;
+			box-shadow: 0 1px 3px rgba(18, 21, 28, 0.04);
+			transition: border-color 0.14s, background 0.14s, box-shadow 0.14s;
+		}
+		.mod-item:hover {
+			border-color: #aeb8c7;
 		}
 		.mod-item.active {
-			border-color: #4f88f2;
-			background: #18253d;
+			border-color: var(--ink-visor);
+			background: #f5f8fc;
+			box-shadow: 0 2px 8px rgba(18, 21, 28, 0.08);
 		}
 		.mod-toggle {
 			display: flex;
-			align-items: center;
+			align-items: flex-start;
 			gap: 10px;
 			min-width: 0;
 			flex: 1;
@@ -463,7 +485,8 @@
 		.mod-toggle input[type="checkbox"] {
 			width: 16px;
 			height: 16px;
-			accent-color: #4f88f2;
+			margin-top: 2px;
+			accent-color: var(--ink-visor);
 			flex-shrink: 0;
 			cursor: pointer;
 		}
@@ -476,8 +499,9 @@
 			background: none;
 			border: 0;
 			padding: 0;
-			color: #8db3f2;
+			color: var(--accent-blue);
 			font-size: 12px;
+			font-weight: 600;
 			cursor: pointer;
 		}
 		.text-btn:hover {
@@ -488,9 +512,9 @@
 			flex: 1;
 		}
 		.mod-title {
-			font-weight: 600;
+			font-weight: 700;
 			font-size: 14px;
-			color: #f3f7ff;
+			color: var(--ink-visor);
 			display: flex;
 			align-items: center;
 			flex-wrap: wrap;
@@ -498,70 +522,89 @@
 		}
 		.mod-desc {
 			font-size: 12px;
-			color: #92a3c0;
-			margin-top: 2px;
-			white-space: nowrap;
-			overflow: hidden;
-			text-overflow: ellipsis;
+			line-height: 1.4;
+			color: var(--ink-muted);
+			margin-top: 3px;
+			white-space: normal;
+			overflow-wrap: anywhere;
 		}
 		.badge {
-			font-size: 11px;
-			font-weight: 600;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 10.5px;
+			font-weight: 700;
+			letter-spacing: 0.03em;
 			padding: 2px 7px;
-			border-radius: 999px;
-			background: #21304a;
-			color: #b4cdfa;
+			border-radius: 5px;
+			background: #e9eef5;
+			color: #3a4454;
+			border: 1px solid #d4dce7;
 		}
 		.badge.wasm {
-			background: #2b224a;
-			color: #c9b8ff;
+			background: #e8effc;
+			color: #1849a9;
+			border-color: #c2d4f7;
 		}
 		.badge.dl {
-			background: #1a382f;
-			color: #8be2be;
+			background: #e3f5ec;
+			color: #0c6b3f;
+			border-color: #b1e2c8;
 		}
 		.badge.warn {
-			background: #473318;
-			color: #ffd180;
+			background: #fef3dc;
+			color: #9a4706;
+			border-color: #f3d293;
 		}
 		.badge.builtin {
-			background: #17344d;
-			color: #8fd3ff;
+			background: #12151c;
+			color: #ffffff;
+			border-color: #12151c;
 		}
 		.mod-link {
 			font-size: 12px;
-			color: #8db3f2;
+			font-weight: 600;
+			color: var(--ink-body);
 			text-decoration: none;
-			padding: 4px 8px;
-			border-radius: 6px;
-			border: 1px solid rgba(114, 152, 214, 0.28);
-			background: rgba(17, 25, 40, 0.7);
+			padding: 5px 9px;
+			border-radius: 7px;
+			border: 1px solid #cbd3df;
+			background: #f7f9fb;
 			white-space: nowrap;
+			transition: border-color 0.14s, background 0.14s, color 0.14s;
 		}
 		.mod-link:hover {
-			color: #fff;
-			border-color: rgba(141, 179, 242, 0.65);
+			color: var(--ink-visor);
+			background: #ffffff;
+			border-color: var(--ink-visor);
 		}
 		.mod-actions {
 			display: flex;
 			gap: 6px;
 			flex-shrink: 0;
 		}
+		@media (max-width: 500px) {
+			.mod-item {
+				flex-direction: column;
+				align-items: stretch;
+			}
+			.mod-actions {
+				justify-content: flex-end;
+			}
+		}
 		.dropzone {
-			border: 1.5px dashed #364a6e;
+			border: 1.5px dashed #bac5d4;
 			border-radius: 10px;
-			padding: 16px;
+			padding: 15px 16px;
 			text-align: center;
-			background: rgba(20, 28, 43, 0.55);
+			background: #f7f9fc;
 			transition: border-color 0.15s, background 0.15s;
 		}
 		.dropzone.dragover {
-			border-color: #ffd54f;
-			background: rgba(44, 107, 224, 0.18);
+			border-color: var(--ink-visor);
+			background: #e8eef7;
 		}
 		.dropzone-label {
-			font-size: 13px;
-			color: #cbd7ec;
+			font-size: 12.5px;
+			color: var(--ink-muted);
 			margin-bottom: 10px;
 		}
 		.btn-row {
@@ -575,28 +618,35 @@
 			display: inline-flex;
 			align-items: center;
 			gap: 6px;
-			padding: 8px 14px;
-			border-radius: 7px;
-			border: 1px solid #3f5780;
-			background: #1e2d47;
-			color: #eef2f8;
-			font-size: 13px;
+			padding: 7px 13px;
+			border-radius: 8px;
+			border: 1.5px solid #c4cdd9;
+			background: linear-gradient(180deg, #ffffff 0%, #f1f4f8 100%);
+			color: var(--ink-visor);
+			font-size: 12.5px;
 			font-weight: 600;
+			box-shadow: 0 1px 2px rgba(18, 21, 28, 0.05), inset 0 1px 0 #ffffff;
+			transition: border-color 0.14s, background 0.14s, transform 0.1s;
 		}
 		.btn:hover {
-			background: #2a3e61;
+			border-color: var(--ink-visor);
+			background: #ffffff;
+		}
+		.btn:active {
+			transform: translateY(1px);
 		}
 		.btn.small {
 			padding: 5px 10px;
 			font-size: 12px;
 		}
 		.btn.danger {
-			border-color: #6e3037;
-			background: #33181e;
-			color: #ffb8bf;
+			border-color: #eab7bc;
+			background: #fdf2f3;
+			color: #b4232c;
 		}
 		.btn.danger:hover {
-			background: #4b2029;
+			border-color: #d62828;
+			background: #fce4e6;
 		}
 		.btn:disabled {
 			opacity: 0.5;
@@ -605,31 +655,32 @@
 		#mod-status {
 			margin-top: 10px;
 			font-size: 12px;
-			color: #8fb4ff;
+			font-weight: 500;
+			color: var(--accent-blue);
 			min-height: 16px;
 		}
 		#mod-status.error {
-			color: #ff8c94;
+			color: var(--accent-red);
 		}
 		#mod-status.ok {
-			color: #7be3a8;
+			color: var(--accent-green);
 		}
 		details.advanced {
 			margin-top: 14px;
-			border: 1px solid #232f42;
-			border-radius: 9px;
-			background: rgba(12, 16, 25, 0.6);
+			border: 1.5px solid #d5dce6;
+			border-radius: 10px;
+			background: #f5f7fa;
 		}
 		details.advanced summary {
 			cursor: pointer;
 			padding: 10px 14px;
-			font-size: 13px;
+			font-size: 12.5px;
 			font-weight: 600;
-			color: #9fb1cf;
+			color: var(--ink-body);
 			user-select: none;
 		}
 		details.advanced summary:hover {
-			color: #dbe6fa;
+			color: var(--ink-visor);
 		}
 		.advanced-body {
 			padding: 4px 14px 14px;
@@ -644,13 +695,16 @@
 			flex: 1;
 		}
 		.footer {
-			margin-top: 18px;
+			margin-top: 20px;
+			padding-top: 14px;
+			border-top: 1px solid #e1e6ee;
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			gap: 12px;
+			flex-wrap: wrap;
+			gap: 10px;
 			font-size: 12px;
-			color: #7484a1;
+			color: var(--ink-faint);
 		}
 		.footer-links {
 			display: flex;
@@ -659,7 +713,8 @@
 		}
 		.footer a,
 		.footer button.link-btn {
-			color: #8db3f2;
+			color: var(--ink-body);
+			font-weight: 600;
 			text-decoration: none;
 			background: none;
 			border: 0;
@@ -669,12 +724,14 @@
 		}
 		.footer a:hover,
 		.footer button.link-btn:hover {
+			color: var(--ink-visor);
 			text-decoration: underline;
 		}
 		.modal-backdrop {
 			position: fixed;
 			inset: 0;
-			background: rgba(5, 8, 14, 0.78);
+			background: rgba(15, 18, 25, 0.56);
+			backdrop-filter: blur(4px);
 			display: none;
 			align-items: center;
 			justify-content: center;
@@ -687,11 +744,11 @@
 		.modal {
 			max-width: 460px;
 			width: 100%;
-			background: #141a26;
-			border: 1px solid #30405c;
-			border-radius: 12px;
+			background: linear-gradient(180deg, #ffffff 0%, #f4f6f9 100%);
+			border: 1.5px solid #c6cfd9;
+			border-radius: 14px;
 			padding: 22px;
-			box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75);
+			box-shadow: 0 24px 64px rgba(15, 18, 25, 0.28);
 		}
 		.modal-head {
 			display: flex;
@@ -701,8 +758,11 @@
 		}
 		.modal-head h2 {
 			margin: 0;
-			font-size: 16px;
-			color: #f0f5ff;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 14px;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			color: var(--ink-visor);
 		}
 		.diag-grid {
 			display: grid;
@@ -714,34 +774,34 @@
 			justify-content: space-between;
 			align-items: center;
 			gap: 12px;
-			padding: 8px 10px;
-			border-radius: 7px;
-			background: #0e131d;
-			border: 1px solid #222e42;
+			padding: 8px 11px;
+			border-radius: 8px;
+			background: #ffffff;
+			border: 1px solid #d8dfe9;
 			font-size: 13px;
 		}
 		.diag-key {
-			color: #93a4c2;
+			color: var(--ink-muted);
 		}
 		.diag-val {
-			color: #eef2f8;
+			color: var(--ink-visor);
 			font-weight: 600;
 			text-align: right;
 			word-break: break-all;
 		}
 		.diag-val.ok {
-			color: #7be3a8;
+			color: var(--accent-green);
 		}
 		.diag-val.err {
-			color: #ff8c94;
+			color: var(--accent-red);
 		}
 		.diag-error {
 			display: none;
 			padding: 9px 11px;
-			border-radius: 7px;
-			background: rgba(120, 32, 42, 0.35);
-			border: 1px solid #6e3037;
-			color: #ffb8bf;
+			border-radius: 8px;
+			background: #fdf2f3;
+			border: 1px solid #eab7bc;
+			color: #b4232c;
 			font-size: 12px;
 			margin-bottom: 14px;
 			word-break: break-word;
@@ -756,8 +816,6 @@
 		}
 		#opfs-pill.warn {
 			display: inline-block;
-			background: #4a2328;
-			color: #ffb0b8;
 		}
 	</style>
 </head>
@@ -765,19 +823,21 @@
 	<div class="card">
 		<div class="header">
 			<div class="brand">
-				<div class="eyebrow">Star Wars &middot; Jedi Knight</div>
+				<div class="eyebrow"><span class="led-pip" aria-hidden="true"></span>Star Wars &middot; OpenJK Web</div>
 				<h1>Jedi Academy</h1>
 			</div>
 			<div class="header-right">
+				<div class="vent-grille" aria-hidden="true">
+					<span></span><span></span><span></span><span></span><span></span>
+				</div>
 				<a class="github-pill" href="https://github.com/pdewilde/openjk-wasm" target="_blank" rel="noopener noreferrer">
 					<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
 					GitHub
 				</a>
-				<span class="subtitle">OpenJK Web</span>
 			</div>
 		</div>
-		<div class="saber-divider" aria-hidden="true"></div>
 
+		<div class="card-body">
 		<div id="gamefiles-box" class="gamefiles-box" style="display: none;">
 			<div class="gamefiles-head">
 				<span id="gamefiles-title" class="gamefiles-title">Step 1 &middot; Load Your Jedi Academy Files</span>
@@ -804,7 +864,7 @@
 
 		<div class="launch-grid">
 			<a id="mp-launch-link" class="launch-btn mp" href="openjk.wasm32.html">
-				<img class="launch-icon" src="icons/mp128.png" alt="" width="48" height="48">
+				<span class="icon-housing"><img class="launch-icon" src="icons/mp128.png" alt="" width="38" height="38"></span>
 				<span class="launch-copy">
 					<span class="launch-title">Play Multiplayer</span>
 					<small id="mp-launch-desc">Base Game</small>
@@ -812,7 +872,7 @@
 			</a>
 			<a id="sp-launch-link" class="launch-btn sp" href="openjk_sp.wasm32.html">
 				<span class="badge warn launch-badge">Untested</span>
-				<img class="launch-icon" src="icons/sp128.png" alt="" width="48" height="48">
+				<span class="icon-housing"><img class="launch-icon" src="icons/sp128.png" alt="" width="38" height="38"></span>
 				<span class="launch-copy">
 					<span class="launch-title">Play Singleplayer</span>
 					<small id="sp-launch-desc">Campaign (likely has bugs)</small>
@@ -822,7 +882,7 @@
 
 		<div class="section">
 			<div class="section-head">
-				<span class="section-title">Multiplayer Mods <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#7f93b5;">(optional)</span></span>
+				<span class="section-title">Multiplayer Mods <span class="muted">(optional)</span></span>
 				<div class="section-actions">
 					<button id="toggle-all-btn" class="text-btn" type="button" style="display: none;">Disable all</button>
 					<span id="opfs-pill" class="badge">Storage Unavailable</span>
@@ -888,6 +948,7 @@
 				<button id="diag-open-btn" class="link-btn" type="button">Network Diagnostics</button>
 				<a href="https://github.com/pdewilde/openjk-wasm" target="_blank" rel="noopener noreferrer">GitHub</a>
 			</div>
+		</div>
 		</div>
 	</div>
 

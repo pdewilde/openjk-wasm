@@ -7,20 +7,20 @@
 	<link rel="icon" href="favicon.ico">
 	<style>
 		:root {
-			--bg-wall: #e6ebf0;
-			--bg-wall-deep: #d9e0e8;
-			--shell-top: #ffffff;
-			--shell-bottom: #f3f6f9;
-			--bay-bg: #eef2f6;
-			--bay-border: #cfd7e2;
-			--ink-visor: #12151c;
-			--ink-body: #2d3442;
-			--ink-muted: #5d677a;
-			--ink-faint: #7c879b;
-			--accent-red: #d62828;
-			--accent-blue: #1d5fd6;
-			--accent-green: #0f8a52;
-			--accent-amber: #b45309;
+			--suit-black: #0a0b0e;
+			--suit-rib: #13151b;
+			--visor-black: #0c0e12;
+			--plastoid-hi: #ffffff;
+			--plastoid-mid: #f2f5f9;
+			--plastoid-low: #d5dce8;
+			--plastoid-rim: #b9c3d4;
+			--ink-dark: #101218;
+			--ink-mid: #2b313e;
+			--ink-muted: #545e70;
+			--imperial-red: #d62828;
+			--legion-blue: #1e5ed6;
+			--jedi-green: #0f9458;
+			--warn-amber: #b45309;
 		}
 		* {
 			box-sizing: border-box;
@@ -34,130 +34,190 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			padding: 32px 16px;
-			/* Tantive IV / Kamino clean architectural bulkhead backdrop */
-			background-color: var(--bg-wall);
+			padding: 32px 16px 40px;
+			/* Matte black ribbed Stormtrooper undersuit backdrop with subtle overhead studio key light */
+			background-color: var(--suit-black);
 			background-image:
-				linear-gradient(90deg, rgba(18, 21, 28, 0.035) 1px, transparent 1px),
-				linear-gradient(180deg, rgba(18, 21, 28, 0.035) 1px, transparent 1px),
-				radial-gradient(ellipse 90% 60% at 50% 0%, #f6f8fb 0%, var(--bg-wall) 55%, var(--bg-wall-deep) 100%);
-			background-size: 96px 96px, 96px 96px, 100% 100%;
-			color: var(--ink-visor);
+				radial-gradient(ellipse 75% 45% at 25% 0%, rgba(255, 255, 255, 0.09) 0%, transparent 65%),
+				radial-gradient(ellipse 60% 45% at 85% 95%, rgba(120, 150, 210, 0.08) 0%, transparent 60%),
+				repeating-linear-gradient(
+					180deg,
+					rgba(255, 255, 255, 0.018) 0px,
+					rgba(255, 255, 255, 0.018) 2px,
+					rgba(0, 0, 0, 0.42) 2px,
+					rgba(0, 0, 0, 0.42) 8px
+				);
+			color: var(--ink-dark);
 			font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 			overflow-x: hidden;
 			-webkit-font-smoothing: antialiased;
 		}
-		.card {
+
+		/* Armor plate assembly strapped over the black undersuit */
+		.armor-stack {
 			position: relative;
 			z-index: 1;
-			max-width: 680px;
+			max-width: 700px;
 			width: 100%;
-			background: linear-gradient(180deg, var(--shell-top) 0%, var(--shell-bottom) 100%);
-			border: 1.5px solid #c6cfd9;
-			border-radius: 16px;
-			overflow: hidden;
-			box-shadow:
-				0 24px 60px rgba(18, 21, 28, 0.13),
-				0 4px 12px rgba(18, 21, 28, 0.06),
-				inset 0 1px 0 rgba(255, 255, 255, 0.95);
+			display: flex;
+			flex-direction: column;
+			gap: 14px;
 		}
-		/* Stormtrooper helmet brow / glossy obsidian visor header */
-		.header {
+		/* Vertical matte black undersuit straps visible in the gaps between plates */
+		.armor-stack::before,
+		.armor-stack::after {
+			content: "";
+			position: absolute;
+			top: 28px;
+			bottom: 28px;
+			width: 26px;
+			background: linear-gradient(90deg, #060709 0%, #171a21 48%, #060709 100%);
+			border-left: 1px solid rgba(255, 255, 255, 0.05);
+			border-right: 1px solid rgba(255, 255, 255, 0.05);
+			z-index: 0;
+			pointer-events: none;
+		}
+		.armor-stack::before { left: 16%; }
+		.armor-stack::after { right: 16%; }
+
+		/* Shared glossy molded ABS white plastoid armor plate material */
+		.plate {
 			position: relative;
+			z-index: 1;
+			background:
+				radial-gradient(ellipse 65% 42% at 18% 0%, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 70%),
+				linear-gradient(168deg, #ffffff 0%, #f5f7fb 46%, #e4eaf3 82%, #ced7e6 100%);
+			border: 2px solid #090a0d;
+			border-radius: 18px;
+			box-shadow:
+				0 18px 38px rgba(0, 0, 0, 0.72),
+				0 3px 8px rgba(0, 0, 0, 0.5),
+				inset 0 2px 1px rgba(255, 255, 255, 1),
+				inset 0 -10px 18px rgba(120, 140, 175, 0.34),
+				inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+			overflow: hidden;
+		}
+		/* Crisp studio specular highlight band across the upper curve of each white plate */
+		.plate::before {
+			content: "";
+			position: absolute;
+			top: 3px;
+			left: 18px;
+			right: 18px;
+			height: 10px;
+			border-radius: 999px;
+			background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0) 100%);
+			pointer-events: none;
+			z-index: 2;
+		}
+
+		/* PLATE 1: HELMET DOME + BLACK VISOR BROW */
+		.plate-helmet {
+			padding: 14px 18px 16px;
+		}
+		.helmet-ridge {
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			gap: 16px;
-			padding: 20px 26px 18px;
-			background: linear-gradient(180deg, #1b1f29 0%, #101319 65%, #0c0e13 100%);
-			color: #ffffff;
-			border-bottom: 3px solid #090b0f;
-			box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+			gap: 12px;
+			margin-bottom: 10px;
+			padding: 0 4px;
 		}
-		/* Subtle visor gloss reflection strip */
-		.header::after {
-			content: "";
-			position: absolute;
-			left: 26px;
-			right: 26px;
-			bottom: 0;
-			height: 2px;
-			background: linear-gradient(90deg, var(--accent-red) 0%, var(--accent-red) 36px, transparent 36px);
-		}
-		.brand {
-			min-width: 0;
-		}
-		.eyebrow {
+		.helmet-serial {
 			display: flex;
 			align-items: center;
 			gap: 8px;
 			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 			font-size: 11px;
-			font-weight: 600;
-			letter-spacing: 0.18em;
+			font-weight: 700;
+			letter-spacing: 0.16em;
 			text-transform: uppercase;
-			color: #9ba5b8;
-			margin-bottom: 4px;
+			color: #363e4f;
 		}
 		.led-pip {
-			width: 7px;
-			height: 7px;
+			width: 8px;
+			height: 8px;
 			border-radius: 50%;
-			background: var(--accent-red);
-			box-shadow: 0 0 6px rgba(214, 40, 40, 0.75);
+			background: var(--imperial-red);
+			box-shadow: 0 0 0 2px rgba(16, 18, 24, 0.16), 0 0 7px rgba(214, 40, 40, 0.65);
 			flex-shrink: 0;
 		}
-		h1 {
-			margin: 0;
-			font-size: 25px;
-			font-weight: 800;
-			letter-spacing: 0.08em;
-			text-transform: uppercase;
-			color: #ffffff;
-			line-height: 1.1;
-		}
-		.header-right {
-			display: flex;
-			align-items: center;
-			gap: 14px;
-			flex-shrink: 0;
-		}
-		/* Molded helmet vent grille motif */
-		.vent-grille {
+		/* Sculpted black cheek-vent grille inspired directly by Trooper helmet vents */
+		.cheek-vents {
 			display: flex;
 			gap: 4px;
 			align-items: center;
-			padding: 0 4px;
-			opacity: 0.85;
 		}
-		.vent-grille span {
+		.cheek-vents span {
 			display: block;
-			width: 3px;
-			height: 18px;
+			width: 3.5px;
+			height: 15px;
 			border-radius: 2px;
-			background: #2b313e;
-			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.08);
-			transform: skewX(-14deg);
+			background: linear-gradient(180deg, #090b0f 0%, #242934 100%);
+			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.85);
+			transform: skewX(-18deg);
+		}
+		/* Deep glossy black recessed Trooper visor band */
+		.visor-band {
+			position: relative;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 14px;
+			padding: 16px 20px;
+			background:
+				linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.02) 34%, transparent 35%),
+				linear-gradient(180deg, #161921 0%, #090b0f 62%, #050608 100%);
+			border-radius: 12px;
+			border: 2px solid #050608;
+			box-shadow:
+				inset 0 3px 8px rgba(0, 0, 0, 0.9),
+				inset 0 -1px 0 rgba(255, 255, 255, 0.18),
+				0 2px 0 rgba(255, 255, 255, 0.8);
+			clip-path: polygon(0 0, 100% 0, 98.5% 100%, 1.5% 100%);
+		}
+		.brand {
+			min-width: 0;
+		}
+		.eyebrow {
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 10.5px;
+			font-weight: 700;
+			letter-spacing: 0.24em;
+			text-transform: uppercase;
+			color: #9aa6bc;
+			margin-bottom: 3px;
+		}
+		h1 {
+			margin: 0;
+			font-size: 27px;
+			font-weight: 900;
+			letter-spacing: 0.09em;
+			text-transform: uppercase;
+			color: #ffffff;
+			text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+			line-height: 1.05;
 		}
 		.github-pill {
 			display: inline-flex;
 			align-items: center;
 			gap: 6px;
-			padding: 7px 12px;
+			padding: 7px 13px;
 			border-radius: 999px;
-			border: 1px solid rgba(255, 255, 255, 0.22);
-			background: rgba(255, 255, 255, 0.08);
-			color: #f3f6fa;
+			border: 1.5px solid rgba(255, 255, 255, 0.3);
+			background: rgba(255, 255, 255, 0.1);
+			color: #ffffff;
 			text-decoration: none;
 			font-size: 12px;
-			font-weight: 600;
-			letter-spacing: 0.02em;
-			transition: background 0.14s, border-color 0.14s, color 0.14s;
+			font-weight: 700;
+			letter-spacing: 0.03em;
+			flex-shrink: 0;
+			transition: background 0.14s, color 0.14s, border-color 0.14s;
 		}
 		.github-pill:hover {
 			background: #ffffff;
 			border-color: #ffffff;
-			color: var(--ink-visor);
+			color: #090b0f;
 		}
 		.github-pill svg {
 			width: 14px;
@@ -165,158 +225,24 @@
 			fill: currentColor;
 			flex-shrink: 0;
 		}
-		.card-body {
-			padding: 22px 26px 24px;
-		}
-		.launch-grid {
-			display: grid;
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-			gap: 12px;
-		}
-		@media (max-width: 560px) {
-			.launch-grid {
-				grid-template-columns: minmax(0, 1fr);
-			}
-			.header {
-				flex-direction: column;
-				align-items: flex-start;
-				padding: 18px 20px 16px;
-			}
-			.card-body {
-				padding: 18px 20px 20px;
-			}
-			.vent-grille {
-				display: none;
-			}
-		}
-		a.launch-btn {
-			position: relative;
-			display: flex;
-			align-items: center;
-			gap: 13px;
-			padding: 14px 15px;
-			border-radius: 12px;
-			text-decoration: none;
-			transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-			overflow: hidden;
-		}
-		a.launch-btn:active {
-			transform: translateY(1px);
-		}
-		/* Primary MP pad: high-contrast matte/gloss obsidian visor */
-		a.launch-btn.mp {
-			background: linear-gradient(180deg, #1d212b 0%, #11141a 100%);
-			border: 1.5px solid #11141a;
-			color: #ffffff;
-			box-shadow:
-				0 6px 16px rgba(17, 20, 26, 0.2),
-				inset 0 1px 0 rgba(255, 255, 255, 0.14);
-		}
-		a.launch-btn.mp:hover {
-			background: linear-gradient(180deg, #242936 0%, #141820 100%);
-			transform: translateY(-1px);
-			box-shadow:
-				0 10px 22px rgba(17, 20, 26, 0.26),
-				inset 0 1px 0 rgba(255, 255, 255, 0.2);
-		}
-		/* Secondary SP pad: molded white plastoid */
-		a.launch-btn.sp {
-			background: linear-gradient(180deg, #ffffff 0%, #f1f4f8 100%);
-			border: 1.5px solid #c7d0dc;
-			color: var(--ink-visor);
-			box-shadow:
-				0 2px 6px rgba(18, 21, 28, 0.06),
-				inset 0 1px 0 #ffffff;
-		}
-		a.launch-btn.sp:hover {
-			border-color: #12151c;
-			transform: translateY(-1px);
-			box-shadow:
-				0 8px 18px rgba(18, 21, 28, 0.1),
-				inset 0 1px 0 #ffffff;
-		}
-		.icon-housing {
-			width: 48px;
-			height: 48px;
-			border-radius: 10px;
-			background: #0d1016;
-			border: 1px solid rgba(255, 255, 255, 0.12);
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			flex-shrink: 0;
-			box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
-		}
-		a.launch-btn.sp .icon-housing {
-			border-color: #1a1f29;
-			box-shadow: 0 2px 6px rgba(18, 21, 28, 0.18);
-		}
-		.launch-icon {
-			width: 38px;
-			height: 38px;
-			object-fit: contain;
-			display: block;
-		}
-		.launch-copy {
-			min-width: 0;
-			display: flex;
-			flex-direction: column;
-		}
-		.launch-title {
-			font-size: 15.5px;
-			font-weight: 700;
-			letter-spacing: 0.01em;
-			line-height: 1.2;
-		}
-		a.launch-btn.mp .launch-title {
-			color: #ffffff;
-		}
-		a.launch-btn.sp .launch-title {
-			color: var(--ink-visor);
-		}
-		.launch-badge {
-			position: absolute;
-			top: 8px;
-			right: 9px;
-			font-size: 10px;
-			padding: 1px 6px;
-		}
-		a.launch-btn small {
-			display: block;
-			margin-top: 4px;
-			font-size: 12px;
-			line-height: 1.35;
-			font-weight: 400;
-		}
-		a.launch-btn.mp small {
-			color: #b4bece;
-		}
-		a.launch-btn.sp small {
-			color: var(--ink-muted);
-		}
-		/* Recessed plastoid seam divider */
-		.section {
-			margin-top: 22px;
-			padding-top: 18px;
-			border-top: 1.5px solid #dde3ec;
-			box-shadow: inset 0 1px 0 #ffffff;
-		}
+
+		/* PLATE 2: STEP 1 BASE GAME FILES ARMOR BAY */
 		.gamefiles-box {
-			margin-bottom: 16px;
-			padding: 15px 16px;
-			border-radius: 12px;
-			border: 1.5px solid var(--bay-border);
-			background: var(--bay-bg);
-			box-shadow: inset 0 1px 3px rgba(18, 21, 28, 0.05);
-			transition: border-color 0.15s, background 0.15s;
+			padding: 17px 20px 16px;
+			transition: border-color 0.15s, box-shadow 0.15s;
 		}
 		.gamefiles-box.ready {
-			border-color: #9dd4b8;
-			background: #eef8f3;
+			box-shadow:
+				0 18px 38px rgba(0, 0, 0, 0.72),
+				inset 0 2px 1px #ffffff,
+				inset 0 -10px 18px rgba(15, 148, 88, 0.16),
+				inset 0 0 0 2px rgba(15, 148, 88, 0.35);
 		}
 		.gamefiles-box.dragover {
-			border-color: var(--ink-visor);
-			background: #e4ebf5;
+			box-shadow:
+				0 0 0 3px #ffffff,
+				0 18px 38px rgba(0, 0, 0, 0.8),
+				inset 0 2px 1px #ffffff;
 		}
 		.gamefiles-head {
 			display: flex;
@@ -328,31 +254,32 @@
 		.gamefiles-title {
 			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 			font-size: 12px;
-			font-weight: 700;
-			letter-spacing: 0.08em;
+			font-weight: 800;
+			letter-spacing: 0.1em;
 			text-transform: uppercase;
-			color: var(--ink-visor);
+			color: var(--ink-dark);
 		}
 		.gamefiles-box.ready .gamefiles-title {
-			color: var(--accent-green);
+			color: var(--jedi-green);
 		}
 		.gamefiles-help {
-			font-size: 12.5px;
+			font-size: 13px;
 			line-height: 1.55;
-			color: var(--ink-body);
+			color: var(--ink-mid);
 			margin: 0 0 12px;
 		}
 		.gamefiles-help code {
-			background: #ffffff;
-			border: 1px solid #d5dce6;
+			background: rgba(16, 18, 24, 0.07);
+			border: 1px solid rgba(16, 18, 24, 0.14);
 			padding: 1px 5px;
-			border-radius: 4px;
+			border-radius: 5px;
 			font-size: 11.5px;
-			color: var(--ink-visor);
+			font-weight: 600;
+			color: var(--ink-dark);
 		}
 		.gamefiles-help a {
-			color: var(--accent-blue);
-			font-weight: 600;
+			color: var(--legion-blue);
+			font-weight: 700;
 			text-decoration: none;
 		}
 		.gamefiles-help a:hover {
@@ -364,36 +291,147 @@
 			align-items: center;
 			gap: 8px;
 		}
-		.btn.gold {
-			border-color: #12151c;
-			background: linear-gradient(180deg, #232834 0%, #12151c 100%);
-			color: #ffffff;
-			box-shadow: 0 2px 6px rgba(18, 21, 28, 0.16);
-		}
-		.btn.gold:hover {
-			background: linear-gradient(180deg, #2d3342 0%, #181c26 100%);
-			border-color: #000000;
-		}
-		.btn.gold code {
-			color: #e6ecf5;
-		}
 		#base-status {
 			margin-top: 9px;
 			font-size: 12px;
-			font-weight: 500;
-			color: var(--accent-blue);
+			font-weight: 600;
+			color: var(--legion-blue);
 			min-height: 15px;
 		}
 		#base-status.ok {
-			color: var(--accent-green);
+			color: var(--jedi-green);
 		}
 		#base-status.error {
-			color: var(--accent-red);
+			color: var(--imperial-red);
 		}
 		.gamefiles-note {
 			margin-top: 8px;
 			font-size: 11.5px;
-			color: var(--ink-faint);
+			color: var(--ink-muted);
+		}
+
+		/* PLATE 3: TWIN SCULPTED CHEST ARMOR PLATES (MP & SP LAUNCHERS) */
+		.launch-grid {
+			position: relative;
+			z-index: 1;
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 14px;
+		}
+		a.launch-btn {
+			position: relative;
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			padding: 18px 18px 18px 20px;
+			border-radius: 18px;
+			background:
+				radial-gradient(ellipse 70% 50% at 20% 0%, #ffffff 0%, rgba(255, 255, 255, 0) 70%),
+				linear-gradient(162deg, #ffffff 0%, #f4f7fb 48%, #e1e8f2 84%, #c9d3e3 100%);
+			border: 2px solid #090a0d;
+			color: var(--ink-dark);
+			text-decoration: none;
+			box-shadow:
+				0 16px 34px rgba(0, 0, 0, 0.72),
+				0 3px 8px rgba(0, 0, 0, 0.48),
+				inset 0 2px 1px #ffffff,
+				inset 0 -10px 18px rgba(116, 136, 172, 0.36);
+			transition: transform 0.14s ease, box-shadow 0.16s ease;
+			overflow: hidden;
+		}
+		/* Curved specular gloss highlight on each chest plate */
+		a.launch-btn::before {
+			content: "";
+			position: absolute;
+			top: 3px;
+			left: 16px;
+			right: 16px;
+			height: 9px;
+			border-radius: 999px;
+			background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0) 100%);
+			pointer-events: none;
+		}
+		/* 501st / Imperial Legion bold shoulder stripe accent on left edge */
+		a.launch-btn::after {
+			content: "";
+			position: absolute;
+			top: 14px;
+			bottom: 14px;
+			left: 0;
+			width: 6px;
+			border-radius: 0 4px 4px 0;
+		}
+		a.launch-btn.mp::after {
+			background: linear-gradient(180deg, #1d5fd6 0%, #1d5fd6 62%, #d62828 62%, #d62828 100%);
+		}
+		a.launch-btn.sp::after {
+			background: linear-gradient(180deg, #0f9458 0%, #0b6e41 100%);
+		}
+		a.launch-btn:hover {
+			transform: translateY(-2px);
+			box-shadow:
+				0 22px 42px rgba(0, 0, 0, 0.82),
+				0 0 0 2px rgba(255, 255, 255, 0.35),
+				inset 0 2px 2px #ffffff,
+				inset 0 -10px 18px rgba(108, 130, 170, 0.38);
+		}
+		a.launch-btn:active {
+			transform: translateY(1px);
+		}
+		/* Recessed glossy-black Trooper optical housing for OpenJK icons */
+		.icon-housing {
+			width: 54px;
+			height: 54px;
+			border-radius: 13px;
+			background:
+				linear-gradient(160deg, rgba(255, 255, 255, 0.16) 0%, transparent 45%),
+				linear-gradient(180deg, #161922 0%, #07080b 100%);
+			border: 2px solid #090b0f;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-shrink: 0;
+			box-shadow:
+				inset 0 3px 6px rgba(0, 0, 0, 0.85),
+				0 2px 0 rgba(255, 255, 255, 0.85);
+		}
+		.launch-icon {
+			width: 42px;
+			height: 42px;
+			object-fit: contain;
+			display: block;
+		}
+		.launch-copy {
+			min-width: 0;
+			display: flex;
+			flex-direction: column;
+		}
+		.launch-title {
+			font-size: 16.5px;
+			font-weight: 800;
+			letter-spacing: 0.02em;
+			color: var(--ink-dark);
+			line-height: 1.2;
+		}
+		.launch-badge {
+			position: absolute;
+			top: 9px;
+			right: 11px;
+			font-size: 9.5px;
+			padding: 2px 6px;
+		}
+		a.launch-btn small {
+			display: block;
+			margin-top: 4px;
+			font-size: 12px;
+			line-height: 1.35;
+			font-weight: 500;
+			color: var(--ink-muted);
+		}
+
+		/* PLATE 4: ABDOMINAL CONTROL PLATE (MODS + ADVANCED) */
+		.plate-mods {
+			padding: 18px 20px 18px;
 		}
 		.section-head {
 			display: flex;
@@ -405,41 +443,41 @@
 		.section-title {
 			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 			font-size: 12px;
-			font-weight: 700;
-			letter-spacing: 0.1em;
+			font-weight: 800;
+			letter-spacing: 0.11em;
 			text-transform: uppercase;
-			color: var(--ink-visor);
+			color: var(--ink-dark);
 		}
 		.section-title .muted {
 			font-family: system-ui, -apple-system, sans-serif;
-			font-weight: 400;
+			font-weight: 500;
 			text-transform: none;
 			letter-spacing: 0;
-			color: var(--ink-faint);
+			color: var(--ink-muted);
 		}
 		label.field-label {
 			display: block;
 			font-size: 12px;
-			font-weight: 600;
-			color: var(--ink-body);
+			font-weight: 700;
+			color: var(--ink-mid);
 			margin-bottom: 5px;
 		}
 		select,
 		input[type="text"] {
 			width: 100%;
 			padding: 9px 11px;
-			border-radius: 8px;
-			border: 1.5px solid #cbd3df;
+			border-radius: 9px;
+			border: 1.5px solid #adb8c9;
 			background: #ffffff;
-			color: var(--ink-visor);
+			color: var(--ink-dark);
 			font-size: 13px;
-			box-shadow: inset 0 1px 2px rgba(18, 21, 28, 0.04);
+			box-shadow: inset 0 2px 4px rgba(16, 18, 24, 0.07);
 		}
 		select:focus,
 		input[type="text"]:focus {
 			outline: none;
-			border-color: var(--ink-visor);
-			box-shadow: 0 0 0 2px rgba(18, 21, 28, 0.1);
+			border-color: var(--ink-dark);
+			box-shadow: 0 0 0 2px rgba(16, 18, 24, 0.14);
 		}
 		.mod-list {
 			display: grid;
@@ -449,7 +487,7 @@
 		}
 		.mod-empty {
 			font-size: 13px;
-			color: var(--ink-faint);
+			color: var(--ink-muted);
 			padding: 6px 0;
 		}
 		.mod-item {
@@ -460,19 +498,23 @@
 			min-width: 0;
 			max-width: 100%;
 			padding: 11px 13px;
-			border-radius: 10px;
-			border: 1.5px solid #d5dce6;
-			background: #ffffff;
-			box-shadow: 0 1px 3px rgba(18, 21, 28, 0.04);
+			border-radius: 11px;
+			border: 1.5px solid #bcc6d6;
+			background: linear-gradient(180deg, #ffffff 0%, #f1f4f9 100%);
+			box-shadow:
+				0 2px 4px rgba(16, 18, 24, 0.07),
+				inset 0 1px 0 #ffffff;
 			transition: border-color 0.14s, background 0.14s, box-shadow 0.14s;
 		}
 		.mod-item:hover {
-			border-color: #aeb8c7;
+			border-color: #6b7689;
 		}
 		.mod-item.active {
-			border-color: var(--ink-visor);
-			background: #f5f8fc;
-			box-shadow: 0 2px 8px rgba(18, 21, 28, 0.08);
+			border-color: var(--ink-dark);
+			background: linear-gradient(180deg, #ffffff 0%, #e9f0fb 100%);
+			box-shadow:
+				0 3px 10px rgba(16, 18, 24, 0.14),
+				inset 0 0 0 1px rgba(16, 18, 24, 0.2);
 		}
 		.mod-toggle {
 			display: flex;
@@ -483,10 +525,10 @@
 			cursor: pointer;
 		}
 		.mod-toggle input[type="checkbox"] {
-			width: 16px;
-			height: 16px;
+			width: 17px;
+			height: 17px;
 			margin-top: 2px;
-			accent-color: var(--ink-visor);
+			accent-color: var(--ink-dark);
 			flex-shrink: 0;
 			cursor: pointer;
 		}
@@ -499,9 +541,9 @@
 			background: none;
 			border: 0;
 			padding: 0;
-			color: var(--accent-blue);
+			color: var(--legion-blue);
 			font-size: 12px;
-			font-weight: 600;
+			font-weight: 700;
 			cursor: pointer;
 		}
 		.text-btn:hover {
@@ -512,9 +554,9 @@
 			flex: 1;
 		}
 		.mod-title {
-			font-weight: 700;
+			font-weight: 800;
 			font-size: 14px;
-			color: var(--ink-visor);
+			color: var(--ink-dark);
 			display: flex;
 			align-items: center;
 			flex-wrap: wrap;
@@ -530,81 +572,75 @@
 		}
 		.badge {
 			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-			font-size: 10.5px;
-			font-weight: 700;
-			letter-spacing: 0.03em;
+			font-size: 10px;
+			font-weight: 800;
+			letter-spacing: 0.05em;
+			text-transform: uppercase;
 			padding: 2px 7px;
 			border-radius: 5px;
-			background: #e9eef5;
-			color: #3a4454;
-			border: 1px solid #d4dce7;
+			background: #dfe5ef;
+			color: #262e3d;
+			border: 1px solid #c3ccd9;
 		}
 		.badge.wasm {
-			background: #e8effc;
-			color: #1849a9;
-			border-color: #c2d4f7;
+			background: #e1ecff;
+			color: #1545a3;
+			border-color: #b4cdfa;
 		}
 		.badge.dl {
-			background: #e3f5ec;
-			color: #0c6b3f;
-			border-color: #b1e2c8;
+			background: #dcf4e8;
+			color: #0b6b40;
+			border-color: #a6dfc2;
 		}
 		.badge.warn {
-			background: #fef3dc;
-			color: #9a4706;
-			border-color: #f3d293;
+			background: #14171f;
+			color: #ffd056;
+			border-color: #14171f;
 		}
 		.badge.builtin {
-			background: #12151c;
+			background: #0e1015;
 			color: #ffffff;
-			border-color: #12151c;
+			border-color: #0e1015;
 		}
 		.mod-link {
 			font-size: 12px;
-			font-weight: 600;
-			color: var(--ink-body);
+			font-weight: 700;
+			color: var(--ink-dark);
 			text-decoration: none;
-			padding: 5px 9px;
+			padding: 5px 10px;
 			border-radius: 7px;
-			border: 1px solid #cbd3df;
-			background: #f7f9fb;
+			border: 1.5px solid #aeb8c9;
+			background: linear-gradient(180deg, #ffffff 0%, #eaeff6 100%);
 			white-space: nowrap;
-			transition: border-color 0.14s, background 0.14s, color 0.14s;
+			box-shadow: inset 0 1px 0 #ffffff;
+			transition: border-color 0.14s, background 0.14s;
 		}
 		.mod-link:hover {
-			color: var(--ink-visor);
 			background: #ffffff;
-			border-color: var(--ink-visor);
+			border-color: var(--ink-dark);
 		}
 		.mod-actions {
 			display: flex;
 			gap: 6px;
 			flex-shrink: 0;
 		}
-		@media (max-width: 500px) {
-			.mod-item {
-				flex-direction: column;
-				align-items: stretch;
-			}
-			.mod-actions {
-				justify-content: flex-end;
-			}
-		}
+		/* Recessed matte drop-bay inside the white abdominal plate */
 		.dropzone {
-			border: 1.5px dashed #bac5d4;
-			border-radius: 10px;
-			padding: 15px 16px;
+			border: 1.5px dashed #99a6ba;
+			border-radius: 11px;
+			padding: 14px 16px;
 			text-align: center;
-			background: #f7f9fc;
+			background: rgba(16, 18, 24, 0.045);
+			box-shadow: inset 0 2px 5px rgba(16, 18, 24, 0.06);
 			transition: border-color 0.15s, background 0.15s;
 		}
 		.dropzone.dragover {
-			border-color: var(--ink-visor);
-			background: #e8eef7;
+			border-color: var(--ink-dark);
+			background: rgba(30, 94, 214, 0.08);
 		}
 		.dropzone-label {
 			font-size: 12.5px;
-			color: var(--ink-muted);
+			color: var(--ink-mid);
 			margin-bottom: 10px;
 		}
 		.btn-row {
@@ -613,40 +649,61 @@
 			justify-content: center;
 			gap: 8px;
 		}
+		/* Tactile glossy molded plastic buttons */
 		.btn {
 			cursor: pointer;
 			display: inline-flex;
 			align-items: center;
 			gap: 6px;
-			padding: 7px 13px;
+			padding: 7px 14px;
 			border-radius: 8px;
-			border: 1.5px solid #c4cdd9;
-			background: linear-gradient(180deg, #ffffff 0%, #f1f4f8 100%);
-			color: var(--ink-visor);
+			border: 1.5px solid #9da9bd;
+			background: linear-gradient(180deg, #ffffff 0%, #e7edf5 100%);
+			color: var(--ink-dark);
 			font-size: 12.5px;
-			font-weight: 600;
-			box-shadow: 0 1px 2px rgba(18, 21, 28, 0.05), inset 0 1px 0 #ffffff;
+			font-weight: 700;
+			box-shadow:
+				0 2px 4px rgba(16, 18, 24, 0.1),
+				inset 0 1px 0 #ffffff;
 			transition: border-color 0.14s, background 0.14s, transform 0.1s;
 		}
 		.btn:hover {
-			border-color: var(--ink-visor);
-			background: #ffffff;
+			border-color: var(--ink-dark);
+			background: linear-gradient(180deg, #ffffff 0%, #f2f5fa 100%);
 		}
 		.btn:active {
 			transform: translateY(1px);
+		}
+		.btn.gold {
+			border-color: #090b0f;
+			background: linear-gradient(180deg, #272c38 0%, #0e1016 100%);
+			color: #ffffff;
+			box-shadow:
+				0 3px 8px rgba(0, 0, 0, 0.28),
+				inset 0 1px 0 rgba(255, 255, 255, 0.22);
+		}
+		.btn.gold:hover {
+			background: linear-gradient(180deg, #323847 0%, #151821 100%);
+		}
+		.btn.gold code {
+			color: #eef2f8;
+			background: rgba(255, 255, 255, 0.14);
+			border: 0;
+			padding: 0 4px;
+			border-radius: 3px;
 		}
 		.btn.small {
 			padding: 5px 10px;
 			font-size: 12px;
 		}
 		.btn.danger {
-			border-color: #eab7bc;
-			background: #fdf2f3;
-			color: #b4232c;
+			border-color: #e3a7ad;
+			background: linear-gradient(180deg, #fff5f6 0%, #fce2e5 100%);
+			color: #a81c24;
 		}
 		.btn.danger:hover {
-			border-color: #d62828;
-			background: #fce4e6;
+			border-color: var(--imperial-red);
+			background: #fad6da;
 		}
 		.btn:disabled {
 			opacity: 0.5;
@@ -655,32 +712,33 @@
 		#mod-status {
 			margin-top: 10px;
 			font-size: 12px;
-			font-weight: 500;
-			color: var(--accent-blue);
+			font-weight: 600;
+			color: var(--legion-blue);
 			min-height: 16px;
 		}
 		#mod-status.error {
-			color: var(--accent-red);
+			color: var(--imperial-red);
 		}
 		#mod-status.ok {
-			color: var(--accent-green);
+			color: var(--jedi-green);
 		}
 		details.advanced {
 			margin-top: 14px;
-			border: 1.5px solid #d5dce6;
+			border: 1.5px solid #b8c2d3;
 			border-radius: 10px;
-			background: #f5f7fa;
+			background: rgba(16, 18, 24, 0.04);
+			box-shadow: inset 0 1px 3px rgba(16, 18, 24, 0.06);
 		}
 		details.advanced summary {
 			cursor: pointer;
 			padding: 10px 14px;
 			font-size: 12.5px;
-			font-weight: 600;
-			color: var(--ink-body);
+			font-weight: 700;
+			color: var(--ink-mid);
 			user-select: none;
 		}
 		details.advanced summary:hover {
-			color: var(--ink-visor);
+			color: var(--ink-dark);
 		}
 		.advanced-body {
 			padding: 4px 14px 14px;
@@ -694,27 +752,28 @@
 		.url-row input {
 			flex: 1;
 		}
-		.footer {
-			margin-top: 20px;
-			padding-top: 14px;
-			border-top: 1px solid #e1e6ee;
+
+		/* PLATE 5: STORMTROOPER UTILITY BELT FOOTER */
+		.plate-belt {
+			padding: 11px 18px;
+			border-radius: 14px;
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
 			flex-wrap: wrap;
 			gap: 10px;
 			font-size: 12px;
-			color: var(--ink-faint);
+			color: var(--ink-muted);
 		}
 		.footer-links {
 			display: flex;
 			align-items: center;
 			gap: 14px;
 		}
-		.footer a,
-		.footer button.link-btn {
-			color: var(--ink-body);
-			font-weight: 600;
+		.plate-belt a,
+		.plate-belt button.link-btn {
+			color: var(--ink-dark);
+			font-weight: 700;
 			text-decoration: none;
 			background: none;
 			border: 0;
@@ -722,16 +781,41 @@
 			font: inherit;
 			cursor: pointer;
 		}
-		.footer a:hover,
-		.footer button.link-btn:hover {
-			color: var(--ink-visor);
+		.plate-belt a:hover,
+		.plate-belt button.link-btn:hover {
+			color: var(--legion-blue);
 			text-decoration: underline;
 		}
+
+		@media (max-width: 580px) {
+			.launch-grid {
+				grid-template-columns: minmax(0, 1fr);
+			}
+			.visor-band {
+				flex-direction: column;
+				align-items: flex-start;
+				clip-path: none;
+			}
+			.cheek-vents {
+				display: none;
+			}
+		}
+		@media (max-width: 500px) {
+			.mod-item {
+				flex-direction: column;
+				align-items: stretch;
+			}
+			.mod-actions {
+				justify-content: flex-end;
+			}
+		}
+
+		/* NETWORK DIAGNOSTICS MODAL (matching gloss plastoid plate) */
 		.modal-backdrop {
 			position: fixed;
 			inset: 0;
-			background: rgba(15, 18, 25, 0.56);
-			backdrop-filter: blur(4px);
+			background: rgba(5, 6, 9, 0.72);
+			backdrop-filter: blur(5px);
 			display: none;
 			align-items: center;
 			justify-content: center;
@@ -744,11 +828,15 @@
 		.modal {
 			max-width: 460px;
 			width: 100%;
-			background: linear-gradient(180deg, #ffffff 0%, #f4f6f9 100%);
-			border: 1.5px solid #c6cfd9;
-			border-radius: 14px;
+			background:
+				radial-gradient(ellipse 70% 45% at 20% 0%, #ffffff 0%, rgba(255, 255, 255, 0) 70%),
+				linear-gradient(168deg, #ffffff 0%, #f2f5f9 55%, #d6deeb 100%);
+			border: 2px solid #090a0d;
+			border-radius: 16px;
 			padding: 22px;
-			box-shadow: 0 24px 64px rgba(15, 18, 25, 0.28);
+			box-shadow:
+				0 24px 64px rgba(0, 0, 0, 0.8),
+				inset 0 2px 1px #ffffff;
 		}
 		.modal-head {
 			display: flex;
@@ -759,10 +847,11 @@
 		.modal-head h2 {
 			margin: 0;
 			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-			font-size: 14px;
-			letter-spacing: 0.08em;
+			font-size: 13.5px;
+			font-weight: 800;
+			letter-spacing: 0.1em;
 			text-transform: uppercase;
-			color: var(--ink-visor);
+			color: var(--ink-dark);
 		}
 		.diag-grid {
 			display: grid;
@@ -777,31 +866,32 @@
 			padding: 8px 11px;
 			border-radius: 8px;
 			background: #ffffff;
-			border: 1px solid #d8dfe9;
+			border: 1.5px solid #c2ccd9;
 			font-size: 13px;
 		}
 		.diag-key {
 			color: var(--ink-muted);
+			font-weight: 600;
 		}
 		.diag-val {
-			color: var(--ink-visor);
-			font-weight: 600;
+			color: var(--ink-dark);
+			font-weight: 700;
 			text-align: right;
 			word-break: break-all;
 		}
 		.diag-val.ok {
-			color: var(--accent-green);
+			color: var(--jedi-green);
 		}
 		.diag-val.err {
-			color: var(--accent-red);
+			color: var(--imperial-red);
 		}
 		.diag-error {
 			display: none;
 			padding: 9px 11px;
 			border-radius: 8px;
-			background: #fdf2f3;
-			border: 1px solid #eab7bc;
-			color: #b4232c;
+			background: #fdf0f1;
+			border: 1.5px solid #e3a7ad;
+			color: #a81c24;
 			font-size: 12px;
 			margin-bottom: 14px;
 			word-break: break-word;
@@ -820,15 +910,18 @@
 	</style>
 </head>
 <body>
-	<div class="card">
-		<div class="header">
-			<div class="brand">
-				<div class="eyebrow"><span class="led-pip" aria-hidden="true"></span>Star Wars &middot; OpenJK Web</div>
-				<h1>Jedi Academy</h1>
+	<div class="armor-stack">
+		<div class="plate plate-helmet">
+			<div class="helmet-ridge">
+				<div class="helmet-serial"><span class="led-pip" aria-hidden="true"></span>TK-421 &middot; OPENJK WEB TERMINAL</div>
+				<div class="cheek-vents" aria-hidden="true">
+					<span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+				</div>
 			</div>
-			<div class="header-right">
-				<div class="vent-grille" aria-hidden="true">
-					<span></span><span></span><span></span><span></span><span></span>
+			<div class="visor-band">
+				<div class="brand">
+					<div class="eyebrow">Star Wars &middot; Jedi Knight</div>
+					<h1>Jedi Academy</h1>
 				</div>
 				<a class="github-pill" href="https://github.com/pdewilde/openjk-wasm" target="_blank" rel="noopener noreferrer">
 					<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
@@ -837,8 +930,7 @@
 			</div>
 		</div>
 
-		<div class="card-body">
-		<div id="gamefiles-box" class="gamefiles-box" style="display: none;">
+		<div id="gamefiles-box" class="plate gamefiles-box" style="display: none;">
 			<div class="gamefiles-head">
 				<span id="gamefiles-title" class="gamefiles-title">Step 1 &middot; Load Your Jedi Academy Files</span>
 				<span id="base-badge" class="badge warn">Required</span>
@@ -864,7 +956,7 @@
 
 		<div class="launch-grid">
 			<a id="mp-launch-link" class="launch-btn mp" href="openjk.wasm32.html">
-				<span class="icon-housing"><img class="launch-icon" src="icons/mp128.png" alt="" width="38" height="38"></span>
+				<span class="icon-housing"><img class="launch-icon" src="icons/mp128.png" alt="" width="42" height="42"></span>
 				<span class="launch-copy">
 					<span class="launch-title">Play Multiplayer</span>
 					<small id="mp-launch-desc">Base Game</small>
@@ -872,7 +964,7 @@
 			</a>
 			<a id="sp-launch-link" class="launch-btn sp" href="openjk_sp.wasm32.html">
 				<span class="badge warn launch-badge">Untested</span>
-				<span class="icon-housing"><img class="launch-icon" src="icons/sp128.png" alt="" width="38" height="38"></span>
+				<span class="icon-housing"><img class="launch-icon" src="icons/sp128.png" alt="" width="42" height="42"></span>
 				<span class="launch-copy">
 					<span class="launch-title">Play Singleplayer</span>
 					<small id="sp-launch-desc">Campaign (likely has bugs)</small>
@@ -880,7 +972,7 @@
 			</a>
 		</div>
 
-		<div class="section">
+		<div class="plate plate-mods">
 			<div class="section-head">
 				<span class="section-title">Multiplayer Mods <span class="muted">(optional)</span></span>
 				<div class="section-actions">
@@ -940,7 +1032,7 @@
 			</details>
 		</div>
 
-		<div class="footer">
+		<div class="plate plate-belt">
 			<span>Saves &amp; mods are stored locally in your browser.</span>
 			<div class="footer-links">
 				<a id="hosted-login-btn" href="/base/login?next=/" style="display: none;">Hosted Login</a>
@@ -948,7 +1040,6 @@
 				<button id="diag-open-btn" class="link-btn" type="button">Network Diagnostics</button>
 				<a href="https://github.com/pdewilde/openjk-wasm" target="_blank" rel="noopener noreferrer">GitHub</a>
 			</div>
-		</div>
 		</div>
 	</div>
 
@@ -1803,7 +1894,7 @@
 								info.sourceUrl = byName[k].sourceUrl;
 								info.license = byName[k].license;
 								info.catalogUrl = byName[k].catalogUrl;
-								if (!info.description) info.description = byName[k].description;
+								if (byName[k].description) info.description = byName[k].description;
 								info.cachedInOpfs = true;
 							}
 							byName[k] = info;

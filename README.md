@@ -14,7 +14,7 @@ Play **Star Wars Jedi Knight: Jedi Academy** (Singleplayer & Multiplayer) right 
 
 - **Multiplayer in the Browser (plus Experimental Singleplayer):** Runs in modern Chrome, Edge, and Firefox with hardware-accelerated WebGL2 graphics and WebAudio sound. *(Singleplayer is included but currently untested and likely has bugs.)*
 - **Browser Multiplayer:** Host or join multiplayer matches directly from the browser via WebTransport.
-- **Easy Mod Support:** Drag and drop `.zip`, `.pk3`, or mod folders right onto the home page, check which mods you want enabled, and play.
+- **Easy Mod Support:** Enable built-in FOSS mods like **JA++** with a single checkbox (no upload needed!), or drag and drop your own `.zip`, `.pk3`, or mod folders right onto the home page.
 - **Saved Locally:** Your singleplayer saves, settings, and installed mods are stored locally in your browser.
 - **Display & Controls:** Defaults to a classic crisp **4:3** aspect ratio fitted to your window, with a pre-launch resolution picker under **Advanced options**, live in-game resolution & brightness sliders, and shareable map/server links.
 

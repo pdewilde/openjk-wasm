@@ -800,6 +800,149 @@
 			window.__openjkEnabledBaseMods = mountedIntoBase;
 		}
 
+		async function extractModZipEntries(arrayBuffer) {
+			var bytes = new Uint8Array(arrayBuffer);
+			var dv = new DataView(arrayBuffer);
+			var len = bytes.length;
+			if (len < 22) return [];
+			var minStart = Math.max(0, len - 65557);
+			var eocd = -1;
+			for (var p = len - 22; p >= minStart; p--) {
+				if (dv.getUint32(p, true) === 0x06054b50) { eocd = p; break; }
+			}
+			if (eocd < 0) return [];
+			var totalEntries = dv.getUint16(eocd + 10, true);
+			var ofs = dv.getUint32(eocd + 16, true);
+			var decoder = new TextDecoder('utf-8');
+			var out = [];
+			for (var i = 0; i < totalEntries; i++) {
+				if (ofs + 46 > len || dv.getUint32(ofs, true) !== 0x02014b50) break;
+				var method = dv.getUint16(ofs + 10, true);
+				var compSize = dv.getUint32(ofs + 20, true);
+				var nameLen = dv.getUint16(ofs + 28, true);
+				var extraLen = dv.getUint16(ofs + 30, true);
+				var commentLen = dv.getUint16(ofs + 32, true);
+				var lfhOfs = dv.getUint32(ofs + 42, true);
+				var name = decoder.decode(bytes.subarray(ofs + 46, ofs + 46 + nameLen)).replace(/\\/g, '/');
+				ofs += 46 + nameLen + extraLen + commentLen;
+				if (!name || name.endsWith('/') || name.indexOf('..') !== -1 || name.startsWith('/')) continue;
+				if (lfhOfs + 30 > len || dv.getUint32(lfhOfs, true) !== 0x04034b50) continue;
+				var lfhNameLen = dv.getUint16(lfhOfs + 26, true);
+				var lfhExtraLen = dv.getUint16(lfhOfs + 28, true);
+				var dataStart = lfhOfs + 30 + lfhNameLen + lfhExtraLen;
+				var compSlice = bytes.subarray(dataStart, dataStart + compSize);
+				var itemBytes;
+				if (method === 0) {
+					itemBytes = new Uint8Array(compSlice);
+				} else if (method === 8) {
+					itemBytes = await inflateRawBytes(compSlice);
+				} else {
+					continue;
+				}
+				out.push({ path: name, bytes: itemBytes });
+			}
+			return out;
+		}
+
+		async function hydrateCatalogMods(activeFsGame, enabledMods) {
+			var fs = getWasmFs();
+			var hydratedSet = Object.create(null);
+			(window.__openjkHydratedMods || []).forEach(function (m) { hydratedSet[m.toLowerCase()] = true; });
+			var wanted = [];
+			if (activeFsGame && !hydratedSet[activeFsGame.toLowerCase()]) {
+				wanted.push({ name: activeFsGame, mountToBase: false });
+			}
+			(enabledMods || []).forEach(function (m) {
+				if (m && !hydratedSet[m.toLowerCase()]) {
+					wanted.push({ name: m, mountToBase: true });
+				}
+			});
+			if (wanted.length === 0) return;
+
+			var catalogData = null;
+			try {
+				var resp = await fetch('mods/catalog.json', { cache: 'no-cache' });
+				if (!resp || !resp.ok) return;
+				catalogData = await resp.json();
+			} catch (e) {
+				return;
+			}
+			if (!catalogData || !Array.isArray(catalogData.mods)) return;
+
+			var byId = Object.create(null);
+			catalogData.mods.forEach(function (entry) {
+				var id = sanitizeModName(entry && entry.id);
+				if (id && entry.url) byId[id.toLowerCase()] = entry;
+			});
+
+			for (var wi = 0; wi < wanted.length; wi++) {
+				var target = wanted[wi];
+				var entry = byId[target.name.toLowerCase()];
+				if (!entry) continue;
+				var modName = sanitizeModName(entry.id);
+				Module.setStatus('Loading built-in mod "' + (entry.name || modName) + '"...');
+				try {
+					var zResp = await fetch(entry.url);
+					if (!zResp || !zResp.ok) continue;
+					var ab = await zResp.arrayBuffer();
+					var items = await extractModZipEntries(ab);
+					if (items.length === 0) continue;
+					ensureDirTree(fs, '/' + modName);
+					ensureDirTree(fs, '/base');
+
+					// Strip leading <modName>/ prefix if archive is wrapped in a single folder
+					var prefixLower = modName.toLowerCase() + '/';
+					var opfsModDir = null;
+					try {
+						opfsModDir = await getOpfsDir('openjk-mods', [modName], true);
+					} catch (e) { opfsModDir = null; }
+
+					for (var ii = 0; ii < items.length; ii++) {
+						var rel = items[ii].path.replace(/^\/+/, '');
+						if (rel.toLowerCase().indexOf(prefixLower) === 0) {
+							rel = rel.slice(prefixLower.length);
+						}
+						if (!rel || rel.indexOf('..') !== -1) continue;
+						var data = items[ii].bytes;
+						writeWasmFile(fs, '/' + modName + '/' + rel, data);
+
+						if (target.mountToBase && !/\.wasm$/i.test(rel)) {
+							var lowerRel = rel.toLowerCase();
+							var baseName = rel.split('/').pop();
+							if (!PROTECTED_BASE_FILES[lowerRel]) {
+								var dest = /\.pk3$/i.test(baseName) ? ('/base/' + baseName) : ('/base/' + rel);
+								if (/\.pk3$/i.test(baseName) && pathExistsInWasm(fs, dest)) {
+									dest = '/base/' + modName + '_' + baseName;
+								}
+								writeWasmFile(fs, dest, data);
+							}
+						}
+
+						if (opfsModDir) {
+							try {
+								var parts = rel.split('/').filter(Boolean);
+								var fn = parts.pop();
+								var sub = opfsModDir;
+								for (var pi = 0; pi < parts.length; pi++) {
+									sub = await sub.getDirectoryHandle(parts[pi], { create: true });
+								}
+								var fh = await sub.getFileHandle(fn, { create: true });
+								var w = await fh.createWritable();
+								await w.write(data);
+								await w.close();
+							} catch (e) { }
+						}
+					}
+
+					hydratedSet[modName.toLowerCase()] = true;
+					window.__openjkHydratedMods.push(modName);
+					if (target.mountToBase) window.__openjkEnabledBaseMods.push(modName);
+				} catch (err) {
+					console.warn('Built-in mod load skipped for ' + modName + ':', err);
+				}
+			}
+		}
+
 		window.__openjkSyncUrl = function (fsGame, connectAddr, mapName) {
 			if (typeof history === 'undefined' || typeof history.replaceState !== 'function') return;
 			try {
@@ -1354,6 +1497,9 @@
 					})
 					.then(function () {
 						return hydrateOpfsMods(modParam, enabledMods);
+					})
+					.then(function () {
+						return hydrateCatalogMods(modParam, enabledMods);
 					})
 					.then(function () {
 						return initManifestMode();

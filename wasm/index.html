@@ -524,6 +524,24 @@
 			background: #473318;
 			color: #ffd180;
 		}
+		.badge.builtin {
+			background: #17344d;
+			color: #8fd3ff;
+		}
+		.mod-link {
+			font-size: 12px;
+			color: #8db3f2;
+			text-decoration: none;
+			padding: 4px 8px;
+			border-radius: 6px;
+			border: 1px solid rgba(114, 152, 214, 0.28);
+			background: rgba(17, 25, 40, 0.7);
+			white-space: nowrap;
+		}
+		.mod-link:hover {
+			color: #fff;
+			border-color: rgba(141, 179, 242, 0.65);
+		}
 		.mod-actions {
 			display: flex;
 			gap: 6px;
@@ -1655,16 +1673,59 @@
 				return info;
 			}
 
-			async function scanInstalledMods() {
-				var root = await getOpfsRoot();
-				if (!root) {
-					opfsPill.textContent = 'Disabled in Private Mode';
-					opfsPill.className = 'badge warn';
+			async function loadCatalogMods() {
+				try {
+					var resp = await fetch('mods/catalog.json', { cache: 'no-cache' });
+					if (!resp || !resp.ok) return [];
+					var data = await resp.json();
+					if (!data || !Array.isArray(data.mods)) return [];
+					var verified = [];
+					for (var i = 0; i < data.mods.length; i++) {
+						var entry = data.mods[i];
+						var id = sanitizeModName(entry && entry.id);
+						if (!id || !entry.url) continue;
+						try {
+							var head = await fetch(entry.url, { method: 'HEAD', cache: 'no-cache' });
+							if (!head || !head.ok) continue;
+							var contentLen = parseInt(head.headers.get('content-length') || '0', 10);
+							verified.push({
+								name: id,
+								displayName: entry.name || id,
+								source: 'builtin',
+								builtin: true,
+								catalogUrl: entry.url,
+								sourceUrl: entry.sourceUrl || '',
+								license: entry.license || '',
+								pk3Count: entry.type === 'assets' ? 1 : 0,
+								wasmFiles: entry.type === 'code' ? ['cgamewasm32.wasm', 'jampgamewasm32.wasm', 'uiwasm32.wasm'] : [],
+								nativeCodeUnsupported: false,
+								fileCount: 1,
+								totalBytes: contentLen || entry.size || 0,
+								description: entry.description || ''
+							});
+						} catch (e) { }
+					}
+					return verified;
+				} catch (e) {
 					return [];
 				}
-				opfsPill.className = 'badge';
+			}
 
+			async function scanInstalledMods() {
 				var byName = Object.create(null);
+
+				var catalog = await loadCatalogMods();
+				for (var ci = 0; ci < catalog.length; ci++) {
+					byName[catalog[ci].name.toLowerCase()] = catalog[ci];
+				}
+
+				var root = await getOpfsRoot();
+				if (!root) {
+					opfsPill.textContent = 'Uploads disabled in Private Mode';
+					opfsPill.className = 'badge warn';
+					return Object.keys(byName).sort().map(function (k) { return byName[k]; });
+				}
+				opfsPill.className = 'badge';
 
 				try {
 					var modsDir = await root.getDirectoryHandle('openjk-mods', { create: false });
@@ -1674,7 +1735,17 @@
 						if (RESERVED_NAMES[name.toLowerCase()]) continue;
 						var info = await inspectModDir(entry[1], 'imported');
 						if (info.fileCount > 0) {
-							byName[name.toLowerCase()] = info;
+							var k = name.toLowerCase();
+							if (byName[k] && byName[k].builtin) {
+								info.builtin = true;
+								info.displayName = byName[k].displayName;
+								info.sourceUrl = byName[k].sourceUrl;
+								info.license = byName[k].license;
+								info.catalogUrl = byName[k].catalogUrl;
+								if (!info.description) info.description = byName[k].description;
+								info.cachedInOpfs = true;
+							}
+							byName[k] = info;
 						}
 					}
 				} catch (e) { }
@@ -1700,7 +1771,11 @@
 					}
 				} catch (e) { }
 
-				return Object.keys(byName).sort().map(function (k) { return byName[k]; });
+				return Object.keys(byName).sort(function (a, b) {
+					var ma = byName[a], mb = byName[b];
+					if (!!ma.builtin !== !!mb.builtin) return ma.builtin ? -1 : 1;
+					return a < b ? -1 : (a > b ? 1 : 0);
+				}).map(function (k) { return byName[k]; });
 			}
 
 			async function deleteMod(modInfo) {
@@ -1865,9 +1940,15 @@
 					var title = document.createElement('div');
 					title.className = 'mod-title';
 					var nameSpan = document.createElement('span');
-					nameSpan.textContent = m.name;
+					nameSpan.textContent = m.displayName || m.name;
 					title.appendChild(nameSpan);
 
+					if (m.builtin) {
+						var bBuiltin = document.createElement('span');
+						bBuiltin.className = 'badge builtin';
+						bBuiltin.textContent = 'Built-in';
+						title.appendChild(bBuiltin);
+					}
 					if (isCodeMod(m)) {
 						var bWasm = document.createElement('span');
 						bWasm.className = 'badge wasm';
@@ -1896,6 +1977,7 @@
 					if (m.description) {
 						var desc = document.createElement('div');
 						desc.className = 'mod-desc';
+						desc.title = m.description;
 						desc.textContent = m.description;
 						meta.appendChild(desc);
 					}
@@ -1905,14 +1987,26 @@
 					var actions = document.createElement('div');
 					actions.className = 'mod-actions';
 
-					var delBtn = document.createElement('button');
-					delBtn.type = 'button';
-					delBtn.className = 'btn small danger';
-					delBtn.textContent = 'Remove';
-					delBtn.onclick = function () {
-						deleteMod(m);
-					};
-					actions.appendChild(delBtn);
+					if (m.sourceUrl) {
+						var srcLink = document.createElement('a');
+						srcLink.className = 'mod-link';
+						srcLink.href = m.sourceUrl;
+						srcLink.target = '_blank';
+						srcLink.rel = 'noopener noreferrer';
+						srcLink.textContent = m.license ? ('Source (' + m.license + ')') : 'Source';
+						actions.appendChild(srcLink);
+					}
+
+					if (!m.builtin) {
+						var delBtn = document.createElement('button');
+						delBtn.type = 'button';
+						delBtn.className = 'btn small danger';
+						delBtn.textContent = 'Remove';
+						delBtn.onclick = function () {
+							deleteMod(m);
+						};
+						actions.appendChild(delBtn);
+					}
 
 					item.appendChild(label);
 					item.appendChild(actions);

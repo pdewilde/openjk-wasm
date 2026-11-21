@@ -46,7 +46,7 @@ cmake --build build-wasm -j
 Stage the built artifacts, launcher, and icons into a web root (for example `dist/`):
 
 ```bash
-mkdir -p dist/base dist/icons
+mkdir -p dist/base dist/icons dist/mods
 cp build-wasm/openjk.wasm32.{html,js,wasm} dist/
 cp build-wasm/openjk_sp.wasm32.{html,js,wasm} dist/
 cp build-wasm/codemp/game/jampgamewasm32.wasm dist/
@@ -56,6 +56,8 @@ cp build-wasm/code/game/jagamewasm32.wasm dist/
 cp wasm/index.html dist/index.html
 cp wasm/gog_extractor.js dist/gog_extractor.js
 cp wasm/icons/mp128.png wasm/icons/sp128.png dist/icons/
+cp wasm/mods/catalog.json dist/mods/catalog.json
+# Optional: stage built-in FOSS mods (e.g. japp-wasm.zip from pdewilde/japp-wasm) into dist/mods/
 ```
 
 ---

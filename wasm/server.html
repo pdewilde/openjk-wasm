@@ -1,0 +1,1535 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Dedicated Server Host — OpenJK Web</title>
+	<link rel="icon" href="favicon.ico">
+	<style>
+		:root {
+			--suit-black: #0a0b0e;
+			--visor-black: #0c0e12;
+			--ink-dark: #101218;
+			--ink-mid: #2b313e;
+			--ink-muted: #545e70;
+			--imperial-red: #d62828;
+			--legion-blue: #1e5ed6;
+			--jedi-green: #0f9458;
+			--warn-amber: #b45309;
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; min-height: 100vh; }
+		body {
+			position: relative;
+			display: flex;
+			justify-content: center;
+			padding: 28px 16px 48px;
+			background-color: var(--suit-black);
+			background-image:
+				radial-gradient(ellipse 75% 45% at 25% 0%, rgba(255, 255, 255, 0.09) 0%, transparent 65%),
+				radial-gradient(ellipse 60% 45% at 85% 95%, rgba(120, 150, 210, 0.08) 0%, transparent 60%),
+				repeating-linear-gradient(
+					180deg,
+					rgba(255, 255, 255, 0.018) 0px,
+					rgba(255, 255, 255, 0.018) 2px,
+					rgba(0, 0, 0, 0.42) 2px,
+					rgba(0, 0, 0, 0.42) 8px
+				);
+			color: var(--ink-dark);
+			font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+			overflow-x: hidden;
+			-webkit-font-smoothing: antialiased;
+		}
+
+		.armor-stack {
+			position: relative;
+			z-index: 1;
+			max-width: 860px;
+			width: 100%;
+			display: flex;
+			flex-direction: column;
+			gap: 14px;
+		}
+		.armor-stack::before,
+		.armor-stack::after {
+			content: "";
+			position: absolute;
+			top: 28px;
+			bottom: 28px;
+			width: 26px;
+			background: linear-gradient(90deg, #060709 0%, #171a21 48%, #060709 100%);
+			border-left: 1px solid rgba(255, 255, 255, 0.05);
+			border-right: 1px solid rgba(255, 255, 255, 0.05);
+			z-index: 0;
+			pointer-events: none;
+		}
+		.armor-stack::before { left: 12%; }
+		.armor-stack::after { right: 12%; }
+
+		.plate {
+			position: relative;
+			z-index: 1;
+			background:
+				radial-gradient(ellipse 65% 42% at 18% 0%, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 70%),
+				linear-gradient(168deg, #ffffff 0%, #f5f7fb 46%, #e4eaf3 82%, #ced7e6 100%);
+			border: 2px solid #090a0d;
+			border-radius: 18px;
+			box-shadow:
+				0 18px 38px rgba(0, 0, 0, 0.72),
+				0 3px 8px rgba(0, 0, 0, 0.5),
+				inset 0 2px 1px rgba(255, 255, 255, 1),
+				inset 0 -10px 18px rgba(120, 140, 175, 0.34),
+				inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+			overflow: hidden;
+		}
+		.plate::before {
+			content: "";
+			position: absolute;
+			top: 3px;
+			left: 18px;
+			right: 18px;
+			height: 10px;
+			border-radius: 999px;
+			background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0) 100%);
+			pointer-events: none;
+			z-index: 2;
+		}
+
+		/* Helmet header plate */
+		.plate-helmet { padding: 14px 18px 16px; }
+		.helmet-ridge {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+			margin-bottom: 10px;
+			padding: 0 4px;
+		}
+		.helmet-serial {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 11px;
+			font-weight: 700;
+			letter-spacing: 0.16em;
+			text-transform: uppercase;
+			color: #363e4f;
+		}
+		.led-pip {
+			width: 9px;
+			height: 9px;
+			border-radius: 50%;
+			background: var(--imperial-red);
+			box-shadow: 0 0 0 2px rgba(16, 18, 24, 0.16), 0 0 7px rgba(214, 40, 40, 0.65);
+			flex-shrink: 0;
+			transition: background 0.2s, box-shadow 0.2s;
+		}
+		.led-pip.booting {
+			background: #f59e0b;
+			box-shadow: 0 0 0 2px rgba(16, 18, 24, 0.16), 0 0 9px rgba(245, 158, 11, 0.85);
+		}
+		.led-pip.online {
+			background: #10b981;
+			box-shadow: 0 0 0 2px rgba(16, 18, 24, 0.16), 0 0 10px rgba(16, 185, 129, 0.9);
+		}
+		.ridge-right { display: flex; align-items: center; gap: 14px; }
+		.cheek-vents { display: flex; gap: 4px; align-items: center; }
+		.cheek-vents span {
+			display: block;
+			width: 3.5px;
+			height: 15px;
+			border-radius: 2px;
+			background: linear-gradient(180deg, #090b0f 0%, #242934 100%);
+			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.85);
+			transform: skewX(-18deg);
+		}
+		.back-link {
+			font-size: 12px;
+			font-weight: 700;
+			color: #1e2430;
+			text-decoration: none;
+			padding: 4px 10px;
+			border-radius: 999px;
+			border: 1.5px solid #181c24;
+			background: rgba(255, 255, 255, 0.85);
+			transition: background 0.15s;
+		}
+		.back-link:hover { background: #101218; color: #fff; }
+
+		.visor-band {
+			position: relative;
+			background: linear-gradient(180deg, #161922 0%, #090b0f 55%, #050608 100%);
+			border: 2px solid #050608;
+			border-radius: 13px;
+			padding: 16px 20px;
+			color: #f8fafc;
+			box-shadow:
+				inset 0 2px 6px rgba(0, 0, 0, 0.95),
+				inset 0 1px 0 rgba(255, 255, 255, 0.12),
+				0 2px 0 rgba(255, 255, 255, 0.9);
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			flex-wrap: wrap;
+			gap: 14px;
+		}
+		.visor-kicker {
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 10px;
+			letter-spacing: 0.2em;
+			text-transform: uppercase;
+			color: #9aa7bd;
+			margin-bottom: 3px;
+		}
+		.visor-title {
+			font-size: 23px;
+			font-weight: 900;
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+			margin: 0;
+			color: #ffffff;
+		}
+		.visor-sub {
+			font-size: 12.5px;
+			color: #b4c0d4;
+			margin: 4px 0 0;
+		}
+		.visor-actions {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			flex-wrap: wrap;
+		}
+		.vip-pill {
+			display: inline-flex;
+			align-items: center;
+			gap: 7px;
+			padding: 7px 12px;
+			border-radius: 10px;
+			background: rgba(16, 185, 129, 0.14);
+			border: 1px solid rgba(52, 211, 153, 0.55);
+			color: #6ee7b7;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 12.5px;
+			font-weight: 700;
+		}
+		.vip-pill.waiting {
+			background: rgba(245, 158, 11, 0.14);
+			border-color: rgba(251, 191, 36, 0.5);
+			color: #fcd34d;
+		}
+
+		/* Armor plates body */
+		.plate-body { padding: 18px 20px 20px; }
+		.section-head {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+			margin-bottom: 14px;
+			flex-wrap: wrap;
+		}
+		.section-title {
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 11.5px;
+			font-weight: 800;
+			letter-spacing: 0.14em;
+			text-transform: uppercase;
+			color: #1f2533;
+			margin: 0;
+		}
+		.phase-badge {
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 11px;
+			font-weight: 700;
+			padding: 4px 10px;
+			border-radius: 999px;
+			background: #e6ecf5;
+			border: 1px solid #b8c4d9;
+			color: #2c3547;
+		}
+		.phase-badge.online {
+			background: #dcfce7;
+			border-color: #86efac;
+			color: #166534;
+		}
+		.phase-badge.error {
+			background: #fee2e2;
+			border-color: #fca5a5;
+			color: #991b1b;
+		}
+
+		.form-grid {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 12px;
+		}
+		.form-grid .span-2 { grid-column: span 2; }
+		.form-grid .span-3 { grid-column: span 3; }
+		@media (max-width: 700px) {
+			.form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+			.form-grid .span-3 { grid-column: span 2; }
+		}
+		@media (max-width: 480px) {
+			.form-grid { grid-template-columns: 1fr; }
+			.form-grid .span-2, .form-grid .span-3 { grid-column: span 1; }
+		}
+
+		.field { display: flex; flex-direction: column; gap: 4px; }
+		.field label {
+			font-size: 11.5px;
+			font-weight: 700;
+			color: #364054;
+			letter-spacing: 0.03em;
+		}
+		.field input,
+		.field select {
+			width: 100%;
+			padding: 8px 10px;
+			border-radius: 9px;
+			border: 1.5px solid #9aa8bf;
+			background: #ffffff;
+			color: var(--ink-dark);
+			font-size: 13.5px;
+			font-family: inherit;
+			box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+		}
+		.field input:focus,
+		.field select:focus {
+			outline: none;
+			border-color: var(--legion-blue);
+			box-shadow: 0 0 0 3px rgba(30, 94, 214, 0.16);
+		}
+		.field input:disabled,
+		.field select:disabled {
+			background: #edf1f7;
+			color: #6b768b;
+			cursor: not-allowed;
+		}
+
+		.japp-box {
+			margin-top: 14px;
+			padding: 12px 14px;
+			border-radius: 12px;
+			background: rgba(255, 255, 255, 0.72);
+			border: 1.5px solid #bac6db;
+		}
+		.japp-box-title {
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 11px;
+			font-weight: 800;
+			letter-spacing: 0.1em;
+			text-transform: uppercase;
+			color: #1e5ed6;
+			margin: 0 0 9px;
+		}
+		.toggle-row {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+		}
+		.toggle-chip {
+			position: relative;
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			padding: 6px 11px;
+			border-radius: 999px;
+			border: 1.5px solid #aebbd2;
+			background: #ffffff;
+			font-size: 12.5px;
+			font-weight: 600;
+			color: #1f2533;
+			cursor: pointer;
+			user-select: none;
+			transition: all 0.14s;
+		}
+		.toggle-chip input { margin: 0; accent-color: var(--legion-blue); cursor: pointer; }
+		.toggle-chip.active {
+			background: #101218;
+			border-color: #101218;
+			color: #ffffff;
+		}
+		.toggle-chip[data-tip]::after {
+			content: attr(data-tip);
+			position: absolute;
+			left: 50%;
+			bottom: calc(100% + 8px);
+			transform: translateX(-50%) translateY(4px);
+			width: 240px;
+			padding: 8px 10px;
+			border-radius: 9px;
+			background: #0c0e14;
+			border: 1px solid rgba(255, 255, 255, 0.16);
+			color: #f1f5f9;
+			font-size: 11.5px;
+			font-weight: 500;
+			line-height: 1.4;
+			text-align: left;
+			white-space: normal;
+			box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55);
+			opacity: 0;
+			pointer-events: none;
+			transition: opacity 0.14s ease, transform 0.14s ease;
+			z-index: 30;
+		}
+		.toggle-chip[data-tip]:hover::after,
+		.toggle-chip[data-tip]:focus-within::after {
+			opacity: 1;
+			transform: translateX(-50%) translateY(0);
+		}
+		.plate-body { overflow: visible; }
+
+		.alert-box {
+			margin-top: 12px;
+			padding: 12px 14px;
+			border-radius: 11px;
+			border: 1.5px solid #f59e0b;
+			background: #fffbeb;
+			color: #78350f;
+			font-size: 13px;
+			line-height: 1.45;
+			display: none;
+		}
+		.alert-box.show { display: block; }
+		.alert-box.err {
+			border-color: #ef4444;
+			background: #fef2f2;
+			color: #991b1b;
+		}
+
+		.btn-bar {
+			margin-top: 16px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			flex-wrap: wrap;
+			gap: 10px;
+		}
+		.btn-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+		.btn {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+			padding: 9px 16px;
+			border-radius: 10px;
+			border: 1.5px solid #101218;
+			font-size: 13px;
+			font-weight: 700;
+			font-family: inherit;
+			cursor: pointer;
+			text-decoration: none;
+			transition: transform 0.08s, background 0.14s, box-shadow 0.14s;
+		}
+		.btn:active { transform: translateY(1px); }
+		.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+		.btn-primary {
+			background: linear-gradient(180deg, #1f2430 0%, #0b0d12 100%);
+			color: #ffffff;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+		}
+		.btn-primary:hover:not(:disabled) { background: linear-gradient(180deg, #2d3548 0%, #141822 100%); }
+		.btn-green {
+			background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+			border-color: #065f46;
+			color: #ffffff;
+		}
+		.btn-green:hover:not(:disabled) { background: linear-gradient(180deg, #34d399 0%, #059669 100%); }
+		.btn-danger {
+			background: #ffffff;
+			border-color: #dc2626;
+			color: #dc2626;
+		}
+		.btn-danger:hover:not(:disabled) { background: #dc2626; color: #ffffff; }
+		.btn-secondary {
+			background: #ffffff;
+			border-color: #95a4bd;
+			color: #1a202c;
+		}
+		.btn-secondary:hover:not(:disabled) { background: #eef3fa; border-color: #101218; }
+		.btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 7px; }
+		.btn-visor {
+			background: rgba(255, 255, 255, 0.12);
+			border: 1px solid rgba(255, 255, 255, 0.28);
+			color: #ffffff;
+		}
+		.btn-visor:hover:not(:disabled) { background: rgba(255, 255, 255, 0.24); }
+
+		.worker-note {
+			font-size: 12px;
+			color: var(--ink-muted);
+		}
+
+		/* Telemetry cards */
+		.telemetry-grid {
+			display: grid;
+			grid-template-columns: repeat(5, minmax(0, 1fr));
+			gap: 8px;
+			margin-bottom: 14px;
+		}
+		@media (max-width: 700px) {
+			.telemetry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+		}
+		.stat-tile {
+			padding: 10px 12px;
+			border-radius: 11px;
+			background: rgba(255, 255, 255, 0.8);
+			border: 1.5px solid #c2cde0;
+		}
+		.stat-label {
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 10px;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.1em;
+			color: var(--ink-muted);
+		}
+		.stat-val {
+			font-size: 14px;
+			font-weight: 800;
+			color: var(--ink-dark);
+			margin-top: 2px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		/* Live control sub-panels */
+		.control-row {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			align-items: center;
+			margin-bottom: 12px;
+		}
+		.control-row input,
+		.control-row select {
+			padding: 7px 10px;
+			border-radius: 8px;
+			border: 1.5px solid #9aa8bf;
+			background: #ffffff;
+			font-size: 13px;
+			font-family: inherit;
+		}
+		.control-row .grow { flex: 1 1 200px; min-width: 140px; }
+
+		/* Players table */
+		.players-wrap {
+			border: 1.5px solid #bac6db;
+			border-radius: 12px;
+			background: rgba(255, 255, 255, 0.88);
+			overflow-x: auto;
+			margin-bottom: 14px;
+		}
+		table.players-table {
+			width: 100%;
+			border-collapse: collapse;
+			font-size: 13px;
+		}
+		table.players-table th {
+			text-align: left;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 10.5px;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: #4b5568;
+			padding: 8px 10px;
+			border-bottom: 1.5px solid #d4dceb;
+			background: #f1f5fb;
+		}
+		table.players-table td {
+			padding: 8px 10px;
+			border-bottom: 1px solid #e6ebf4;
+			vertical-align: middle;
+		}
+		table.players-table tr:last-child td { border-bottom: none; }
+		.tag-bot {
+			display: inline-block;
+			font-size: 10px;
+			font-weight: 800;
+			padding: 2px 6px;
+			border-radius: 999px;
+			background: #e0e7ff;
+			color: #3730a3;
+			text-transform: uppercase;
+		}
+		.tag-human {
+			display: inline-block;
+			font-size: 10px;
+			font-weight: 800;
+			padding: 2px 6px;
+			border-radius: 999px;
+			background: #dcfce7;
+			color: #166534;
+			text-transform: uppercase;
+		}
+		.empty-row {
+			text-align: center;
+			color: var(--ink-muted);
+			padding: 18px 10px !important;
+			font-style: italic;
+		}
+
+		/* Console */
+		.console-box {
+			background: #0b0d12;
+			border: 2px solid #050608;
+			border-radius: 12px;
+			color: #e2e8f0;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 12px;
+			line-height: 1.45;
+			height: 280px;
+			overflow-y: auto;
+			padding: 10px 12px;
+			white-space: pre-wrap;
+			word-break: break-word;
+			box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.85);
+		}
+		.console-line.err { color: #f87171; }
+		.console-line.sys { color: #60a5fa; }
+		.console-input-row {
+			display: flex;
+			gap: 8px;
+			margin-top: 8px;
+		}
+		.console-input-row input {
+			flex: 1;
+			padding: 8px 11px;
+			border-radius: 9px;
+			border: 1.5px solid #101218;
+			background: #141822;
+			color: #ffffff;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 13px;
+		}
+		.console-input-row input:focus { outline: none; border-color: #3b82f6; }
+		.quick-cmds {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 6px;
+			margin-top: 8px;
+		}
+
+		/* Quake ^0-^7 colors inside console/names */
+		.q0 { color: #64748b; }
+		.q1 { color: #f87171; }
+		.q2 { color: #4ade80; }
+		.q3 { color: #facc15; }
+		.q4 { color: #60a5fa; }
+		.q5 { color: #22d3ee; }
+		.q6 { color: #e879f9; }
+		.q7 { color: #f8fafc; }
+
+		/* Utility belt footer */
+		.plate-belt {
+			padding: 12px 18px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			flex-wrap: wrap;
+			gap: 10px;
+			font-size: 12px;
+			color: var(--ink-muted);
+		}
+		.plate-belt a { color: #1e293b; font-weight: 700; text-decoration: none; }
+		.plate-belt a:hover { text-decoration: underline; }
+		.hidden { display: none !important; }
+	</style>
+</head>
+<body>
+	<main class="armor-stack">
+
+		<!-- PLATE 1: HELMET & CONNECTION VISOR -->
+		<section class="plate plate-helmet">
+			<div class="helmet-ridge">
+				<div class="helmet-serial">
+					<span id="status-led" class="led-pip"></span>
+					<span>TK-421 · DEDICATED SERVER HOST</span>
+				</div>
+				<div class="ridge-right">
+					<a class="back-link" href="./">← Launcher</a>
+					<div class="cheek-vents" aria-hidden="true">
+						<span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+					</div>
+				</div>
+			</div>
+			<div class="visor-band">
+				<div>
+					<div class="visor-kicker">OPENJK WEBASSEMBLY · WTUNNEL VIRTUAL LAN</div>
+					<h1 class="visor-title">Dedicated Server</h1>
+					<p class="visor-sub" id="visor-sub">Host a headless Jedi Academy server right from your browser — players on this site can join via Local/LAN or direct link.</p>
+				</div>
+				<div class="visor-actions" id="visor-online-actions">
+					<span id="vip-pill" class="vip-pill waiting hidden">Connecting to wtunnel…</span>
+					<a id="btn-play-self" class="btn btn-green btn-sm hidden" target="_blank" rel="noopener">Play in New Tab</a>
+					<button id="btn-copy-link" class="btn btn-visor btn-sm hidden" type="button">Copy Join Link</button>
+				</div>
+			</div>
+		</section>
+
+		<!-- PLATE 2: SERVER CONFIGURATION -->
+		<section class="plate plate-body">
+			<div class="section-head">
+				<h2 class="section-title">Server Configuration</h2>
+				<span id="phase-badge" class="phase-badge">Stopped</span>
+			</div>
+
+			<div class="form-grid">
+				<div class="field span-2">
+					<label for="cfg-hostname">Server Name</label>
+					<input id="cfg-hostname" type="text" value="OpenJK Web Server" maxlength="64" placeholder="My Jedi Academy Server">
+				</div>
+				<div class="field">
+					<label for="cfg-mod">Game / Mod</label>
+					<select id="cfg-mod">
+						<option value="">Base Game (Vanilla MP)</option>
+						<option value="japp">JA++ (Built-in · JPLua + SQLite)</option>
+					</select>
+				</div>
+
+				<div class="field">
+					<label for="cfg-gametype">Gametype</label>
+					<select id="cfg-gametype">
+						<option value="0" selected>Free For All (FFA)</option>
+						<option value="3">Duel (1v1)</option>
+						<option value="4">Power Duel (2v1)</option>
+						<option value="6">Team FFA</option>
+						<option value="7">Siege</option>
+						<option value="8">Capture The Flag (CTF)</option>
+						<option value="9">Capture The Ysalamiri (CTY)</option>
+						<option value="1">Holocron FFA</option>
+						<option value="2">Jedi Master</option>
+					</select>
+				</div>
+				<div class="field">
+					<label for="cfg-map">Starting Map</label>
+					<select id="cfg-map">
+						<optgroup label="Free For All / Team">
+							<option value="mp/ffa1" selected>mp/ffa1 — Vjun Sentinel</option>
+							<option value="mp/ffa2">mp/ffa2 — Korriban Tombs</option>
+							<option value="mp/ffa3">mp/ffa3 — Tatooine</option>
+							<option value="mp/ffa4">mp/ffa4 — Rift Sanctuary</option>
+							<option value="mp/ffa5">mp/ffa5 — Taspir</option>
+						</optgroup>
+						<optgroup label="Duel / Power Duel">
+							<option value="mp/duel1">mp/duel1 — Bespin Courtyard</option>
+							<option value="mp/duel2">mp/duel2 — Generator Room</option>
+							<option value="mp/duel3">mp/duel3 — Imperial Shaft</option>
+							<option value="mp/duel4">mp/duel4 — Imperial Control Room</option>
+							<option value="mp/duel5">mp/duel5 — Taspir Landing</option>
+							<option value="mp/duel6">mp/duel6 — Yavin Training Grounds</option>
+							<option value="mp/duel7">mp/duel7 — Rancor Pit</option>
+							<option value="mp/duel8">mp/duel8 — Abandoned City</option>
+							<option value="mp/duel9">mp/duel9 — Hoth Canyon</option>
+							<option value="mp/duel10">mp/duel10 — Vjun Fuel Depot</option>
+						</optgroup>
+						<optgroup label="Capture The Flag">
+							<option value="mp/ctf1">mp/ctf1 — Imperial Drop Zone</option>
+							<option value="mp/ctf2">mp/ctf2 — Hoth Wasteland</option>
+							<option value="mp/ctf3">mp/ctf3 — Yavin Hilltops</option>
+							<option value="mp/ctf4">mp/ctf4 — Coruscant Streets</option>
+							<option value="mp/ctf5">mp/ctf5 — Factory</option>
+						</optgroup>
+						<optgroup label="Siege">
+							<option value="mp/siege_hoth">mp/siege_hoth — Hoth</option>
+							<option value="mp/siege_korriban">mp/siege_korriban — Korriban</option>
+							<option value="mp/siege_desert">mp/siege_desert — Desert</option>
+						</optgroup>
+					</select>
+				</div>
+				<div class="field">
+					<label for="cfg-custom-map">Custom Map (optional override)</label>
+					<input id="cfg-custom-map" type="text" placeholder="e.g. mp/ffa3">
+				</div>
+
+				<div class="field">
+					<label for="cfg-maxclients">Max Players</label>
+					<input id="cfg-maxclients" type="number" min="2" max="32" value="32">
+				</div>
+				<div class="field">
+					<label for="cfg-fraglimit">Frag / Cap Limit (0 = none)</label>
+					<input id="cfg-fraglimit" type="number" min="0" max="999" value="20">
+				</div>
+				<div class="field">
+					<label for="cfg-timelimit">Time Limit in min (0 = none)</label>
+					<input id="cfg-timelimit" type="number" min="0" max="240" value="15">
+				</div>
+
+				<div class="field">
+					<label for="cfg-bots">Auto-Spawn Bots</label>
+					<input id="cfg-bots" type="number" min="0" max="12" value="2">
+				</div>
+				<div class="field">
+					<label for="cfg-botskill">Bot Skill (1–5)</label>
+					<select id="cfg-botskill">
+						<option value="1">1 — Padawan</option>
+						<option value="2" selected>2 — Jedi</option>
+						<option value="3">3 — Jedi Knight</option>
+						<option value="4">4 — Jedi Master</option>
+						<option value="5">5 — Nightmare</option>
+					</select>
+				</div>
+				<div class="field">
+					<label for="cfg-password">Server Password (optional)</label>
+					<input id="cfg-password" type="text" placeholder="Leave blank for open">
+				</div>
+			</div>
+
+			<!-- JA++ Gameplay Toggles -->
+			<div id="japp-options" class="japp-box hidden">
+				<div class="japp-box-title">JA++ Server Gameplay Rules (hover for details · live-toggleable while running)</div>
+				<div class="toggle-row">
+					<label class="toggle-chip" data-tip="Server-side lag compensation for hitscan weapons — rewinds player hitboxes to match your ping (japp_unlagged)." title="Server-side lag compensation for hitscan weapons (japp_unlagged)"><input type="checkbox" id="japp-unlagged" checked data-cvar="japp_unlagged"> Unlagged</label>
+					<label class="toggle-chip" data-tip="Challenge ProMode (CPM) physics: strong mid-air turning control, fast double-jumps, and snappier acceleration (japp_promode)." title="Challenge ProMode air-control physics (japp_promode)"><input type="checkbox" id="japp-promode" data-cvar="japp_promode"> ProMode (CPM) Physics</label>
+					<label class="toggle-chip" data-tip="Classic Vanilla Quake 3 strafe-jumping physics instead of default Jedi Academy movement (japp_vq3physics)." title="Classic Vanilla Quake 3 movement physics (japp_vq3physics)"><input type="checkbox" id="japp-vq3" data-cvar="japp_vq3physics"> VQ3 Physics</label>
+					<label class="toggle-chip" data-tip="Enables the JA+ grappling hook so players can latch onto walls and swing across maps via +button12 / amhook (japp_allowHook)." title="Enable grappling hook (japp_allowHook)"><input type="checkbox" id="japp-hook" data-cvar="japp_allowHook"> Grappling Hook</label>
+					<label class="toggle-chip" data-tip="Equips players with a usable jetpack for vertical flight and aerial combat (japp_allowJetpack)." title="Enable jetpacks for players (japp_allowJetpack)"><input type="checkbox" id="japp-jetpack" data-cvar="japp_allowJetpack"> Jetpack</label>
+					<label class="toggle-chip" data-tip="One-hit-kill eliminations — every weapon/saber hit is instantly lethal (japp_instagib)." title="One-hit-kill instagib mode (japp_instagib)"><input type="checkbox" id="japp-instagib" data-cvar="japp_instagib"> Instagib</label>
+				</div>
+			</div>
+
+			<div id="asset-alert" class="alert-box">
+				<strong>Game files needed:</strong> No cached Jedi Academy <code>assets0–3.pk3</code> files were found in this browser.
+				<div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+					<a class="btn btn-primary btn-sm" href="./">Load GameData on Launcher</a>
+					<label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+						Or Select assets0–3.pk3 Here
+						<input id="inline-pk3-input" type="file" multiple accept=".pk3" style="display:none;">
+					</label>
+					<span id="inline-pk3-status" style="font-size:12px;"></span>
+				</div>
+			</div>
+
+			<div id="error-alert" class="alert-box err"></div>
+
+			<div class="btn-bar">
+				<div class="btn-group">
+					<button id="btn-start" class="btn btn-primary" type="button">Start Server</button>
+					<button id="btn-stop" class="btn btn-danger hidden" type="button">Stop Server</button>
+					<button id="btn-restart-map" class="btn btn-secondary hidden" type="button">Restart Match</button>
+				</div>
+				<span class="worker-note">Runs in a Web Worker — keep this tab open while hosting; switching tabs to play will not pause the server.</span>
+			</div>
+		</section>
+
+		<!-- PLATE 3: LIVE CONTROL DECK -->
+		<section id="live-panel" class="plate plate-body hidden">
+			<div class="section-head">
+				<h2 class="section-title">Live Server Control Deck</h2>
+				<span id="live-mod-badge" class="phase-badge">base</span>
+			</div>
+
+			<div class="telemetry-grid">
+				<div class="stat-tile"><div class="stat-label">Map</div><div class="stat-val" id="stat-map">—</div></div>
+				<div class="stat-tile"><div class="stat-label">Gametype</div><div class="stat-val" id="stat-gt">—</div></div>
+				<div class="stat-tile"><div class="stat-label">Players</div><div class="stat-val" id="stat-players">0 / 32</div></div>
+				<div class="stat-tile"><div class="stat-label">Uptime</div><div class="stat-val" id="stat-uptime">00:00</div></div>
+				<div class="stat-tile"><div class="stat-label">Tickrate</div><div class="stat-val" id="stat-fps">20 Hz</div></div>
+			</div>
+
+			<!-- Live Gametype, Map & Rules Controls -->
+			<div class="control-row">
+				<select id="live-gt-select" title="Choose gametype to switch to">
+					<option value="0">Free For All (FFA)</option>
+					<option value="3">Duel (1v1)</option>
+					<option value="4">Power Duel (2v1)</option>
+					<option value="6">Team FFA</option>
+					<option value="7">Siege</option>
+					<option value="8">Capture The Flag (CTF)</option>
+					<option value="9">Capture The Ysalamiri (CTY)</option>
+					<option value="1">Holocron FFA</option>
+					<option value="2">Jedi Master</option>
+				</select>
+				<button id="btn-change-gt" class="btn btn-secondary btn-sm" type="button" title="Switches g_gametype and loads the selected map">Change Gametype</button>
+				<select id="live-map-select" class="grow" title="Choose map to load">
+					<optgroup label="Free For All / Team">
+						<option value="mp/ffa1">mp/ffa1 — Vjun Sentinel</option>
+						<option value="mp/ffa2">mp/ffa2 — Korriban Tombs</option>
+						<option value="mp/ffa3">mp/ffa3 — Tatooine</option>
+						<option value="mp/ffa4">mp/ffa4 — Rift Sanctuary</option>
+						<option value="mp/ffa5">mp/ffa5 — Taspir</option>
+					</optgroup>
+					<optgroup label="Duel / Power Duel">
+						<option value="mp/duel1">mp/duel1 — Bespin Courtyard</option>
+						<option value="mp/duel2">mp/duel2 — Generator Room</option>
+						<option value="mp/duel3">mp/duel3 — Imperial Shaft</option>
+						<option value="mp/duel4">mp/duel4 — Imperial Control Room</option>
+						<option value="mp/duel5">mp/duel5 — Taspir Landing</option>
+						<option value="mp/duel6">mp/duel6 — Yavin Training Grounds</option>
+						<option value="mp/duel7">mp/duel7 — Rancor Pit</option>
+						<option value="mp/duel8">mp/duel8 — Abandoned City</option>
+						<option value="mp/duel9">mp/duel9 — Hoth Canyon</option>
+						<option value="mp/duel10">mp/duel10 — Vjun Fuel Depot</option>
+					</optgroup>
+					<optgroup label="Capture The Flag">
+						<option value="mp/ctf1">mp/ctf1 — Imperial Drop Zone</option>
+						<option value="mp/ctf2">mp/ctf2 — Hoth Wasteland</option>
+						<option value="mp/ctf3">mp/ctf3 — Yavin Hilltops</option>
+						<option value="mp/ctf4">mp/ctf4 — Coruscant Streets</option>
+						<option value="mp/ctf5">mp/ctf5 — Factory</option>
+					</optgroup>
+					<optgroup label="Siege">
+						<option value="mp/siege_hoth">mp/siege_hoth — Hoth</option>
+						<option value="mp/siege_korriban">mp/siege_korriban — Korriban</option>
+						<option value="mp/siege_desert">mp/siege_desert — Desert</option>
+					</optgroup>
+				</select>
+				<button id="btn-change-map" class="btn btn-secondary btn-sm" type="button">Change Map</button>
+			</div>
+
+			<div class="control-row">
+				<input id="live-say-input" class="grow" type="text" placeholder="Broadcast server message (say)...">
+				<button id="btn-say" class="btn btn-secondary btn-sm" type="button">Send Say</button>
+				<button id="btn-low-grav" class="btn btn-secondary btn-sm" type="button" title="Toggle between normal gravity (800) and low gravity (300)">Low Gravity: Off</button>
+				<button id="btn-saber-only" class="btn btn-secondary btn-sm" type="button" title="Toggle Lightsabers Only (g_weaponDisable)">Sabers Only: Off</button>
+			</div>
+
+			<!-- Players & Bots -->
+			<div class="players-wrap">
+				<table class="players-table">
+					<thead>
+						<tr>
+							<th style="width:42px;">ID</th>
+							<th>Player</th>
+							<th style="width:76px;">Type</th>
+							<th style="width:66px;">Score</th>
+							<th style="width:66px;">Ping</th>
+							<th style="width:230px;">Actions</th>
+						</tr>
+					</thead>
+					<tbody id="players-tbody">
+						<tr><td colspan="6" class="empty-row">No players connected yet.</td></tr>
+					</tbody>
+				</table>
+			</div>
+
+			<div class="control-row">
+				<select id="addbot-char">
+					<option value="Kyle Katarn">Kyle Katarn</option>
+					<option value="Luke Skywalker">Luke Skywalker</option>
+					<option value="Desann">Desann</option>
+					<option value="Tavion">Tavion</option>
+					<option value="Alora">Alora</option>
+					<option value="Reborn">Reborn</option>
+					<option value="Boba Fett">Boba Fett</option>
+					<option value="Stormtrooper">Stormtrooper</option>
+					<option value="Shadowtrooper">Shadowtrooper</option>
+					<option value="Chewbacca">Chewbacca</option>
+					<option value="Jan Ors">Jan Ors</option>
+					<option value="Rosh Penin">Rosh Penin</option>
+				</select>
+				<select id="addbot-skill">
+					<option value="1">1 — Padawan</option>
+					<option value="2" selected>2 — Jedi</option>
+					<option value="3">3 — Jedi Knight</option>
+					<option value="4">4 — Jedi Master</option>
+					<option value="5">5 — Nightmare</option>
+				</select>
+				<button id="btn-add-bot" class="btn btn-secondary btn-sm" type="button">+ Add Bot</button>
+				<button id="btn-kick-bots" class="btn btn-secondary btn-sm" type="button">Kick All Bots</button>
+			</div>
+
+			<!-- Live Server Console -->
+			<div class="section-head" style="margin-top:14px; margin-bottom:8px;">
+				<h3 class="section-title">Live Server Console</h3>
+				<button id="btn-clear-console" class="btn btn-secondary btn-sm" type="button">Clear Log</button>
+			</div>
+			<div id="console-box" class="console-box" aria-live="off"></div>
+			<div class="console-input-row">
+				<input id="console-cmd" type="text" placeholder="Enter server console command (e.g. status, map mp/ffa3, addbot Kyle 3)..." autocomplete="off">
+				<button id="btn-exec-cmd" class="btn btn-primary btn-sm" type="button">Run</button>
+			</div>
+			<div class="quick-cmds">
+				<button class="btn btn-secondary btn-sm quick-cmd" data-cmd="status" type="button">status</button>
+				<button class="btn btn-secondary btn-sm quick-cmd" data-cmd="map_restart" type="button">map_restart</button>
+				<button class="btn btn-secondary btn-sm quick-cmd japp-only hidden" data-cmd="lua_list" type="button">lua_list</button>
+				<button class="btn btn-secondary btn-sm quick-cmd japp-only hidden" data-cmd="lua local db=ConnectToDB(DBType.SQLITE,':memory:') db:Query('CREATE TABLE t(msg TEXT)') db:Query([[INSERT INTO t VALUES('SQLite OK')]]) local r=db:Query('SELECT msg FROM t') print('^2[SQLite Self-Test]^7 '..tostring(r[1].msg)..'\n') db:Close()" type="button">SQLite Self-Test</button>
+			</div>
+		</section>
+
+		<!-- UTILITY BELT FOOTER -->
+		<footer class="plate plate-belt">
+			<span>Browser-hosted <code>openjkded.wasm32</code> · Routed over <code>wtunnel</code> Virtual LAN</span>
+			<span>
+				<a href="./">Launcher</a> ·
+				<a href="test_wt.html">Network Diagnostics</a> ·
+				<a href="https://github.com/pdewilde/openjk-wasm" target="_blank" rel="noopener">GitHub</a>
+			</span>
+		</footer>
+
+	</main>
+
+	<script>
+	(function () {
+		'use strict';
+
+		var GAMETYPE_NAMES = {
+			0: 'FFA', 1: 'Holocron', 2: 'Jedi Master', 3: 'Duel',
+			4: 'Power Duel', 6: 'Team FFA', 7: 'Siege', 8: 'CTF', 9: 'CTY'
+		};
+
+		var worker = null;
+		var running = false;
+		var currentVip = '';
+		var currentPort = 29070;
+		var currentMod = '';
+		var lastState = null;
+		var sessionBaseFiles = [];
+		var cmdHistory = [];
+		var cmdHistIdx = -1;
+
+		var els = {
+			led: document.getElementById('status-led'),
+			phase: document.getElementById('phase-badge'),
+			visorSub: document.getElementById('visor-sub'),
+			vipPill: document.getElementById('vip-pill'),
+			btnPlaySelf: document.getElementById('btn-play-self'),
+			btnCopyLink: document.getElementById('btn-copy-link'),
+			cfgHostname: document.getElementById('cfg-hostname'),
+			cfgMod: document.getElementById('cfg-mod'),
+			cfgGametype: document.getElementById('cfg-gametype'),
+			cfgMap: document.getElementById('cfg-map'),
+			cfgCustomMap: document.getElementById('cfg-custom-map'),
+			cfgMaxClients: document.getElementById('cfg-maxclients'),
+			cfgFraglimit: document.getElementById('cfg-fraglimit'),
+			cfgTimelimit: document.getElementById('cfg-timelimit'),
+			cfgBots: document.getElementById('cfg-bots'),
+			cfgBotSkill: document.getElementById('cfg-botskill'),
+			cfgPassword: document.getElementById('cfg-password'),
+			jappOptions: document.getElementById('japp-options'),
+			assetAlert: document.getElementById('asset-alert'),
+			inlinePk3Input: document.getElementById('inline-pk3-input'),
+			inlinePk3Status: document.getElementById('inline-pk3-status'),
+			errorAlert: document.getElementById('error-alert'),
+			btnStart: document.getElementById('btn-start'),
+			btnStop: document.getElementById('btn-stop'),
+			btnRestartMap: document.getElementById('btn-restart-map'),
+			livePanel: document.getElementById('live-panel'),
+			liveModBadge: document.getElementById('live-mod-badge'),
+			statMap: document.getElementById('stat-map'),
+			statGt: document.getElementById('stat-gt'),
+			statPlayers: document.getElementById('stat-players'),
+			statUptime: document.getElementById('stat-uptime'),
+			statFps: document.getElementById('stat-fps'),
+			liveGtSelect: document.getElementById('live-gt-select'),
+			btnChangeGt: document.getElementById('btn-change-gt'),
+			liveMapSelect: document.getElementById('live-map-select'),
+			btnChangeMap: document.getElementById('btn-change-map'),
+			liveSayInput: document.getElementById('live-say-input'),
+			btnSay: document.getElementById('btn-say'),
+			btnLowGrav: document.getElementById('btn-low-grav'),
+			btnSaberOnly: document.getElementById('btn-saber-only'),
+			playersTbody: document.getElementById('players-tbody'),
+			addbotChar: document.getElementById('addbot-char'),
+			addbotSkill: document.getElementById('addbot-skill'),
+			btnAddBot: document.getElementById('btn-add-bot'),
+			btnKickBots: document.getElementById('btn-kick-bots'),
+			consoleBox: document.getElementById('console-box'),
+			consoleCmd: document.getElementById('console-cmd'),
+			btnExecCmd: document.getElementById('btn-exec-cmd'),
+			btnClearConsole: document.getElementById('btn-clear-console')
+		};
+
+		function escapeHtml(s) {
+			return String(s || '').replace(/[&<>"']/g, function (c) {
+				return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+			});
+		}
+
+		function renderQuakeText(str, defaultLight) {
+			var s = String(str || '');
+			var out = '';
+			var curClass = defaultLight ? 'q7' : '';
+			var i = 0;
+			while (i < s.length) {
+				if (s[i] === '^' && i + 1 < s.length && /[0-9]/.test(s[i + 1])) {
+					var code = parseInt(s[i + 1], 10) % 8;
+					curClass = 'q' + code;
+					i += 2;
+					continue;
+				}
+				var start = i;
+				while (i < s.length && !(s[i] === '^' && i + 1 < s.length && /[0-9]/.test(s[i + 1]))) i++;
+				var chunk = escapeHtml(s.slice(start, i));
+				out += curClass ? ('<span class="' + curClass + '">' + chunk + '</span>') : chunk;
+			}
+			return out;
+		}
+
+		function appendConsole(level, text) {
+			var box = els.consoleBox;
+			var atBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 32;
+			var line = document.createElement('div');
+			var str = String(text || '');
+			var isRealErr = (level === 'err') && /(?:^|\s)(?:ERROR:|Error:|Lua Error:|Server aborted|Boot error|FATAL)/i.test(str);
+			line.className = 'console-line ' + (level === 'sys' ? 'sys' : (isRealErr ? 'err' : 'out'));
+			line.innerHTML = (level === 'sys') ? escapeHtml(str) : renderQuakeText(str, true);
+			box.appendChild(line);
+			while (box.childNodes.length > 600) box.removeChild(box.firstChild);
+			if (atBottom) box.scrollTop = box.scrollHeight;
+		}
+
+		function formatUptime(ms) {
+			var sec = Math.max(0, Math.floor((ms || 0) / 1000));
+			var h = Math.floor(sec / 3600);
+			var m = Math.floor((sec % 3600) / 60);
+			var s = sec % 60;
+			var mm = (m < 10 ? '0' : '') + m;
+			var ss = (s < 10 ? '0' : '') + s;
+			return h > 0 ? (h + ':' + mm + ':' + ss) : (mm + ':' + ss);
+		}
+
+		function setError(msg) {
+			if (!msg) {
+				els.errorAlert.classList.remove('show');
+				els.errorAlert.textContent = '';
+			} else {
+				els.errorAlert.textContent = msg;
+				els.errorAlert.classList.add('show');
+			}
+		}
+
+		function syncToggleChipStyles() {
+			var chips = els.jappOptions.querySelectorAll('.toggle-chip');
+			for (var i = 0; i < chips.length; i++) {
+				var cb = chips[i].querySelector('input[type="checkbox"]');
+				chips[i].classList.toggle('active', !!(cb && cb.checked));
+			}
+		}
+
+		function updateModVisibility() {
+			var isJapp = els.cfgMod.value.toLowerCase() === 'japp';
+			els.jappOptions.classList.toggle('hidden', !isJapp);
+			syncToggleChipStyles();
+		}
+
+		function setConfigLocked(locked) {
+			var ids = ['cfgHostname', 'cfgMod', 'cfgGametype', 'cfgMap', 'cfgCustomMap',
+				'cfgMaxClients', 'cfgFraglimit', 'cfgTimelimit', 'cfgBots', 'cfgBotSkill', 'cfgPassword'];
+			for (var i = 0; i < ids.length; i++) els[ids[i]].disabled = locked;
+		}
+
+		function buildJoinUrl(vip, port, mod) {
+			var url = new URL('openjk.wasm32.html', window.location.href);
+			if (mod) url.searchParams.set('mod', mod);
+			url.searchParams.set('connect', vip + ':' + (port || 29070));
+			return url.toString();
+		}
+
+		function updateVipDisplay(vip, port) {
+			if (!vip) return;
+			currentVip = vip;
+			currentPort = port || 29070;
+			els.vipPill.textContent = 'ONLINE · ' + currentVip + ':' + currentPort;
+			els.vipPill.classList.remove('waiting', 'hidden');
+			var joinUrl = buildJoinUrl(currentVip, currentPort, currentMod);
+			els.btnPlaySelf.href = joinUrl;
+			els.btnPlaySelf.classList.remove('hidden');
+			els.btnCopyLink.classList.remove('hidden');
+			els.visorSub.textContent = 'Live on wtunnel Virtual LAN (' + currentVip + ':' + currentPort + ') — visible in Local/LAN Server Browser or via Join Link.';
+		}
+
+		function execCmd(cmd) {
+			var trimmed = String(cmd || '').trim();
+			if (!trimmed || !worker) return;
+			appendConsole('sys', '] ' + trimmed);
+			worker.postMessage({ type: 'exec', cmd: trimmed });
+		}
+
+		function renderPlayers(state) {
+			var players = (state && Array.isArray(state.players)) ? state.players : [];
+			var isJapp = !!(state && state.japp && state.japp.active);
+			if (players.length === 0) {
+				els.playersTbody.innerHTML = '<tr><td colspan="6" class="empty-row">No players connected yet. Share the Join Link or add bots below!</td></tr>';
+				return;
+			}
+			var html = '';
+			for (var i = 0; i < players.length; i++) {
+				var p = players[i];
+				var actions = '<button class="btn btn-danger btn-sm p-act" data-cmd="clientkick ' + p.id + '" type="button">Kick</button>';
+				if (isJapp) {
+					actions += ' <button class="btn btn-secondary btn-sm p-act" data-cmd="amslap ' + p.id + '" type="button">Slap</button>';
+					actions += ' <button class="btn btn-secondary btn-sm p-act" data-cmd="amsleep ' + p.id + '" type="button">Sleep</button>';
+					actions += ' <button class="btn btn-secondary btn-sm p-act" data-cmd="amempower ' + p.id + '" type="button">Empower</button>';
+				}
+				html += '<tr>' +
+					'<td><code>' + p.id + '</code></td>' +
+					'<td><strong>' + renderQuakeText(p.name || 'Unnamed', false) + '</strong></td>' +
+					'<td>' + (p.isBot ? '<span class="tag-bot">Bot</span>' : '<span class="tag-human">Human</span>') + '</td>' +
+					'<td>' + (p.score || 0) + '</td>' +
+					'<td>' + (p.isBot ? '—' : ((p.ping || 0) + ' ms')) + '</td>' +
+					'<td><div style="display:flex; gap:4px; flex-wrap:wrap;">' + actions + '</div></td>' +
+					'</tr>';
+			}
+			els.playersTbody.innerHTML = html;
+		}
+
+		function applyLiveStatus(state) {
+			lastState = state;
+			els.statMap.textContent = state.mapname || '—';
+			els.statGt.textContent = GAMETYPE_NAMES[state.gametype] || ('GT ' + state.gametype);
+			var players = state.players || [];
+			var bots = players.filter(function (p) { return p.isBot; }).length;
+			var humans = players.length - bots;
+			els.statPlayers.textContent = humans + 'H + ' + bots + 'B / ' + (state.maxClients || 16);
+			els.statUptime.textContent = formatUptime(state.uptimeMs);
+			els.statFps.textContent = (state.svFps || 20) + ' Hz';
+
+			var isJapp = !!(state.japp && state.japp.active);
+			els.liveModBadge.textContent = isJapp ? (state.japp.version || 'JA++') : (state.gameDir || 'base');
+			els.liveModBadge.classList.add('online');
+
+			var jappOnlyBtns = document.querySelectorAll('.japp-only');
+			for (var i = 0; i < jappOnlyBtns.length; i++) {
+				jappOnlyBtns[i].classList.toggle('hidden', !isJapp);
+			}
+
+			if (isJapp) {
+				document.getElementById('japp-unlagged').checked = !!state.japp.unlagged;
+				document.getElementById('japp-promode').checked = !!state.japp.promode;
+				document.getElementById('japp-vq3').checked = !!state.japp.vq3;
+				document.getElementById('japp-hook').checked = !!state.japp.hook;
+				document.getElementById('japp-jetpack').checked = !!state.japp.jetpack;
+				document.getElementById('japp-instagib').checked = !!state.japp.instagib;
+				syncToggleChipStyles();
+			}
+
+			renderPlayers(state);
+		}
+
+		function stopServer() {
+			if (worker) {
+				try { worker.postMessage({ type: 'stop' }); } catch (e) { }
+				try { worker.terminate(); } catch (e) { }
+				worker = null;
+			}
+			running = false;
+			currentVip = '';
+			lastState = null;
+			setConfigLocked(false);
+			els.led.classList.remove('online', 'booting');
+			els.phase.textContent = 'Stopped';
+			els.phase.classList.remove('online', 'error');
+			els.vipPill.classList.add('hidden');
+			els.btnPlaySelf.classList.add('hidden');
+			els.btnCopyLink.classList.add('hidden');
+			els.btnStart.classList.remove('hidden');
+			els.btnStop.classList.add('hidden');
+			els.btnRestartMap.classList.add('hidden');
+			els.visorSub.textContent = 'Host a headless Jedi Academy server right from your browser — players on this site can join via Local/LAN or direct link.';
+			appendConsole('sys', '--- Dedicated server stopped ---');
+		}
+
+		function startServer() {
+			if (running) return;
+			setError('');
+			els.assetAlert.classList.remove('show');
+			els.consoleBox.innerHTML = '';
+
+			var mod = els.cfgMod.value.trim();
+			currentMod = mod;
+			var customMap = els.cfgCustomMap.value.trim();
+			var startMap = customMap || els.cfgMap.value;
+
+			var config = {
+				hostname: els.cfgHostname.value.trim() || 'OpenJK Web Server',
+				mod: mod,
+				gametype: parseInt(els.cfgGametype.value, 10) || 0,
+				map: startMap,
+				maxClients: Math.max(2, Math.min(32, parseInt(els.cfgMaxClients.value, 10) || 32)),
+				fraglimit: Math.max(0, parseInt(els.cfgFraglimit.value, 10) || 0),
+				timelimit: Math.max(0, parseInt(els.cfgTimelimit.value, 10) || 0),
+				botCount: Math.max(0, Math.min(12, parseInt(els.cfgBots.value, 10) || 0)),
+				botSkill: parseInt(els.cfgBotSkill.value, 10) || 2,
+				password: els.cfgPassword.value.trim(),
+				pure: false,
+				svFps: 20,
+				jappOpts: {
+					unlagged: document.getElementById('japp-unlagged').checked,
+					promode: document.getElementById('japp-promode').checked,
+					vq3: document.getElementById('japp-vq3').checked,
+					hook: document.getElementById('japp-hook').checked,
+					jetpack: document.getElementById('japp-jetpack').checked,
+					instagib: document.getElementById('japp-instagib').checked
+				},
+				sessionBaseFiles: sessionBaseFiles
+			};
+
+			running = true;
+			setConfigLocked(true);
+			els.addbotSkill.value = String(config.botSkill);
+			els.liveGtSelect.value = String(config.gametype);
+			if (els.liveMapSelect.querySelector('option[value="' + startMap + '"]')) {
+				els.liveMapSelect.value = startMap;
+			}
+			els.led.classList.remove('online');
+			els.led.classList.add('booting');
+			els.phase.textContent = 'Starting…';
+			els.phase.classList.remove('online', 'error');
+			els.btnStart.classList.add('hidden');
+			els.btnStop.classList.remove('hidden');
+			els.btnRestartMap.classList.remove('hidden');
+			els.livePanel.classList.remove('hidden');
+			els.vipPill.textContent = 'Connecting to wtunnel…';
+			els.vipPill.classList.add('waiting');
+			els.vipPill.classList.remove('hidden');
+
+			worker = new Worker('server_worker.js');
+			worker.onmessage = function (ev) {
+				var msg = ev.data || {};
+				if (msg.type === 'log') {
+					appendConsole(msg.level, msg.text);
+				} else if (msg.type === 'phase') {
+					els.phase.textContent = msg.text;
+				} else if (msg.type === 'started') {
+					els.led.classList.remove('booting');
+					els.led.classList.add('online');
+					els.phase.textContent = 'Online';
+					els.phase.classList.add('online');
+				} else if (msg.type === 'vip') {
+					updateVipDisplay(msg.ip, msg.port);
+				} else if (msg.type === 'status') {
+					if (msg.vip && !currentVip) updateVipDisplay(msg.vip, msg.port);
+					if (msg.state) applyLiveStatus(msg.state);
+				} else if (msg.type === 'need_assets') {
+					stopServer();
+					els.assetAlert.classList.add('show');
+				} else if (msg.type === 'error') {
+					setError(msg.message || 'Server error.');
+					els.phase.textContent = 'Error';
+					els.phase.classList.add('error');
+					els.led.classList.remove('online', 'booting');
+				}
+			};
+			worker.onerror = function (err) {
+				setError('Worker crashed: ' + (err.message || err));
+				stopServer();
+			};
+			worker.postMessage({ type: 'start', config: config });
+		}
+
+		// Check available base assets & populate installed OPFS code mods on load
+		async function initPage() {
+			var params = new URLSearchParams(window.location.search);
+			var preMod = (params.get('mod') || '').trim();
+
+			// Discover any user-installed OPFS code mods
+			try {
+				if (navigator.storage && typeof navigator.storage.getDirectory === 'function') {
+					var root = await navigator.storage.getDirectory();
+					try {
+						var modsDir = await root.getDirectoryHandle('openjk-mods');
+						for await (var entry of modsDir.entries()) {
+							var mName = entry[0];
+							if (entry[1].kind !== 'directory' || mName.toLowerCase() === 'japp') continue;
+							try {
+								await entry[1].getFileHandle('jampgamewasm32.wasm');
+								var opt = document.createElement('option');
+								opt.value = mName;
+								opt.textContent = mName + ' (Installed Code Mod)';
+								els.cfgMod.appendChild(opt);
+							} catch (e) { }
+						}
+					} catch (e) { }
+				}
+			} catch (e) { }
+
+			if (preMod) {
+				for (var i = 0; i < els.cfgMod.options.length; i++) {
+					if (els.cfgMod.options[i].value.toLowerCase() === preMod.toLowerCase()) {
+						els.cfgMod.selectedIndex = i;
+						break;
+					}
+				}
+			}
+			updateModVisibility();
+
+			// Check if base assets are available (OPFS or hosted)
+			var hasAssets = false;
+			try {
+				if (navigator.storage && typeof navigator.storage.getDirectory === 'function') {
+					var r = await navigator.storage.getDirectory();
+					var b = await r.getDirectoryHandle('openjk-base');
+					await b.getFileHandle('assets0.pk3');
+					hasAssets = true;
+				}
+			} catch (e) { }
+			if (!hasAssets) {
+				try {
+					var resp = await fetch('base/manifest.json', { cache: 'no-cache', headers: { 'X-No-Auth-Prompt': '1' } });
+					if (resp && resp.ok) hasAssets = true;
+				} catch (e) { }
+			}
+			if (!hasAssets) {
+				els.assetAlert.classList.add('show');
+			}
+		}
+
+		// Event listeners
+		els.cfgMod.addEventListener('change', updateModVisibility);
+		els.btnStart.addEventListener('click', startServer);
+		els.btnStop.addEventListener('click', stopServer);
+		els.btnRestartMap.addEventListener('click', function () { execCmd('map_restart'); });
+
+		els.btnCopyLink.addEventListener('click', function () {
+			if (!currentVip) return;
+			var link = buildJoinUrl(currentVip, currentPort, currentMod);
+			if (navigator.clipboard && navigator.clipboard.writeText) {
+				navigator.clipboard.writeText(link).then(function () {
+					var orig = els.btnCopyLink.textContent;
+					els.btnCopyLink.textContent = 'Copied!';
+					setTimeout(function () { els.btnCopyLink.textContent = orig; }, 1600);
+				});
+			} else {
+				window.prompt('Copy Join Link:', link);
+			}
+		});
+
+		// Live JA++ cvar toggles
+		var jappInputs = els.jappOptions.querySelectorAll('input[data-cvar]');
+		for (var ji = 0; ji < jappInputs.length; ji++) {
+			jappInputs[ji].addEventListener('change', function (ev) {
+				syncToggleChipStyles();
+				if (running && worker) {
+					var cvar = ev.target.getAttribute('data-cvar');
+					execCmd('set ' + cvar + ' ' + (ev.target.checked ? '1' : '0'));
+				}
+			});
+		}
+
+		var DEFAULT_MAP_FOR_GT = {
+			0: 'mp/ffa1', 1: 'mp/ffa1', 2: 'mp/ffa1',
+			3: 'mp/duel1', 4: 'mp/duel1',
+			6: 'mp/ffa1', 7: 'mp/siege_hoth',
+			8: 'mp/ctf1', 9: 'mp/ctf1'
+		};
+
+		els.liveGtSelect.addEventListener('change', function () {
+			var gt = parseInt(els.liveGtSelect.value, 10);
+			var curMap = els.liveMapSelect.value || '';
+			var needsSwitch =
+				((gt === 8 || gt === 9) && curMap.indexOf('mp/ctf') !== 0) ||
+				(gt === 7 && curMap.indexOf('mp/siege_') !== 0) ||
+				((gt === 3 || gt === 4) && curMap.indexOf('mp/duel') !== 0) ||
+				((gt === 0 || gt === 1 || gt === 2 || gt === 6) && curMap.indexOf('mp/siege_') === 0);
+			if (needsSwitch && DEFAULT_MAP_FOR_GT[gt]) {
+				els.liveMapSelect.value = DEFAULT_MAP_FOR_GT[gt];
+			}
+		});
+
+		els.btnChangeGt.addEventListener('click', function () {
+			var gt = parseInt(els.liveGtSelect.value, 10);
+			var targetMap = els.liveMapSelect.value || (lastState && lastState.mapname) || 'mp/ffa1';
+			execCmd('set g_gametype ' + gt);
+			execCmd('map ' + targetMap);
+		});
+
+		els.btnChangeMap.addEventListener('click', function () {
+			var map = els.liveMapSelect.value;
+			if (map) execCmd('map ' + map);
+		});
+
+		var lowGravOn = false;
+		els.btnLowGrav.addEventListener('click', function () {
+			lowGravOn = !lowGravOn;
+			els.btnLowGrav.textContent = 'Low Gravity: ' + (lowGravOn ? 'On' : 'Off');
+			execCmd('set g_gravity ' + (lowGravOn ? '300' : '800'));
+		});
+
+		var saberOnlyOn = false;
+		els.btnSaberOnly.addEventListener('click', function () {
+			saberOnlyOn = !saberOnlyOn;
+			els.btnSaberOnly.textContent = 'Sabers Only: ' + (saberOnlyOn ? 'On' : 'Off');
+			// 65531 disables all non-saber weapons (BaseJKA/JA++ standard bitmask)
+			execCmd('set g_weaponDisable ' + (saberOnlyOn ? '65531' : '0'));
+		});
+
+		els.btnSay.addEventListener('click', function () {
+			var txt = els.liveSayInput.value.trim();
+			if (!txt) return;
+			execCmd('say ' + txt);
+			els.liveSayInput.value = '';
+		});
+		els.liveSayInput.addEventListener('keydown', function (ev) {
+			if (ev.key === 'Enter') { ev.preventDefault(); els.btnSay.click(); }
+		});
+
+		els.btnAddBot.addEventListener('click', function () {
+			execCmd('addbot "' + els.addbotChar.value + '" ' + els.addbotSkill.value);
+		});
+		els.btnKickBots.addEventListener('click', function () {
+			execCmd('kick allbots');
+		});
+
+		els.playersTbody.addEventListener('click', function (ev) {
+			var btn = ev.target.closest('.p-act');
+			if (!btn) return;
+			var cmd = btn.getAttribute('data-cmd');
+			if (cmd) execCmd(cmd);
+		});
+
+		function submitConsoleCmd() {
+			var cmd = els.consoleCmd.value.trim();
+			if (!cmd) return;
+			cmdHistory.unshift(cmd);
+			if (cmdHistory.length > 50) cmdHistory.pop();
+			cmdHistIdx = -1;
+			els.consoleCmd.value = '';
+			execCmd(cmd);
+		}
+		els.btnExecCmd.addEventListener('click', submitConsoleCmd);
+		els.consoleCmd.addEventListener('keydown', function (ev) {
+			if (ev.key === 'Enter') {
+				ev.preventDefault();
+				submitConsoleCmd();
+			} else if (ev.key === 'ArrowUp') {
+				if (cmdHistIdx + 1 < cmdHistory.length) {
+					cmdHistIdx++;
+					els.consoleCmd.value = cmdHistory[cmdHistIdx];
+				}
+			} else if (ev.key === 'ArrowDown') {
+				if (cmdHistIdx > 0) {
+					cmdHistIdx--;
+					els.consoleCmd.value = cmdHistory[cmdHistIdx];
+				} else {
+					cmdHistIdx = -1;
+					els.consoleCmd.value = '';
+				}
+			}
+		});
+
+		els.btnClearConsole.addEventListener('click', function () { els.consoleBox.innerHTML = ''; });
+
+		var qBtns = document.querySelectorAll('.quick-cmd');
+		for (var qi = 0; qi < qBtns.length; qi++) {
+			qBtns[qi].addEventListener('click', function (ev) {
+				execCmd(ev.currentTarget.getAttribute('data-cmd'));
+			});
+		}
+
+		// Inline PK3 picker fallback for Private Mode / fresh browser
+		els.inlinePk3Input.addEventListener('change', function (ev) {
+			var files = Array.prototype.slice.call(ev.target.files || []);
+			sessionBaseFiles = files.filter(function (f) { return /\.pk3$/i.test(f.name); });
+			if (sessionBaseFiles.length > 0) {
+				els.inlinePk3Status.textContent = 'Loaded ' + sessionBaseFiles.length + ' .pk3 file(s) for this session — click Start Server!';
+				els.assetAlert.classList.remove('show');
+			}
+		});
+
+		window.addEventListener('beforeunload', function (ev) {
+			if (running) {
+				ev.preventDefault();
+				ev.returnValue = '';
+			}
+		});
+
+		initPage();
+	})();
+	</script>
+</body>
+</html>

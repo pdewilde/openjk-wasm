@@ -849,12 +849,12 @@
 			var hydratedSet = Object.create(null);
 			(window.__openjkHydratedMods || []).forEach(function (m) { hydratedSet[m.toLowerCase()] = true; });
 			var wanted = [];
-			if (activeFsGame && !hydratedSet[activeFsGame.toLowerCase()]) {
-				wanted.push({ name: activeFsGame, mountToBase: false });
+			if (activeFsGame) {
+				wanted.push({ name: activeFsGame, mountToBase: false, alreadyHydrated: !!hydratedSet[activeFsGame.toLowerCase()] });
 			}
 			(enabledMods || []).forEach(function (m) {
-				if (m && !hydratedSet[m.toLowerCase()]) {
-					wanted.push({ name: m, mountToBase: true });
+				if (m) {
+					wanted.push({ name: m, mountToBase: true, alreadyHydrated: !!hydratedSet[m.toLowerCase()] });
 				}
 			});
 			if (wanted.length === 0) return;
@@ -880,9 +880,28 @@
 				var entry = byId[target.name.toLowerCase()];
 				if (!entry) continue;
 				var modName = sanitizeModName(entry.id);
+				var opfsModDir = null;
+				try {
+					opfsModDir = await getOpfsDir('openjk-mods', [modName], true);
+				} catch (e) { opfsModDir = null; }
+
+				if (target.alreadyHydrated) {
+					if (!entry.version) continue;
+					var cachedVer = '';
+					if (opfsModDir) {
+						try {
+							var vfh = await opfsModDir.getFileHandle('.catalog-version');
+							var vf = await vfh.getFile();
+							cachedVer = (await vf.text()).trim();
+						} catch (e) { cachedVer = ''; }
+					}
+					if (cachedVer === String(entry.version)) continue;
+				}
+
 				Module.setStatus('Loading built-in mod "' + (entry.name || modName) + '"...');
 				try {
-					var zResp = await fetch(entry.url);
+					var fetchUrl = entry.url + (entry.version ? ((entry.url.indexOf('?') === -1 ? '?' : '&') + 'v=' + encodeURIComponent(entry.version)) : '');
+					var zResp = await fetch(fetchUrl);
 					if (!zResp || !zResp.ok) continue;
 					var ab = await zResp.arrayBuffer();
 					var items = await extractModZipEntries(ab);
@@ -892,10 +911,6 @@
 
 					// Strip leading <modName>/ prefix if archive is wrapped in a single folder
 					var prefixLower = modName.toLowerCase() + '/';
-					var opfsModDir = null;
-					try {
-						opfsModDir = await getOpfsDir('openjk-mods', [modName], true);
-					} catch (e) { opfsModDir = null; }
 
 					for (var ii = 0; ii < items.length; ii++) {
 						var rel = items[ii].path.replace(/^\/+/, '');
@@ -932,6 +947,15 @@
 								await w.close();
 							} catch (e) { }
 						}
+					}
+
+					if (opfsModDir && entry.version) {
+						try {
+							var vfhW = await opfsModDir.getFileHandle('.catalog-version', { create: true });
+							var vw = await vfhW.createWritable();
+							await vw.write(String(entry.version));
+							await vw.close();
+						} catch (e) { }
 					}
 
 					hydratedSet[modName.toLowerCase()] = true;

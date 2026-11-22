@@ -1574,7 +1574,7 @@ void Com_Frame( void ) {
 		{
 			char wasmCmd[MAX_STRING_CHARS];
 			if (Sys_WasmConsumePendingCommand(wasmCmd, sizeof(wasmCmd))) {
-				Cbuf_AddText(wasmCmd);
+				Cbuf_ExecuteText(EXEC_INSERT, wasmCmd);
 				Cbuf_Execute();
 			}
 		}
@@ -1626,7 +1626,7 @@ void Com_Frame( void ) {
 		{
 			char wasmCmd[MAX_STRING_CHARS];
 			if (Sys_WasmConsumePendingCommand(wasmCmd, sizeof(wasmCmd))) {
-				Cbuf_AddText(wasmCmd);
+				Cbuf_ExecuteText(EXEC_INSERT, wasmCmd);
 				Cbuf_Execute();
 			}
 		}

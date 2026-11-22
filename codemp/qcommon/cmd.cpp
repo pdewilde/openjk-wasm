@@ -25,6 +25,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 // cmd.c -- Quake script command processing module
 
 #include "qcommon/qcommon.h"
+#ifdef __EMSCRIPTEN__
+#include "sys/sys_wasm_vfs.h"
+#endif
 
 #include <vector>
 #include <algorithm>
@@ -188,6 +191,14 @@ void Cbuf_Execute (void)
 
 	while (cmd_text.cursize)
 	{
+#ifdef __EMSCRIPTEN__
+		if ( Sys_WasmIsMapPrefetchActive() ) {
+			// Pause queued commands (e.g. addbot following map) while async
+			// map asset prefetching is in flight; the deferred map command will
+			// be inserted ahead of them once prefetch finishes.
+			break;
+		}
+#endif
 		if ( cmd_wait > 0 ) {
 			// skip out while text still remains in buffer, leaving it
 			// for next frame

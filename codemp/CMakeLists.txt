@@ -686,6 +686,8 @@ if(BuildMPDed)
 			"${SharedDir}/sys/sys_loadlib.h"
 			"${SharedDir}/sys/sys_local.h"
 			"${SharedDir}/sys/sys_main.cpp"
+			"${SharedDir}/sys/sys_wasm_vfs.cpp"
+			"${SharedDir}/sys/sys_wasm_vfs.h"
 			"${SharedDir}/sys/sys_event.cpp"
 			"${SharedDir}/sys/sys_public.h"
 			"${SharedDir}/sys/sys_win32.cpp"
@@ -701,6 +703,8 @@ if(BuildMPDed)
 			"${SharedDir}/sys/sys_loadlib.h"
 			"${SharedDir}/sys/sys_local.h"
 			"${SharedDir}/sys/sys_main.cpp"
+			"${SharedDir}/sys/sys_wasm_vfs.cpp"
+			"${SharedDir}/sys/sys_wasm_vfs.h"
 			"${SharedDir}/sys/sys_event.cpp"
 			"${SharedDir}/sys/sys_public.h"
 			"${SharedDir}/sys/sys_unix.cpp"
@@ -727,4 +731,8 @@ if(BuildMPDed)
 	set_target_properties(${MPDed} PROPERTIES INCLUDE_DIRECTORIES "${MPDedIncludeDirectories}")
 	set_target_properties(${MPDed} PROPERTIES PROJECT_LABEL "MP Dedicated Server")
 	target_link_libraries(${MPDed} ${MPDedLibraries})
+	if(EMSCRIPTEN)
+		set_target_properties(${MPDed} PROPERTIES SUFFIX ".js")
+		target_link_options(${MPDed} PRIVATE ${OPENJK_EMSCRIPTEN_DED_LINK_FLAGS})
+	endif()
 endif(BuildMPDed)

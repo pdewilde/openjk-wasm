@@ -770,7 +770,9 @@ char *Sys_StripAppBundle( char *dir )
 #endif
 
 #ifdef __EMSCRIPTEN__
+#ifndef DEDICATED
 extern "C" void initialize_gl4es();
+#endif
 
 static void Sys_InitWasmFS(void)
 {
@@ -798,8 +800,10 @@ int main ( int argc, char* argv[] )
 
 #ifdef __EMSCRIPTEN__
 	Sys_InitWasmFS();
+#ifndef DEDICATED
 	setenv("LIBGL_VSYNC", "1", 1);
 	initialize_gl4es();
+#endif
 #endif
 
 	// get the initial time base
@@ -843,9 +847,15 @@ int main ( int argc, char* argv[] )
 #endif
 
 #ifdef __EMSCRIPTEN__
+#ifdef DEDICATED
+	// Dedicated server runs headless (often inside a Web Worker) where rAF is
+	// unavailable or background-throttled; use fixed-rate timer ticks instead.
+	emscripten_set_main_loop(Com_Frame, 25, 1);
+#else
 	// In the browser, we must yield control to the browser event loop.
 	// emscripten_set_main_loop calls Com_Frame via requestAnimationFrame.
 	emscripten_set_main_loop(Com_Frame, 0, 1);
+#endif
 #else
 	// main game loop
 	while (1)

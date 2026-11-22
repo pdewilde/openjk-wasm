@@ -972,6 +972,23 @@
 			</a>
 		</div>
 
+		<a id="server-launch-link" class="launch-btn mp" href="server.html" style="padding: 13px 18px 13px 20px;">
+			<span class="icon-housing" style="width: 44px; height: 44px;">
+				<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<rect x="3" y="4" width="18" height="6" rx="1.5"></rect>
+					<rect x="3" y="14" width="18" height="6" rx="1.5"></rect>
+					<circle cx="7" cy="7" r="1" fill="#10b981" stroke="none"></circle>
+					<circle cx="7" cy="17" r="1" fill="#3b82f6" stroke="none"></circle>
+					<line x1="11" y1="7" x2="17" y2="7"></line>
+					<line x1="11" y1="17" x2="17" y2="17"></line>
+				</svg>
+			</span>
+			<span class="launch-copy">
+				<span class="launch-title" style="font-size: 16px;">Host Dedicated Server</span>
+				<small id="server-launch-desc">Graphical server manager in your browser · routed over wtunnel</small>
+			</span>
+		</a>
+
 		<div class="plate plate-mods">
 			<div class="section-head">
 				<span class="section-title">Multiplayer Mods <span class="muted">(optional)</span></span>
@@ -1082,6 +1099,8 @@
 			var mpLaunchDesc = document.getElementById('mp-launch-desc');
 			var spLaunchLink = document.getElementById('sp-launch-link');
 			var spLaunchDesc = document.getElementById('sp-launch-desc');
+			var serverLaunchLink = document.getElementById('server-launch-link');
+			var serverLaunchDesc = document.getElementById('server-launch-desc');
 			var resSelect = document.getElementById('res-select');
 			var gamefilesBox = document.getElementById('gamefiles-box');
 			var gamefilesTitle = document.getElementById('gamefiles-title');
@@ -2004,6 +2023,15 @@
 					if (res) spQs.set('res', res);
 					var spQuery = spQs.toString();
 					spLaunchLink.href = 'openjk_sp.wasm32.html' + (spQuery ? ('?' + spQuery) : '');
+				}
+
+				if (serverLaunchLink) {
+					serverLaunchLink.href = activeCodeMod ? ('server.html?mod=' + encodeURIComponent(activeCodeMod)) : 'server.html';
+				}
+				if (serverLaunchDesc) {
+					serverLaunchDesc.textContent = activeCodeMod
+						? ('Host a ' + activeCodeMod + ' server in your browser · routed over wtunnel')
+						: 'Graphical server manager in your browser · routed over wtunnel';
 				}
 
 				var resNote = res === 'auto43' ? '' : (res === 'window' ? ' · Widescreen' : (' · ' + res));

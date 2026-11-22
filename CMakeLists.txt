@@ -38,7 +38,6 @@ option(BuildPortableVersion "Build portable version (does not read or write file
 set(BuildMPDedDefault ON)
 set(BuildMPRend2Default ON)
 if(EMSCRIPTEN)
-	set(BuildMPDedDefault OFF)
 	set(BuildMPRend2Default OFF)
 endif()
 
@@ -456,8 +455,25 @@ if(EMSCRIPTEN)
     "-sEXPORTED_RUNTIME_METHODS=['FS','run','callMain']"
     --shell-file "${CMAKE_SOURCE_DIR}/wasm/shell.html"
   )
+  set(OPENJK_EMSCRIPTEN_DED_LINK_FLAGS
+    -sMAIN_MODULE=1
+    -sALLOW_MEMORY_GROWTH=1
+    -sINITIAL_MEMORY=67108864
+    -sMAXIMUM_MEMORY=4GB
+    -sSTACK_SIZE=8388608
+    -sFORCE_FILESYSTEM=1
+    -sWASMFS
+    -sERROR_ON_UNDEFINED_SYMBOLS=1
+    -sUSE_ZLIB=1
+    -msimd128
+    -fwasm-exceptions
+    -sENVIRONMENT=web,worker
+    "-sEXPORTED_FUNCTIONS=['_main','_OpenJKDed_ExecCommand','_OpenJKDed_GetStatusJson']"
+    "-sEXPORTED_RUNTIME_METHODS=['FS','run','callMain','ccall','cwrap','UTF8ToString','stringToUTF8']"
+  )
   if(WasmUsePthreads)
     list(APPEND OPENJK_EMSCRIPTEN_ENGINE_LINK_FLAGS -pthread -sPROXY_TO_PTHREAD -sOFFSCREEN_FRAMEBUFFER=1)
+    list(APPEND OPENJK_EMSCRIPTEN_DED_LINK_FLAGS -pthread)
   endif()
   include("${CMAKE_SOURCE_DIR}/wasm/gl4es.cmake")
 

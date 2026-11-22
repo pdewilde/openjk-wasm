@@ -1253,3 +1253,126 @@ void SV_Frame( int msec ) {
 
 //============================================================================
 
+#if defined(__EMSCRIPTEN__) && defined(DEDICATED)
+#include <emscripten.h>
+#include <string>
+
+static void SV_JsonAppendEscaped( std::string &out, const char *s ) {
+	out.push_back( '"' );
+	if ( s ) {
+		for ( const unsigned char *p = (const unsigned char *)s; *p; ++p ) {
+			unsigned char c = *p;
+			switch ( c ) {
+			case '"':  out += "\\\""; break;
+			case '\\': out += "\\\\"; break;
+			case '\b': out += "\\b"; break;
+			case '\f': out += "\\f"; break;
+			case '\n': out += "\\n"; break;
+			case '\r': out += "\\r"; break;
+			case '\t': out += "\\t"; break;
+			default:
+				if ( c < 0x20 ) {
+					char hex[8];
+					Com_sprintf( hex, sizeof(hex), "\\u%04x", (unsigned int)c );
+					out += hex;
+				} else {
+					out.push_back( (char)c );
+				}
+				break;
+			}
+		}
+	}
+	out.push_back( '"' );
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void OpenJKDed_ExecCommand( const char *cmd ) {
+	if ( !cmd || !cmd[0] ) {
+		return;
+	}
+	Cbuf_AddText( cmd );
+	Cbuf_AddText( "\n" );
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE const char *OpenJKDed_GetStatusJson( void ) {
+	static std::string jsonBuf;
+	jsonBuf.clear();
+	jsonBuf.reserve( 2048 );
+
+	const qboolean running = (com_sv_running && com_sv_running->integer) ? qtrue : qfalse;
+	const char *hostname = (sv_hostname && sv_hostname->string) ? sv_hostname->string : "";
+	const char *mapname = (sv_mapname && sv_mapname->string) ? sv_mapname->string : "";
+	const char *gameDir = FS_GetCurrentGameDir();
+	const int gametype = sv_gametype ? sv_gametype->integer : 0;
+	const int maxClients = sv_maxclients ? sv_maxclients->integer : 0;
+	const int fraglimit = Cvar_VariableIntegerValue( "fraglimit" );
+	const int timelimit = Cvar_VariableIntegerValue( "timelimit" );
+	const int capturelimit = Cvar_VariableIntegerValue( "capturelimit" );
+	const int svFps = sv_fps ? sv_fps->integer : 20;
+	const int needPass = Cvar_VariableIntegerValue( "g_needpass" );
+	const int netPort = Cvar_VariableIntegerValue( "net_port" );
+	const char *jappVer = Cvar_VariableString( "japp_version" );
+	const bool jappActive = (jappVer && jappVer[0] != '\0');
+
+	char numBuf[256];
+	jsonBuf += "{\"running\":";
+	jsonBuf += running ? "true" : "false";
+	jsonBuf += ",\"hostname\":";
+	SV_JsonAppendEscaped( jsonBuf, hostname );
+	jsonBuf += ",\"mapname\":";
+	SV_JsonAppendEscaped( jsonBuf, mapname );
+	jsonBuf += ",\"gameDir\":";
+	SV_JsonAppendEscaped( jsonBuf, gameDir );
+	Com_sprintf( numBuf, sizeof(numBuf),
+		",\"gametype\":%d,\"maxClients\":%d,\"fraglimit\":%d,\"timelimit\":%d,\"capturelimit\":%d,\"svFps\":%d,\"needPass\":%s,\"netPort\":%d,\"uptimeMs\":%d",
+		gametype, maxClients, fraglimit, timelimit, capturelimit, svFps, needPass ? "true" : "false", netPort, running ? svs.time : 0 );
+	jsonBuf += numBuf;
+
+	jsonBuf += ",\"japp\":{\"active\":";
+	jsonBuf += jappActive ? "true" : "false";
+	jsonBuf += ",\"version\":";
+	SV_JsonAppendEscaped( jsonBuf, jappVer ? jappVer : "" );
+	Com_sprintf( numBuf, sizeof(numBuf),
+		",\"promode\":%d,\"unlagged\":%d,\"hook\":%d,\"jetpack\":%d,\"instagib\":%d,\"vq3\":%d,\"privateDuel\":%d}",
+		Cvar_VariableIntegerValue( "japp_promode" ),
+		Cvar_VariableIntegerValue( "japp_unlagged" ),
+		Cvar_VariableIntegerValue( "japp_allowHook" ),
+		Cvar_VariableIntegerValue( "japp_allowJetpack" ),
+		Cvar_VariableIntegerValue( "japp_instagib" ),
+		Cvar_VariableIntegerValue( "japp_vq3physics" ),
+		Cvar_VariableIntegerValue( "g_privateDuel" ) );
+	jsonBuf += numBuf;
+
+	jsonBuf += ",\"players\":[";
+	bool first = true;
+	if ( running && svs.clients && maxClients > 0 ) {
+		for ( int i = 0; i < maxClients; i++ ) {
+			client_t *cl = &svs.clients[i];
+			if ( cl->state < CS_CONNECTED ) {
+				continue;
+			}
+			if ( !first ) {
+				jsonBuf.push_back( ',' );
+			}
+			first = false;
+
+			playerState_t *ps = SV_GameClientNum( i );
+			const int score = ps ? ps->persistant[PERS_SCORE] : 0;
+			const int team = ps ? ps->persistant[PERS_TEAM] : 0;
+			const bool isBot = (cl->netchan.remoteAddress.type == NA_BOT);
+			const int ping = (cl->state == CS_ACTIVE) ? (cl->ping < 9999 ? cl->ping : 9999) : 0;
+			const char *addr = NET_AdrToString( &cl->netchan.remoteAddress );
+
+			Com_sprintf( numBuf, sizeof(numBuf), "{\"id\":%d,\"score\":%d,\"team\":%d,\"ping\":%d,\"isBot\":%s,\"state\":%d,\"name\":",
+				i, score, team, ping, isBot ? "true" : "false", (int)cl->state );
+			jsonBuf += numBuf;
+			SV_JsonAppendEscaped( jsonBuf, cl->name );
+			jsonBuf += ",\"address\":";
+			SV_JsonAppendEscaped( jsonBuf, addr );
+			jsonBuf.push_back( '}' );
+		}
+	}
+	jsonBuf += "]}";
+	return jsonBuf.c_str();
+}
+#endif
+

@@ -46,8 +46,8 @@ void Sys_WasmPersistSavePath(const char *osPath)
 	}
 	EM_ASM({
 		var p = UTF8ToString($0);
-		if (typeof window !== 'undefined' && typeof window.__openjkOpfsSyncFile === 'function') {
-			window.__openjkOpfsSyncFile(p);
+		if (typeof globalThis !== 'undefined' && typeof globalThis.__openjkOpfsSyncFile === 'function') {
+			globalThis.__openjkOpfsSyncFile(p);
 		}
 	}, osPath);
 }
@@ -59,8 +59,8 @@ void Sys_WasmRemoveSavePath(const char *osPath)
 	}
 	EM_ASM({
 		var p = UTF8ToString($0);
-		if (typeof window !== 'undefined' && typeof window.__openjkOpfsRemoveFile === 'function') {
-			window.__openjkOpfsRemoveFile(p);
+		if (typeof globalThis !== 'undefined' && typeof globalThis.__openjkOpfsRemoveFile === 'function') {
+			globalThis.__openjkOpfsRemoveFile(p);
 		}
 	}, osPath);
 }
@@ -68,8 +68,8 @@ void Sys_WasmRemoveSavePath(const char *osPath)
 void Sys_WasmSyncBrowserUrl(const char *fsGame, const char *connectAddr, const char *mapName)
 {
 	EM_ASM({
-		if (typeof window !== 'undefined' && typeof window.__openjkSyncUrl === 'function') {
-			window.__openjkSyncUrl(UTF8ToString($0), UTF8ToString($1), UTF8ToString($2));
+		if (typeof globalThis !== 'undefined' && typeof globalThis.__openjkSyncUrl === 'function') {
+			globalThis.__openjkSyncUrl(UTF8ToString($0), UTF8ToString($1), UTF8ToString($2));
 		}
 	}, fsGame ? fsGame : "", connectAddr ? connectAddr : "", mapName ? mapName : "");
 }
@@ -82,8 +82,8 @@ int Sys_WasmEnsureMapAssets(const char *mapName, const char *retryCmd)
 	return EM_ASM_INT({
 		var m = UTF8ToString($0);
 		var cmd = $1 ? UTF8ToString($1) : "";
-		if (typeof window !== 'undefined' && typeof window.__openjkEnsureMapAssets === 'function') {
-			return window.__openjkEnsureMapAssets(m, cmd) ? 1 : 0;
+		if (typeof globalThis !== 'undefined' && typeof globalThis.__openjkEnsureMapAssets === 'function') {
+			return globalThis.__openjkEnsureMapAssets(m, cmd) ? 1 : 0;
 		}
 		return 1;
 	}, mapName, retryCmd ? retryCmd : "");
@@ -92,8 +92,8 @@ int Sys_WasmEnsureMapAssets(const char *mapName, const char *retryCmd)
 int Sys_WasmIsMapPrefetchActive(void)
 {
 	return EM_ASM_INT({
-		if (typeof window !== 'undefined' && typeof window.__openjkIsMapPrefetchActive === 'function') {
-			return window.__openjkIsMapPrefetchActive() ? 1 : 0;
+		if (typeof globalThis !== 'undefined' && typeof globalThis.__openjkIsMapPrefetchActive === 'function') {
+			return globalThis.__openjkIsMapPrefetchActive() ? 1 : 0;
 		}
 		return 0;
 	});
@@ -106,8 +106,8 @@ int Sys_WasmConsumePendingCommand(char *outBuf, int outBufSize)
 	}
 	outBuf[0] = '\0';
 	return EM_ASM_INT({
-		if (typeof window !== 'undefined' && typeof window.__openjkConsumePendingCommand === 'function') {
-			var cmd = window.__openjkConsumePendingCommand();
+		if (typeof globalThis !== 'undefined' && typeof globalThis.__openjkConsumePendingCommand === 'function') {
+			var cmd = globalThis.__openjkConsumePendingCommand();
 			if (cmd && cmd.length > 0) {
 				stringToUTF8(cmd, $0, $1);
 				return 1;
@@ -124,8 +124,8 @@ int Sys_WasmGetManifestPakCount(const char *gameDir)
 	}
 	return EM_ASM_INT({
 		var g = UTF8ToString($0).toLowerCase();
-		if (typeof window !== 'undefined' && window.__openjkManifestApi) {
-			return window.__openjkManifestApi.getPakCount(g) | 0;
+		if (typeof globalThis !== 'undefined' && globalThis.__openjkManifestApi) {
+			return globalThis.__openjkManifestApi.getPakCount(g) | 0;
 		}
 		return 0;
 	}, gameDir);
@@ -137,7 +137,7 @@ int Sys_WasmGetManifestPakInfo(int pakIdx, char *outBasename, int basenameLen, i
 		return 0;
 	}
 	return EM_ASM_INT({
-		var api = (typeof window !== 'undefined') ? window.__openjkManifestApi : null;
+		var api = (typeof globalThis !== 'undefined') ? globalThis.__openjkManifestApi : null;
 		if (!api) return 0;
 		var info = api.getPakInfo($0);
 		if (!info) return 0;
@@ -154,7 +154,7 @@ int Sys_WasmGetManifestPakCrcs(int pakIdx, int *outCrcs, int maxCrcs)
 		return 0;
 	}
 	return EM_ASM_INT({
-		var api = (typeof window !== 'undefined') ? window.__openjkManifestApi : null;
+		var api = (typeof globalThis !== 'undefined') ? globalThis.__openjkManifestApi : null;
 		if (!api) return 0;
 		var crcs = api.getPakCrcs($0);
 		if (!crcs) return 0;
@@ -174,7 +174,7 @@ int Sys_WasmGetManifestPakEntry(int pakIdx, int entryIdx, char *outPath, int pat
 		return 0;
 	}
 	return EM_ASM_INT({
-		var api = (typeof window !== 'undefined') ? window.__openjkManifestApi : null;
+		var api = (typeof globalThis !== 'undefined') ? globalThis.__openjkManifestApi : null;
 		if (!api) return 0;
 		var e = api.getPakEntry($0, $1);
 		if (!e) return 0;
@@ -234,7 +234,7 @@ int Sys_WasmFetchManifestEntry(const char *pakBasename, const char *qpath,
 	}
 
 	int fetched = EM_ASM_INT({
-		var api = (typeof window !== 'undefined') ? window.__openjkManifestApi : null;
+		var api = (typeof globalThis !== 'undefined') ? globalThis.__openjkManifestApi : null;
 		if (!api) return 0;
 		var bytes = api.fetchRangeSync(UTF8ToString($0), $1 >>> 0, $2 >>> 0);
 		if (!bytes || bytes.length !== ($2 >>> 0)) return 0;
@@ -291,7 +291,7 @@ int Sys_WasmFetchManifestEntry(const char *pakBasename, const char *qpath,
 
 	if (ok) {
 		EM_ASM({
-			var api = (typeof window !== 'undefined') ? window.__openjkManifestApi : null;
+			var api = (typeof globalThis !== 'undefined') ? globalThis.__openjkManifestApi : null;
 			if (api && typeof api.cachePutFile === 'function') {
 				api.cachePutFile(UTF8ToString($0), UTF8ToString($1));
 			}

@@ -1230,7 +1230,7 @@
 					'    local cmd = string.format(\'addbot "%s" %d%s\', name, skill, (teamStr and teamStr ~= "") and (" " .. teamStr) or "")',
 					'    SendConsoleCommand(2, cmd)',
 					'end',
-					'AddListener("JPLUA_EVENT_CLIENTCONNECT", function(player)',
+					'AddListener("JPLUA_EVENT_CLIENTBEGIN", function(player)',
 					'    if not player then return end',
 					'    if player.isBot then',
 					'        local sk = table.remove(pendingSpawns, 1) or clamp(cvStartSk:GetInteger(), 1, 5)',

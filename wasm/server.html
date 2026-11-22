@@ -400,6 +400,95 @@
 		}
 		.plate-body { overflow: visible; }
 
+		/* Collapsible advanced server settings */
+		.adv-details {
+			margin-top: 12px;
+			border-radius: 12px;
+			border: 1.5px solid #c5d0e2;
+			background: rgba(246, 249, 255, 0.85);
+		}
+		.adv-details summary {
+			list-style: none;
+			cursor: pointer;
+			padding: 10px 14px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 10px;
+			flex-wrap: wrap;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 11px;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: #2c3548;
+			user-select: none;
+		}
+		.adv-details summary::-webkit-details-marker { display: none; }
+		.adv-details summary::before {
+			content: "▸";
+			display: inline-block;
+			margin-right: 6px;
+			font-size: 12px;
+			transition: transform 0.14s ease;
+		}
+		.adv-details[open] summary::before { transform: rotate(90deg); }
+		.adv-summary-left { display: inline-flex; align-items: center; gap: 6px; }
+		.adv-summary-meta {
+			font-size: 10.5px;
+			font-weight: 600;
+			color: #5a6780;
+			letter-spacing: 0.03em;
+			text-transform: none;
+		}
+		.adv-body {
+			padding: 4px 14px 14px;
+			border-top: 1px solid #d9e1ef;
+		}
+		.preset-bar {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 6px;
+			margin: 8px 0 10px;
+		}
+		.preset-btn {
+			padding: 4px 9px;
+			border-radius: 7px;
+			border: 1px solid #9aa8bf;
+			background: #ffffff;
+			color: #1f2533;
+			font-size: 11.5px;
+			font-weight: 700;
+			font-family: inherit;
+			cursor: pointer;
+		}
+		.preset-btn:hover { background: #101218; color: #ffffff; border-color: #101218; }
+		.cfg-head-right {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			flex-wrap: wrap;
+		}
+		.cfg-io-msg {
+			font-size: 11.5px;
+			font-weight: 600;
+			color: #047857;
+		}
+		.cfg-io-msg.err { color: #b91c1c; }
+		.fp-tag {
+			font-size: 9.5px;
+			font-weight: 800;
+			padding: 1px 5px;
+			border-radius: 4px;
+			text-transform: uppercase;
+			letter-spacing: 0.04em;
+		}
+		.fp-tag.light { background: rgba(59, 130, 246, 0.16); color: #1d4ed8; }
+		.fp-tag.dark { background: rgba(239, 68, 68, 0.16); color: #b91c1c; }
+		.toggle-chip.active .fp-tag.light { background: rgba(96, 165, 250, 0.3); color: #bfdbfe; }
+		.toggle-chip.active .fp-tag.dark { background: rgba(248, 113, 113, 0.3); color: #fecaca; }
+
 		.alert-box {
 			margin-top: 12px;
 			padding: 12px 14px;
@@ -725,7 +814,15 @@
 		<section class="plate plate-body">
 			<div class="section-head">
 				<h2 class="section-title">Server Configuration</h2>
-				<span id="phase-badge" class="phase-badge">Stopped</span>
+				<div class="cfg-head-right">
+					<span id="cfg-io-msg" class="cfg-io-msg"></span>
+					<button id="btn-export-cfg" class="btn btn-secondary btn-sm" type="button" title="Save all server settings, weapons, force powers, and Lua plugins to a .json file">Export JSON</button>
+					<label class="btn btn-secondary btn-sm" style="cursor:pointer;" title="Load a saved server config .json file">
+						Import JSON
+						<input id="cfg-import-input" type="file" accept=".json,application/json" style="display:none;">
+					</label>
+					<span id="phase-badge" class="phase-badge">Stopped</span>
+				</div>
 			</div>
 
 			<div class="form-grid">
@@ -830,6 +927,99 @@
 				</div>
 			</div>
 
+			<!-- Collapsible: Gameplay, Physics & Combat Rules -->
+			<details id="adv-rules" class="adv-details">
+				<summary>
+					<span class="adv-summary-left">Gameplay, Physics &amp; Combat Rules</span>
+					<span id="adv-rules-meta" class="adv-summary-meta">Default physics · Jedi Master Force</span>
+				</summary>
+				<div class="adv-body">
+					<div class="form-grid" style="margin-top:8px;">
+						<div class="field">
+							<label for="cfg-maxforcerank">Max Force Mastery (g_maxForceRank)</label>
+							<select id="cfg-maxforcerank" data-latch="1">
+								<option value="0">0 — Initiate (0 pts)</option>
+								<option value="1">1 — Padawan (10 pts)</option>
+								<option value="2">2 — Apprentice (20 pts)</option>
+								<option value="3">3 — Jedi (30 pts)</option>
+								<option value="4">4 — Jedi Knight (40 pts)</option>
+								<option value="5">5 — Jedi Guardian (50 pts)</option>
+								<option value="6">6 — Jedi Sentinel (60 pts)</option>
+								<option value="7" selected>7 — Jedi Master (100 pts)</option>
+							</select>
+						</div>
+						<div class="field">
+							<label for="cfg-gravity">Gravity (g_gravity · default 800)</label>
+							<input id="cfg-gravity" type="number" min="50" max="2500" step="50" value="800" data-live-cvar="g_gravity">
+						</div>
+						<div class="field">
+							<label for="cfg-speed">Run Speed (g_speed · default 250)</label>
+							<input id="cfg-speed" type="number" min="100" max="1000" step="10" value="250" data-live-cvar="g_speed">
+						</div>
+						<div class="field">
+							<label for="cfg-knockback">Knockback (g_knockback · default 1000)</label>
+							<input id="cfg-knockback" type="number" min="0" max="5000" step="100" value="1000" data-live-cvar="g_knockback">
+						</div>
+						<div class="field">
+							<label for="cfg-forceregen">Force Regen Delay ms (lower = faster)</label>
+							<input id="cfg-forceregen" type="number" min="20" max="2000" step="20" value="200" data-live-cvar="g_forceRegenTime">
+						</div>
+						<div class="field">
+							<label for="cfg-saberdmg">Saber Damage Scale (default 1.0)</label>
+							<input id="cfg-saberdmg" type="number" min="0.1" max="5" step="0.1" value="1.0" data-live-cvar="g_saberDamageScale">
+						</div>
+					</div>
+					<div class="toggle-row" style="margin-top:10px;" id="rules-toggle-row">
+						<label class="toggle-chip" data-tip="Teammates can damage each other in team gametypes (g_friendlyFire)." title="Allow friendly fire (g_friendlyFire)"><input type="checkbox" id="rule-friendlyfire" data-rule-cvar="g_friendlyFire"> Friendly Fire</label>
+						<label class="toggle-chip" data-tip="Enables lightsaber dismemberment on fatal hits (g_dismember 100)." title="Enable dismemberment (g_dismember)"><input type="checkbox" id="rule-dismember" data-rule-cvar="g_dismember" data-on-val="100"> Dismemberment</label>
+						<label class="toggle-chip active" data-tip="Allows dramatic lightsaber locks when two blades clash (g_saberLocking)." title="Enable saber locking (g_saberLocking)"><input type="checkbox" id="rule-saberlock" checked data-rule-cvar="g_saberLocking"> Saber Locking</label>
+						<label class="toggle-chip" data-tip="Restricts Red team to Dark Side Force powers and Blue team to Light Side powers (g_forceBasedTeams · requires Restart Match)." title="Light vs Dark Force-based teams (g_forceBasedTeams)"><input type="checkbox" id="rule-forceteams" data-rule-cvar="g_forceBasedTeams"> Force-Based Teams</label>
+						<label class="toggle-chip active" data-tip="Allows players to call map/kick/gametype votes (g_allowVote)." title="Allow callvote (g_allowVote)"><input type="checkbox" id="rule-allowvote" checked data-rule-cvar="g_allowVote" data-on-val="-1"> Allow Callvote</label>
+						<label class="toggle-chip" data-tip="Automatically rotates to the next map when a match ends (g_autoMapCycle)." title="Auto map cycle (g_autoMapCycle)"><input type="checkbox" id="rule-automapcycle" data-rule-cvar="g_autoMapCycle"> Auto Map Cycle</label>
+						<label class="toggle-chip active" data-tip="Allows spawning NPCs via console commands (g_allowNPC)." title="Allow NPCs (g_allowNPC)"><input type="checkbox" id="rule-allownpc" checked data-rule-cvar="g_allowNPC"> Allow NPCs</label>
+					</div>
+				</div>
+			</details>
+
+			<!-- Collapsible: Allowed Weapons (g_weaponDisable) -->
+			<details id="adv-weapons" class="adv-details">
+				<summary>
+					<span class="adv-summary-left">Allowed Weapons (All Players)</span>
+					<span id="adv-weapons-meta" class="adv-summary-meta">All 15 enabled · g_weaponDisable 0</span>
+				</summary>
+				<div class="adv-body">
+					<div class="preset-bar">
+						<button type="button" class="preset-btn" data-wp-preset="all">All Weapons</button>
+						<button type="button" class="preset-btn" data-wp-preset="saber">Sabers Only</button>
+						<button type="button" class="preset-btn" data-wp-preset="blasters">Blasters Only</button>
+						<button type="button" class="preset-btn" data-wp-preset="noexplosives">No Explosives</button>
+						<button id="btn-apply-weapons" type="button" class="btn btn-primary btn-sm hidden" style="margin-left:auto;" title="Applies latched weapon/force cvars and restarts the match">Apply &amp; Restart Match</button>
+					</div>
+					<div id="weapons-toggle-list" class="toggle-row"></div>
+					<small class="field-hint" style="display:block; margin-top:8px;">Checked = allowed. Unchecked weapons are disabled via <code>g_weaponDisable</code> &amp; <code>g_duelWeaponDisable</code> (takes effect on Start Server or Restart Match).</small>
+				</div>
+			</details>
+
+			<!-- Collapsible: Allowed Force Powers (g_forcePowerDisable) -->
+			<details id="adv-force" class="adv-details">
+				<summary>
+					<span class="adv-summary-left">Allowed Force Powers (All Players)</span>
+					<span id="adv-force-meta" class="adv-summary-meta">All 18 enabled · g_forcePowerDisable 0</span>
+				</summary>
+				<div class="adv-body">
+					<div class="preset-bar">
+						<button type="button" class="preset-btn" data-fp-preset="all">All Force</button>
+						<button type="button" class="preset-btn" data-fp-preset="none">No Force</button>
+						<button type="button" class="preset-btn" data-fp-preset="duel">Duel Standard (Jump/Push/Pull/Saber)</button>
+						<button type="button" class="preset-btn" data-fp-preset="light">Light Side Only</button>
+						<button type="button" class="preset-btn" data-fp-preset="dark">Dark Side Only</button>
+						<button id="btn-apply-force" type="button" class="btn btn-primary btn-sm hidden" style="margin-left:auto;" title="Applies latched force power cvars and restarts the match">Apply &amp; Restart Match</button>
+					</div>
+					<div id="force-toggle-list" class="toggle-row"></div>
+					<small class="field-hint" style="display:block; margin-top:8px;">Checked = allowed. Unchecked powers are disabled via <code>g_forcePowerDisable</code> (takes effect on Start Server or Restart Match).</small>
+				</div>
+			</details>
+
 			<!-- JA++ Gameplay Toggles -->
 			<div id="japp-options" class="japp-box hidden">
 				<div class="japp-box-title">JA++ Server Gameplay Rules (hover for details · live-toggleable while running)</div>
@@ -856,6 +1046,29 @@
 					</div>
 				</div>
 				<div id="lua-plugin-list" class="toggle-row"></div>
+
+				<!-- Collapsible: Bot-Only Weapon & Force Restrictions (powered by bot_loadout Lua plugin) -->
+				<details id="adv-bot-rules" class="adv-details" style="margin-top:10px; background:rgba(255,255,255,0.75);">
+					<summary>
+						<span class="adv-summary-left">Bot-Only Weapon &amp; Force Restrictions (Humans Unaffected · Live)</span>
+						<span id="adv-bot-rules-meta" class="adv-summary-meta">Unrestricted</span>
+					</summary>
+					<div class="adv-body">
+						<div class="toggle-row" style="margin-top:8px;">
+							<label class="toggle-chip" data-tip="Drains Force mana to 0 for bots only (bot_noforce 1). Bots can still use sabers/weapons while humans keep full Force powers." title="Disable Force casting for bots only (bot_noforce)"><input type="checkbox" id="bot-rule-noforce"> Bots: No Force Powers</label>
+							<label class="toggle-chip" data-tip="Applies JA++ Mercenary mode to bots only (bot_merc_mode 1): strips all Force powers + Lightsaber and equips blasters, while humans remain full Jedi." title="Bots become blasters-only Mercenaries with zero Force (bot_merc_mode)"><input type="checkbox" id="bot-rule-merc"> Bots: Merc Mode (No Force + No Saber)</label>
+						</div>
+						<div class="preset-bar">
+							<span style="font-size:11px; font-weight:700; color:#4b5568;">Bot Weapons:</span>
+							<button type="button" class="preset-btn" data-botwp-preset="all">All</button>
+							<button type="button" class="preset-btn" data-botwp-preset="e11">E-11 Blaster Only</button>
+							<button type="button" class="preset-btn" data-botwp-preset="blasters">Blasters Only</button>
+							<button type="button" class="preset-btn" data-botwp-preset="saber">Sabers Only</button>
+						</div>
+						<div id="bot-weapons-toggle-list" class="toggle-row"></div>
+						<small class="field-hint" style="display:block; margin-top:8px;">Powered by the <code>bot_loadout</code> Lua plugin (auto-enabled when you set a restriction). Changes take effect immediately while running — humans are completely unaffected.</small>
+					</div>
+				</details>
 			</div>
 
 			<div id="asset-alert" class="alert-box">
@@ -1460,7 +1673,130 @@
 					'    end',
 					'end)'
 				].join('\n')
+			},
+			{
+				id: 'bot_loadout',
+				label: 'Bot Loadout Rules',
+				defaultOn: false,
+				tip: 'Restricts weapons and/or Force powers for BOTS ONLY while leaving humans completely unaffected. Cvars: bot_merc_mode, bot_noforce, bot_weapondisable.',
+				code: [
+					'RegisterPlugin("Bot Loadout Rules", "1.0.0", "13.0.0")',
+					'local cvMerc    = CreateCvar("bot_merc_mode", "0", 0)',
+					'local cvNoForce = CreateCvar("bot_noforce", "0", 0)',
+					'local cvWpDis   = CreateCvar("bot_weapondisable", "0", 0)',
+					'local fallbackOrder = { 5, 4, 3, 6, 7, 8, 9, 10, 11, 15, 2, 1, 12, 13, 14 }',
+					'local lastTick = 0',
+					'local lastMask = -1',
+					'local function firstAllowedWeapon(mask)',
+					'    for _, w in ipairs(fallbackOrder) do',
+					'        if (mask & (1 << w)) == 0 then return w end',
+					'    end',
+					'    return 2',
+					'end',
+					'local function applyBotLoadout(p, fullStrip)',
+					'    if not p or not p.isBot or not p.isAlive then return end',
+					'    local mercOn = cvMerc:GetInteger() ~= 0',
+					'    local noForce = cvNoForce:GetInteger() ~= 0',
+					'    local mask = cvWpDis:GetInteger()',
+					'    local mercChanged = false',
+					'    if mercOn and not p.isMerc then',
+					'        p.isMerc = true',
+					'        mercChanged = true',
+					'    elseif (not mercOn) and p.isMerc then',
+					'        p.isMerc = false',
+					'        mercChanged = true',
+					'    end',
+					'    if noForce then p.force = 0 end',
+					'    if mask ~= 0 then',
+					'        if fullStrip or mercChanged then',
+					'            for w = 1, 16 do',
+					'                if (mask & (1 << w)) ~= 0 then p:Take("weapon", w) end',
+					'            end',
+					'            local cur = p.weapon or 0',
+					'            if cur <= 0 or (mask & (1 << cur)) ~= 0 then',
+					'                local fw = firstAllowedWeapon(mask)',
+					'                p:Give("weapon", fw)',
+					'                p:Give("ammo", -1, 0)',
+					'                p.weapon = fw',
+					'            end',
+					'        else',
+					'            local cur = p.weapon or 0',
+					'            if cur > 0 and (mask & (1 << cur)) ~= 0 then',
+					'                p:Take("weapon", cur)',
+					'                local nextCur = p.weapon or 0',
+					'                if nextCur <= 0 or (mask & (1 << nextCur)) ~= 0 then',
+					'                    local fw = firstAllowedWeapon(mask)',
+					'                    p:Give("weapon", fw)',
+					'                    p:Give("ammo", -1, 0)',
+					'                    p.weapon = fw',
+					'                end',
+					'            end',
+					'        end',
+					'    end',
+					'end',
+					'AddListener("JPLUA_EVENT_CLIENTSPAWN", function(player, firstSpawn)',
+					'    applyBotLoadout(player, true)',
+					'end)',
+					'AddListener("JPLUA_EVENT_RUNFRAME", function()',
+					'    local noForce = cvNoForce:GetInteger() ~= 0',
+					'    local mask = cvWpDis:GetInteger()',
+					'    local maskChanged = (mask ~= lastMask)',
+					'    local now = GetTime()',
+					'    if (not noForce) and (not maskChanged) and (now - lastTick < 250) then return end',
+					'    local doFull = maskChanged or (now - lastTick >= 250)',
+					'    if doFull then',
+					'        lastTick = now',
+					'        lastMask = mask',
+					'    end',
+					'    local players = GetPlayers() or {}',
+					'    for _, p in ipairs(players) do',
+					'        if p.isBot and p.isAlive then',
+					'            if noForce then p.force = 0 end',
+					'            if doFull then applyBotLoadout(p, maskChanged) end',
+					'        end',
+					'    end',
+					'end)'
+				].join('\n')
 			}
+		];
+
+		var JKA_WEAPONS = [
+			{ id: 1,  name: 'Stun Baton' },
+			{ id: 2,  name: 'Melee' },
+			{ id: 3,  name: 'Lightsaber' },
+			{ id: 4,  name: 'Bryar Pistol' },
+			{ id: 5,  name: 'E-11 Blaster' },
+			{ id: 6,  name: 'Disruptor' },
+			{ id: 7,  name: 'Bowcaster' },
+			{ id: 8,  name: 'Repeater' },
+			{ id: 9,  name: 'DEMP 2' },
+			{ id: 10, name: 'Flechette' },
+			{ id: 11, name: 'Rocket Launcher' },
+			{ id: 12, name: 'Thermal Detonator' },
+			{ id: 13, name: 'Trip Mines' },
+			{ id: 14, name: 'Det Packs' },
+			{ id: 15, name: 'Concussion Rifle' }
+		];
+
+		var JKA_FORCE_POWERS = [
+			{ id: 1,  name: 'Jump',          side: 'core' },
+			{ id: 2,  name: 'Speed',         side: 'core' },
+			{ id: 3,  name: 'Push',          side: 'core' },
+			{ id: 4,  name: 'Pull',          side: 'core' },
+			{ id: 14, name: 'Sense',         side: 'core' },
+			{ id: 15, name: 'Saber Offense', side: 'core' },
+			{ id: 16, name: 'Saber Defense', side: 'core' },
+			{ id: 17, name: 'Saber Throw',   side: 'core' },
+			{ id: 0,  name: 'Heal',          side: 'light' },
+			{ id: 5,  name: 'Mind Trick',    side: 'light' },
+			{ id: 9,  name: 'Protect',       side: 'light' },
+			{ id: 10, name: 'Absorb',        side: 'light' },
+			{ id: 11, name: 'Team Heal',     side: 'light' },
+			{ id: 6,  name: 'Grip',          side: 'dark' },
+			{ id: 7,  name: 'Lightning',     side: 'dark' },
+			{ id: 8,  name: 'Rage',          side: 'dark' },
+			{ id: 12, name: 'Team Energize', side: 'dark' },
+			{ id: 13, name: 'Drain',         side: 'dark' }
 		];
 
 		var customLuaPlugins = []; // { id, label, code, enabled }
@@ -1498,6 +1834,33 @@
 			cfgBots: document.getElementById('cfg-bots'),
 			cfgBotSkill: document.getElementById('cfg-botskill'),
 			cfgPassword: document.getElementById('cfg-password'),
+			btnExportCfg: document.getElementById('btn-export-cfg'),
+			cfgImportInput: document.getElementById('cfg-import-input'),
+			cfgIoMsg: document.getElementById('cfg-io-msg'),
+			cfgMaxForceRank: document.getElementById('cfg-maxforcerank'),
+			cfgGravity: document.getElementById('cfg-gravity'),
+			cfgSpeed: document.getElementById('cfg-speed'),
+			cfgKnockback: document.getElementById('cfg-knockback'),
+			cfgForceRegen: document.getElementById('cfg-forceregen'),
+			cfgSaberDmg: document.getElementById('cfg-saberdmg'),
+			ruleFriendlyFire: document.getElementById('rule-friendlyfire'),
+			ruleDismember: document.getElementById('rule-dismember'),
+			ruleSaberLock: document.getElementById('rule-saberlock'),
+			ruleForceTeams: document.getElementById('rule-forceteams'),
+			ruleAllowVote: document.getElementById('rule-allowvote'),
+			ruleAutoMapCycle: document.getElementById('rule-automapcycle'),
+			ruleAllowNpc: document.getElementById('rule-allownpc'),
+			advRulesMeta: document.getElementById('adv-rules-meta'),
+			advWeaponsMeta: document.getElementById('adv-weapons-meta'),
+			advForceMeta: document.getElementById('adv-force-meta'),
+			advBotRulesMeta: document.getElementById('adv-bot-rules-meta'),
+			weaponsToggleList: document.getElementById('weapons-toggle-list'),
+			forceToggleList: document.getElementById('force-toggle-list'),
+			botWeaponsToggleList: document.getElementById('bot-weapons-toggle-list'),
+			botRuleNoForce: document.getElementById('bot-rule-noforce'),
+			botRuleMerc: document.getElementById('bot-rule-merc'),
+			btnApplyWeapons: document.getElementById('btn-apply-weapons'),
+			btnApplyForce: document.getElementById('btn-apply-force'),
 			jappOptions: document.getElementById('japp-options'),
 			jappLuaBox: document.getElementById('japp-lua-box'),
 			luaPluginList: document.getElementById('lua-plugin-list'),
@@ -1597,12 +1960,269 @@
 			}
 		}
 
+		var weaponDisableMask = 0;
+		var forceDisableMask = 0;
+		var botWeaponDisableMask = 0;
+
 		function syncToggleChipStyles() {
-			var chips = els.jappOptions.querySelectorAll('.toggle-chip');
+			var chips = document.querySelectorAll('.toggle-chip');
 			for (var i = 0; i < chips.length; i++) {
 				var cb = chips[i].querySelector('input[type="checkbox"]');
-				chips[i].classList.toggle('active', !!(cb && cb.checked));
+				if (cb) chips[i].classList.toggle('active', !!cb.checked);
 			}
+		}
+
+		function showCfgIoMsg(text, isErr) {
+			if (!els.cfgIoMsg) return;
+			els.cfgIoMsg.textContent = text || '';
+			els.cfgIoMsg.classList.toggle('err', !!isErr);
+			if (text) {
+				clearTimeout(showCfgIoMsg._t);
+				showCfgIoMsg._t = setTimeout(function () { els.cfgIoMsg.textContent = ''; }, 4000);
+			}
+		}
+
+		function updateAdvancedSummaries() {
+			// Rules summary
+			var grav = parseInt(els.cfgGravity.value, 10) || 800;
+			var spd = parseInt(els.cfgSpeed.value, 10) || 250;
+			var rankOpt = els.cfgMaxForceRank.options[els.cfgMaxForceRank.selectedIndex];
+			var rankLbl = rankOpt ? rankOpt.textContent.replace(/^\d+\s+—\s+/, '').replace(/\s+\(.*\)$/, '') : 'Jedi Master';
+			var ruleBits = [];
+			if (grav !== 800) ruleBits.push('Grav ' + grav);
+			if (spd !== 250) ruleBits.push('Speed ' + spd);
+			if (els.ruleFriendlyFire.checked) ruleBits.push('FF On');
+			if (els.ruleDismember.checked) ruleBits.push('Dismember');
+			if (els.ruleForceTeams.checked) ruleBits.push('Force Teams');
+			els.advRulesMeta.textContent = (ruleBits.length ? ruleBits.join(' · ') + ' · ' : 'Default physics · ') + rankLbl + ' Force';
+
+			// Weapons summary
+			var wOn = 0;
+			for (var wi = 0; wi < JKA_WEAPONS.length; wi++) {
+				if ((weaponDisableMask & (1 << JKA_WEAPONS[wi].id)) === 0) wOn++;
+			}
+			els.advWeaponsMeta.textContent = (wOn === JKA_WEAPONS.length ? ('All ' + wOn + ' enabled') : (wOn + ' / ' + JKA_WEAPONS.length + ' enabled')) + ' · g_weaponDisable ' + weaponDisableMask;
+
+			// Force powers summary
+			var fOn = 0;
+			for (var fi = 0; fi < JKA_FORCE_POWERS.length; fi++) {
+				if ((forceDisableMask & (1 << JKA_FORCE_POWERS[fi].id)) === 0) fOn++;
+			}
+			els.advForceMeta.textContent = (fOn === JKA_FORCE_POWERS.length ? ('All ' + fOn + ' enabled') : (fOn === 0 ? 'All Force disabled' : (fOn + ' / ' + JKA_FORCE_POWERS.length + ' enabled'))) + ' · g_forcePowerDisable ' + forceDisableMask;
+
+			// Bot-only restrictions summary
+			var bParts = [];
+			if (els.botRuleMerc.checked) bParts.push('Merc Mode');
+			else if (els.botRuleNoForce.checked) bParts.push('No Force');
+			var bwOn = 0;
+			for (var bi = 0; bi < JKA_WEAPONS.length; bi++) {
+				if ((botWeaponDisableMask & (1 << JKA_WEAPONS[bi].id)) === 0) bwOn++;
+			}
+			if (bwOn < JKA_WEAPONS.length) bParts.push(bwOn + '/' + JKA_WEAPONS.length + ' weapons');
+			els.advBotRulesMeta.textContent = bParts.length ? bParts.join(' · ') : 'Unrestricted';
+		}
+
+		function renderWeaponChips() {
+			var html = '';
+			for (var i = 0; i < JKA_WEAPONS.length; i++) {
+				var w = JKA_WEAPONS[i];
+				var on = (weaponDisableMask & (1 << w.id)) === 0;
+				html += '<label class="toggle-chip' + (on ? ' active' : '') + '">' +
+					'<input type="checkbox" class="wp-toggle-cb" data-wp-id="' + w.id + '"' + (on ? ' checked' : '') + '> ' +
+					escapeHtml(w.name) + '</label>';
+			}
+			els.weaponsToggleList.innerHTML = html;
+			updateAdvancedSummaries();
+		}
+
+		function renderForceChips() {
+			var html = '';
+			for (var i = 0; i < JKA_FORCE_POWERS.length; i++) {
+				var fp = JKA_FORCE_POWERS[i];
+				var on = (forceDisableMask & (1 << fp.id)) === 0;
+				var tag = fp.side === 'light' ? ' <span class="fp-tag light">L</span>' : (fp.side === 'dark' ? ' <span class="fp-tag dark">D</span>' : '');
+				html += '<label class="toggle-chip' + (on ? ' active' : '') + '">' +
+					'<input type="checkbox" class="fp-toggle-cb" data-fp-id="' + fp.id + '"' + (on ? ' checked' : '') + '> ' +
+					escapeHtml(fp.name) + tag + '</label>';
+			}
+			els.forceToggleList.innerHTML = html;
+			updateAdvancedSummaries();
+		}
+
+		function renderBotWeaponChips() {
+			var html = '';
+			for (var i = 0; i < JKA_WEAPONS.length; i++) {
+				var w = JKA_WEAPONS[i];
+				var on = (botWeaponDisableMask & (1 << w.id)) === 0;
+				html += '<label class="toggle-chip' + (on ? ' active' : '') + '">' +
+					'<input type="checkbox" class="botwp-toggle-cb" data-wp-id="' + w.id + '"' + (on ? ' checked' : '') + '> ' +
+					escapeHtml(w.name) + '</label>';
+			}
+			els.botWeaponsToggleList.innerHTML = html;
+			updateAdvancedSummaries();
+		}
+
+		function collectRulesConfig() {
+			return {
+				maxForceRank: Math.max(0, Math.min(7, parseInt(els.cfgMaxForceRank.value, 10) || 0)),
+				gravity: Math.max(50, Math.min(2500, parseInt(els.cfgGravity.value, 10) || 800)),
+				speed: Math.max(100, Math.min(1000, parseInt(els.cfgSpeed.value, 10) || 250)),
+				knockback: Math.max(0, Math.min(5000, parseInt(els.cfgKnockback.value, 10) || 1000)),
+				forceRegenTime: Math.max(20, Math.min(2000, parseInt(els.cfgForceRegen.value, 10) || 200)),
+				saberDamageScale: Math.max(0.1, Math.min(5, parseFloat(els.cfgSaberDmg.value) || 1.0)),
+				friendlyFire: !!els.ruleFriendlyFire.checked,
+				dismember: !!els.ruleDismember.checked,
+				saberLocking: !!els.ruleSaberLock.checked,
+				forceBasedTeams: !!els.ruleForceTeams.checked,
+				allowVote: !!els.ruleAllowVote.checked,
+				autoMapCycle: !!els.ruleAutoMapCycle.checked,
+				allowNPC: !!els.ruleAllowNpc.checked,
+				weaponDisable: weaponDisableMask >>> 0,
+				forcePowerDisable: forceDisableMask >>> 0
+			};
+		}
+
+		function collectBotRulesConfig() {
+			return {
+				noForce: !!els.botRuleNoForce.checked,
+				mercMode: !!els.botRuleMerc.checked,
+				weaponDisable: botWeaponDisableMask >>> 0
+			};
+		}
+
+		function ensureBotLoadoutPluginEnabled() {
+			var hasBotRules = els.botRuleNoForce.checked || els.botRuleMerc.checked || botWeaponDisableMask !== 0;
+			if (hasBotRules && !builtinLuaEnabled.bot_loadout) {
+				builtinLuaEnabled.bot_loadout = true;
+				renderLuaPlugins();
+				if (running && worker) {
+					worker.postMessage({ type: 'lua_toggle', id: 'bot_loadout', enable: true, enabledList: getEnabledLuaIds() });
+				}
+			}
+		}
+
+		function collectFullConfigJson() {
+			return {
+				format: 'openjk-wasm-server-config',
+				version: 1,
+				hostname: els.cfgHostname.value.trim() || 'OpenJK Web Server',
+				mod: els.cfgMod.value.trim(),
+				gametype: parseInt(els.cfgGametype.value, 10) || 0,
+				map: els.cfgMap.value,
+				customMap: els.cfgCustomMap.value.trim(),
+				maxClients: Math.max(2, Math.min(32, parseInt(els.cfgMaxClients.value, 10) || 32)),
+				fraglimit: Math.max(0, parseInt(els.cfgFraglimit.value, 10) || 0),
+				timelimit: Math.max(0, parseInt(els.cfgTimelimit.value, 10) || 0),
+				botCount: Math.max(0, Math.min(12, parseInt(els.cfgBots.value, 10) || 0)),
+				botSkill: parseInt(els.cfgBotSkill.value, 10) || 2,
+				password: els.cfgPassword.value.trim(),
+				rules: collectRulesConfig(),
+				jappOpts: {
+					unlagged: document.getElementById('japp-unlagged').checked,
+					promode: document.getElementById('japp-promode').checked,
+					vq3: document.getElementById('japp-vq3').checked,
+					hook: document.getElementById('japp-hook').checked,
+					jetpack: document.getElementById('japp-jetpack').checked,
+					instagib: document.getElementById('japp-instagib').checked
+				},
+				botRules: collectBotRulesConfig(),
+				luaEnabled: getEnabledLuaIds(),
+				customLuaPlugins: customLuaPlugins.map(function (p) {
+					return { id: p.id, label: p.label, code: p.code, enabled: !!p.enabled };
+				})
+			};
+		}
+
+		function applyFullConfigJson(data) {
+			if (!data || typeof data !== 'object') throw new Error('Invalid JSON object');
+			if (typeof data.hostname === 'string') els.cfgHostname.value = data.hostname;
+			if (typeof data.mod === 'string') {
+				var matchedMod = false;
+				for (var mi = 0; mi < els.cfgMod.options.length; mi++) {
+					if (els.cfgMod.options[mi].value.toLowerCase() === data.mod.toLowerCase()) {
+						els.cfgMod.selectedIndex = mi;
+						matchedMod = true;
+						break;
+					}
+				}
+				if (!matchedMod) els.cfgMod.selectedIndex = 0;
+			}
+			if (data.gametype != null) els.cfgGametype.value = String(parseInt(data.gametype, 10) || 0);
+			if (typeof data.map === 'string' && els.cfgMap.querySelector('option[value="' + data.map.replace(/"/g, '') + '"]')) {
+				els.cfgMap.value = data.map;
+			}
+			if (typeof data.customMap === 'string') els.cfgCustomMap.value = data.customMap;
+			if (data.maxClients != null) els.cfgMaxClients.value = String(Math.max(2, Math.min(32, parseInt(data.maxClients, 10) || 32)));
+			if (data.fraglimit != null) els.cfgFraglimit.value = String(Math.max(0, parseInt(data.fraglimit, 10) || 0));
+			if (data.timelimit != null) els.cfgTimelimit.value = String(Math.max(0, parseInt(data.timelimit, 10) || 0));
+			if (data.botCount != null) els.cfgBots.value = String(Math.max(0, Math.min(12, parseInt(data.botCount, 10) || 0)));
+			if (data.botSkill != null) els.cfgBotSkill.value = String(Math.max(1, Math.min(5, parseInt(data.botSkill, 10) || 2)));
+			if (typeof data.password === 'string') els.cfgPassword.value = data.password;
+
+			if (data.rules && typeof data.rules === 'object') {
+				var r = data.rules;
+				if (r.maxForceRank != null) els.cfgMaxForceRank.value = String(Math.max(0, Math.min(7, parseInt(r.maxForceRank, 10) || 0)));
+				if (r.gravity != null) els.cfgGravity.value = String(r.gravity);
+				if (r.speed != null) els.cfgSpeed.value = String(r.speed);
+				if (r.knockback != null) els.cfgKnockback.value = String(r.knockback);
+				if (r.forceRegenTime != null) els.cfgForceRegen.value = String(r.forceRegenTime);
+				if (r.saberDamageScale != null) els.cfgSaberDmg.value = String(r.saberDamageScale);
+				if (r.friendlyFire != null) els.ruleFriendlyFire.checked = !!r.friendlyFire;
+				if (r.dismember != null) els.ruleDismember.checked = !!r.dismember;
+				if (r.saberLocking != null) els.ruleSaberLock.checked = !!r.saberLocking;
+				if (r.forceBasedTeams != null) els.ruleForceTeams.checked = !!r.forceBasedTeams;
+				if (r.allowVote != null) els.ruleAllowVote.checked = !!r.allowVote;
+				if (r.autoMapCycle != null) els.ruleAutoMapCycle.checked = !!r.autoMapCycle;
+				if (r.allowNPC != null) els.ruleAllowNpc.checked = !!r.allowNPC;
+				if (r.weaponDisable != null) weaponDisableMask = (parseInt(r.weaponDisable, 10) || 0) >>> 0;
+				if (r.forcePowerDisable != null) forceDisableMask = (parseInt(r.forcePowerDisable, 10) || 0) >>> 0;
+			}
+
+			if (data.jappOpts && typeof data.jappOpts === 'object') {
+				var jo = data.jappOpts;
+				if (jo.unlagged != null) document.getElementById('japp-unlagged').checked = !!jo.unlagged;
+				if (jo.promode != null) document.getElementById('japp-promode').checked = !!jo.promode;
+				if (jo.vq3 != null) document.getElementById('japp-vq3').checked = !!jo.vq3;
+				if (jo.hook != null) document.getElementById('japp-hook').checked = !!jo.hook;
+				if (jo.jetpack != null) document.getElementById('japp-jetpack').checked = !!jo.jetpack;
+				if (jo.instagib != null) document.getElementById('japp-instagib').checked = !!jo.instagib;
+			}
+
+			if (data.botRules && typeof data.botRules === 'object') {
+				var br = data.botRules;
+				els.botRuleNoForce.checked = !!br.noForce;
+				els.botRuleMerc.checked = !!br.mercMode;
+				botWeaponDisableMask = (parseInt(br.weaponDisable, 10) || 0) >>> 0;
+			}
+
+			if (Array.isArray(data.customLuaPlugins)) {
+				customLuaPlugins = [];
+				for (var ci = 0; ci < data.customLuaPlugins.length; ci++) {
+					var cp = data.customLuaPlugins[ci];
+					if (cp && cp.id && typeof cp.code === 'string') {
+						customLuaPlugins.push({ id: String(cp.id), label: String(cp.label || (cp.id + '.lua')), code: cp.code, enabled: cp.enabled !== false });
+					}
+				}
+			}
+
+			if (Array.isArray(data.luaEnabled)) {
+				var enSet = Object.create(null);
+				for (var li = 0; li < data.luaEnabled.length; li++) enSet[String(data.luaEnabled[li])] = true;
+				for (var bi = 0; bi < BUILTIN_LUA_PLUGINS.length; bi++) {
+					builtinLuaEnabled[BUILTIN_LUA_PLUGINS[bi].id] = !!enSet[BUILTIN_LUA_PLUGINS[bi].id];
+				}
+				for (var cj = 0; cj < customLuaPlugins.length; cj++) {
+					customLuaPlugins[cj].enabled = !!enSet[customLuaPlugins[cj].id];
+				}
+			}
+
+			updateModVisibility();
+			updateGametypeDesc();
+			renderWeaponChips();
+			renderForceChips();
+			renderBotWeaponChips();
+			renderLuaPlugins();
+			syncToggleChipStyles();
 		}
 
 		function updateModVisibility() {
@@ -1802,6 +2422,8 @@
 			els.btnStop.classList.add('hidden');
 			els.btnRestartMap.classList.add('hidden');
 			els.btnLuaReload.classList.add('hidden');
+			els.btnApplyWeapons.classList.add('hidden');
+			els.btnApplyForce.classList.add('hidden');
 			els.visorSub.textContent = 'Host a headless Jedi Academy server right from your browser — players on this site can join via Local/LAN or direct link.';
 			appendConsole('sys', '--- Dedicated server stopped ---');
 		}
@@ -1830,6 +2452,7 @@
 				password: els.cfgPassword.value.trim(),
 				pure: false,
 				svFps: 20,
+				rules: collectRulesConfig(),
 				jappOpts: {
 					unlagged: document.getElementById('japp-unlagged').checked,
 					promode: document.getElementById('japp-promode').checked,
@@ -1838,6 +2461,7 @@
 					jetpack: document.getElementById('japp-jetpack').checked,
 					instagib: document.getElementById('japp-instagib').checked
 				},
+				botRules: collectBotRulesConfig(),
 				luaPlugins: getAllLuaPluginsPayload(),
 				luaEnabled: getEnabledLuaIds(),
 				sessionBaseFiles: sessionBaseFiles
@@ -1845,6 +2469,8 @@
 
 			running = true;
 			setConfigLocked(true);
+			els.btnApplyWeapons.classList.remove('hidden');
+			els.btnApplyForce.classList.remove('hidden');
 			els.addbotSkill.value = String(config.botSkill);
 			els.liveGtSelect.value = String(config.gametype);
 			if (els.liveMapSelect.querySelector('option[value="' + startMap + '"]')) {
@@ -1955,6 +2581,10 @@
 				}
 			} catch (e) { }
 			renderLuaPlugins();
+			renderWeaponChips();
+			renderForceChips();
+			renderBotWeaponChips();
+			syncToggleChipStyles();
 
 			// Check if base assets are available (OPFS or hosted)
 			var hasAssets = false;
@@ -2137,9 +2767,211 @@
 		els.btnSaberOnly.addEventListener('click', function () {
 			saberOnlyOn = !saberOnlyOn;
 			els.btnSaberOnly.textContent = 'Sabers Only: ' + (saberOnlyOn ? 'On' : 'Off');
-			// 65531 disables all non-saber weapons (BaseJKA/JA++ standard bitmask)
-			execCmd('set g_weaponDisable ' + (saberOnlyOn ? '65531' : '0'));
+			// Bit 3 (8) is WP_SABER; disable all other weapon bits 1..15 (65526)
+			weaponDisableMask = saberOnlyOn ? 65526 : 0;
+			renderWeaponChips();
+			execCmd('set g_weaponDisable ' + weaponDisableMask);
+			execCmd('set g_duelWeaponDisable ' + weaponDisableMask);
+			execCmd('map_restart');
 		});
+
+		// Export / Import Server Config JSON
+		els.btnExportCfg.addEventListener('click', function () {
+			try {
+				var cfg = collectFullConfigJson();
+				var slug = (cfg.hostname || 'openjk-server').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'openjk-server';
+				var blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
+				var a = document.createElement('a');
+				a.href = URL.createObjectURL(blob);
+				a.download = slug + '-config.json';
+				document.body.appendChild(a);
+				a.click();
+				setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+				showCfgIoMsg('Exported ' + a.download, false);
+			} catch (err) {
+				showCfgIoMsg('Export failed: ' + err.message, true);
+			}
+		});
+
+		els.cfgImportInput.addEventListener('change', async function (ev) {
+			var f = ev.target.files && ev.target.files[0];
+			ev.target.value = '';
+			if (!f) return;
+			try {
+				var parsed = JSON.parse(await f.text());
+				applyFullConfigJson(parsed);
+				showCfgIoMsg('Loaded ' + f.name + (running ? ' (restart server to apply core settings)' : ''), false);
+			} catch (err) {
+				showCfgIoMsg('Invalid JSON: ' + err.message, true);
+			}
+		});
+
+		// Advanced Gameplay & Physics Rules listeners
+		var liveRuleInputs = document.querySelectorAll('#adv-rules [data-live-cvar]');
+		for (var ri = 0; ri < liveRuleInputs.length; ri++) {
+			liveRuleInputs[ri].addEventListener('change', function (ev) {
+				updateAdvancedSummaries();
+				if (running && worker) {
+					var cv = ev.target.getAttribute('data-live-cvar');
+					execCmd('set ' + cv + ' ' + ev.target.value);
+				}
+			});
+		}
+		els.cfgMaxForceRank.addEventListener('change', function () {
+			updateAdvancedSummaries();
+			if (running && worker) {
+				execCmd('set g_maxForceRank ' + els.cfgMaxForceRank.value);
+			}
+		});
+		var ruleToggleCbs = document.querySelectorAll('#rules-toggle-row input[data-rule-cvar]');
+		for (var rti = 0; rti < ruleToggleCbs.length; rti++) {
+			ruleToggleCbs[rti].addEventListener('change', function (ev) {
+				syncToggleChipStyles();
+				updateAdvancedSummaries();
+				if (running && worker) {
+					var cv = ev.target.getAttribute('data-rule-cvar');
+					var onVal = ev.target.getAttribute('data-on-val') || '1';
+					execCmd('set ' + cv + ' ' + (ev.target.checked ? onVal : '0'));
+				}
+			});
+		}
+
+		// Allowed Weapons (All Players) checkboxes & presets
+		els.weaponsToggleList.addEventListener('change', function (ev) {
+			var cb = ev.target.closest('.wp-toggle-cb');
+			if (!cb) return;
+			var id = parseInt(cb.getAttribute('data-wp-id'), 10);
+			if (cb.checked) weaponDisableMask &= ~(1 << id);
+			else weaponDisableMask |= (1 << id);
+			weaponDisableMask >>>= 0;
+			syncToggleChipStyles();
+			updateAdvancedSummaries();
+			if (running && worker) {
+				execCmd('set g_weaponDisable ' + weaponDisableMask);
+				execCmd('set g_duelWeaponDisable ' + weaponDisableMask);
+			}
+		});
+
+		var wpPresetBtns = document.querySelectorAll('[data-wp-preset]');
+		for (var wpi = 0; wpi < wpPresetBtns.length; wpi++) {
+			wpPresetBtns[wpi].addEventListener('click', function (ev) {
+				var preset = ev.currentTarget.getAttribute('data-wp-preset');
+				if (preset === 'all') {
+					weaponDisableMask = 0;
+				} else if (preset === 'saber') {
+					weaponDisableMask = 0;
+					for (var k = 0; k < JKA_WEAPONS.length; k++) {
+						if (JKA_WEAPONS[k].id !== 3) weaponDisableMask |= (1 << JKA_WEAPONS[k].id);
+					}
+				} else if (preset === 'blasters') {
+					weaponDisableMask = (1 << 3); // disable Lightsaber only
+				} else if (preset === 'noexplosives') {
+					weaponDisableMask = (1 << 11) | (1 << 12) | (1 << 13) | (1 << 14) | (1 << 15);
+				}
+				renderWeaponChips();
+				if (running && worker) {
+					execCmd('set g_weaponDisable ' + weaponDisableMask);
+					execCmd('set g_duelWeaponDisable ' + weaponDisableMask);
+				}
+			});
+		}
+
+		// Allowed Force Powers (All Players) checkboxes & presets
+		els.forceToggleList.addEventListener('change', function (ev) {
+			var cb = ev.target.closest('.fp-toggle-cb');
+			if (!cb) return;
+			var id = parseInt(cb.getAttribute('data-fp-id'), 10);
+			if (cb.checked) forceDisableMask &= ~(1 << id);
+			else forceDisableMask |= (1 << id);
+			forceDisableMask >>>= 0;
+			syncToggleChipStyles();
+			updateAdvancedSummaries();
+			if (running && worker) {
+				execCmd('set g_forcePowerDisable ' + forceDisableMask);
+			}
+		});
+
+		var fpPresetBtns = document.querySelectorAll('[data-fp-preset]');
+		for (var fpi = 0; fpi < fpPresetBtns.length; fpi++) {
+			fpPresetBtns[fpi].addEventListener('click', function (ev) {
+				var preset = ev.currentTarget.getAttribute('data-fp-preset');
+				forceDisableMask = 0;
+				if (preset === 'none') {
+					for (var k = 0; k < JKA_FORCE_POWERS.length; k++) forceDisableMask |= (1 << JKA_FORCE_POWERS[k].id);
+				} else if (preset === 'duel') {
+					var duelKeep = { 1: 1, 3: 1, 4: 1, 15: 1, 16: 1, 17: 1 };
+					for (var k = 0; k < JKA_FORCE_POWERS.length; k++) {
+						if (!duelKeep[JKA_FORCE_POWERS[k].id]) forceDisableMask |= (1 << JKA_FORCE_POWERS[k].id);
+					}
+				} else if (preset === 'light') {
+					for (var k = 0; k < JKA_FORCE_POWERS.length; k++) {
+						if (JKA_FORCE_POWERS[k].side === 'dark') forceDisableMask |= (1 << JKA_FORCE_POWERS[k].id);
+					}
+				} else if (preset === 'dark') {
+					for (var k = 0; k < JKA_FORCE_POWERS.length; k++) {
+						if (JKA_FORCE_POWERS[k].side === 'light') forceDisableMask |= (1 << JKA_FORCE_POWERS[k].id);
+					}
+				}
+				renderForceChips();
+				if (running && worker) {
+					execCmd('set g_forcePowerDisable ' + forceDisableMask);
+				}
+			});
+		}
+
+		function applyLatchedRulesAndRestart() {
+			if (!running || !worker) return;
+			execCmd('set g_weaponDisable ' + weaponDisableMask);
+			execCmd('set g_duelWeaponDisable ' + weaponDisableMask);
+			execCmd('set g_forcePowerDisable ' + forceDisableMask);
+			execCmd('set g_maxForceRank ' + els.cfgMaxForceRank.value);
+			execCmd('map_restart');
+		}
+		els.btnApplyWeapons.addEventListener('click', applyLatchedRulesAndRestart);
+		els.btnApplyForce.addEventListener('click', applyLatchedRulesAndRestart);
+
+		// Bot-Only Weapon & Force Restrictions (JA++ Lua bot_loadout)
+		function syncBotRulesLive() {
+			syncToggleChipStyles();
+			updateAdvancedSummaries();
+			ensureBotLoadoutPluginEnabled();
+			if (running && worker) {
+				execCmd('set bot_noforce ' + (els.botRuleNoForce.checked ? '1' : '0'));
+				execCmd('set bot_merc_mode ' + (els.botRuleMerc.checked ? '1' : '0'));
+				execCmd('set bot_weapondisable ' + botWeaponDisableMask);
+			}
+		}
+		els.botRuleNoForce.addEventListener('change', syncBotRulesLive);
+		els.botRuleMerc.addEventListener('change', syncBotRulesLive);
+		els.botWeaponsToggleList.addEventListener('change', function (ev) {
+			var cb = ev.target.closest('.botwp-toggle-cb');
+			if (!cb) return;
+			var id = parseInt(cb.getAttribute('data-wp-id'), 10);
+			if (cb.checked) botWeaponDisableMask &= ~(1 << id);
+			else botWeaponDisableMask |= (1 << id);
+			botWeaponDisableMask >>>= 0;
+			syncBotRulesLive();
+		});
+		var botWpPresetBtns = document.querySelectorAll('[data-botwp-preset]');
+		for (var bpi = 0; bpi < botWpPresetBtns.length; bpi++) {
+			botWpPresetBtns[bpi].addEventListener('click', function (ev) {
+				var preset = ev.currentTarget.getAttribute('data-botwp-preset');
+				botWeaponDisableMask = 0;
+				if (preset === 'e11') {
+					for (var k = 0; k < JKA_WEAPONS.length; k++) {
+						if (JKA_WEAPONS[k].id !== 5) botWeaponDisableMask |= (1 << JKA_WEAPONS[k].id);
+					}
+				} else if (preset === 'blasters') {
+					botWeaponDisableMask = (1 << 3);
+				} else if (preset === 'saber') {
+					for (var k = 0; k < JKA_WEAPONS.length; k++) {
+						if (JKA_WEAPONS[k].id !== 3) botWeaponDisableMask |= (1 << JKA_WEAPONS[k].id);
+					}
+				}
+				renderBotWeaponChips();
+				syncBotRulesLive();
+			});
+		}
 
 		els.btnSay.addEventListener('click', function () {
 			var txt = els.liveSayInput.value.trim();

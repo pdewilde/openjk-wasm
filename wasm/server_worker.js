@@ -573,6 +573,29 @@ function buildServerArgs(cfg) {
 	} else {
 		args.push('+set', 'g_needpass', '0', '+set', 'g_password', '');
 	}
+	if (cfg.rules && typeof cfg.rules === 'object') {
+		var r = cfg.rules;
+		if (r.gravity != null) args.push('+set', 'g_gravity', String(r.gravity));
+		if (r.speed != null) args.push('+set', 'g_speed', String(r.speed));
+		if (r.knockback != null) args.push('+set', 'g_knockback', String(r.knockback));
+		if (r.maxForceRank != null) args.push('+set', 'g_maxForceRank', String(r.maxForceRank));
+		if (r.forceRegenTime != null) args.push('+set', 'g_forceRegenTime', String(r.forceRegenTime));
+		if (r.saberDamageScale != null) args.push('+set', 'g_saberDamageScale', String(r.saberDamageScale));
+		if (r.friendlyFire != null) args.push('+set', 'g_friendlyFire', r.friendlyFire ? '1' : '0');
+		if (r.dismember != null) args.push('+set', 'g_dismember', r.dismember ? '100' : '0');
+		if (r.saberLocking != null) args.push('+set', 'g_saberLocking', r.saberLocking ? '1' : '0');
+		if (r.forceBasedTeams != null) args.push('+set', 'g_forceBasedTeams', r.forceBasedTeams ? '1' : '0');
+		if (r.allowVote != null) args.push('+set', 'g_allowVote', r.allowVote ? '-1' : '0');
+		if (r.autoMapCycle != null) args.push('+set', 'g_autoMapCycle', r.autoMapCycle ? '1' : '0');
+		if (r.allowNPC != null) args.push('+set', 'g_allowNPC', r.allowNPC ? '1' : '0');
+		if (r.weaponDisable != null) {
+			args.push('+set', 'g_weaponDisable', String(r.weaponDisable));
+			args.push('+set', 'g_duelWeaponDisable', String(r.weaponDisable));
+		}
+		if (r.forcePowerDisable != null) {
+			args.push('+set', 'g_forcePowerDisable', String(r.forcePowerDisable));
+		}
+	}
 	var modId = sanitizeModName(cfg.mod);
 	if (modId && modId.toLowerCase() !== 'base') {
 		args.push('+set', 'fs_game', modId);
@@ -587,6 +610,14 @@ function buildServerArgs(cfg) {
 			'+set', 'japp_instagib', jo.instagib ? '1' : '0',
 			'+set', 'japp_vq3physics', jo.vq3 ? '1' : '0'
 		);
+		if (cfg.botRules && typeof cfg.botRules === 'object') {
+			var br = cfg.botRules;
+			args.push(
+				'+set', 'bot_merc_mode', br.mercMode ? '1' : '0',
+				'+set', 'bot_noforce', br.noForce ? '1' : '0',
+				'+set', 'bot_weapondisable', String(br.weaponDisable || 0)
+			);
+		}
 		if (Array.isArray(cfg.luaEnabled)) {
 			args.push('+set', 'g_jpluaAutoload', cfg.luaEnabled.length > 0 ? cfg.luaEnabled.join(' ') : '0');
 		}

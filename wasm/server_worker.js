@@ -15,7 +15,13 @@ var autoBotsAdded = false;
 
 var DEFAULT_BOT_ROSTER = [
 	'Kyle Katarn', 'Luke Skywalker', 'Desann', 'Tavion', 'Alora', 'Reborn',
-	'Boba Fett', 'Stormtrooper', 'Shadowtrooper', 'Chewbacca', 'Jan Ors', 'Rosh Penin'
+	'Boba Fett', 'Stormtrooper', 'Shadowtrooper', 'Chewbacca', 'Jan Ors', 'Rosh Penin',
+	'Jedi', 'Jedi Trainer', 'Galak Fyarr', 'Reborn Master', 'New Reborn', 'Reborn Twin',
+	'Cultist', 'Snowtrooper', 'Swamptrooper', 'TIE Pilot', 'Imperial Officer',
+	'Imperial Saboteur', 'Imperial Worker', 'Lannik Racto', 'Rax Joris', 'Mercenary',
+	'Chiss', 'Gran', 'Noghri', 'Reelo', 'Rodian', 'Trandoshan', 'Tusken Raider',
+	'Weequay', 'Bespin Cop', 'Mon Mothma', 'Morgan Katarn', 'Prisoner', 'Rebel',
+	'Rebel Pilot', 'Ugnaught'
 ];
 
 function postLog(level, text) {

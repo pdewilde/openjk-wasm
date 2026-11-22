@@ -976,18 +976,55 @@
 
 			<div class="control-row">
 				<select id="addbot-char">
-					<option value="Kyle Katarn">Kyle Katarn</option>
-					<option value="Luke Skywalker">Luke Skywalker</option>
-					<option value="Desann">Desann</option>
-					<option value="Tavion">Tavion</option>
-					<option value="Alora">Alora</option>
-					<option value="Reborn">Reborn</option>
-					<option value="Boba Fett">Boba Fett</option>
-					<option value="Stormtrooper">Stormtrooper</option>
-					<option value="Shadowtrooper">Shadowtrooper</option>
-					<option value="Chewbacca">Chewbacca</option>
-					<option value="Jan Ors">Jan Ors</option>
-					<option value="Rosh Penin">Rosh Penin</option>
+					<optgroup label="Light Side">
+						<option value="Kyle Katarn">Kyle Katarn</option>
+						<option value="Luke Skywalker">Luke Skywalker</option>
+						<option value="Jedi">Jedi</option>
+						<option value="Jedi Trainer">Jedi Trainer</option>
+						<option value="Chewbacca">Chewbacca</option>
+						<option value="Jan Ors">Jan Ors</option>
+						<option value="Mon Mothma">Mon Mothma</option>
+						<option value="Morgan Katarn">Morgan Katarn</option>
+						<option value="Rosh Penin">Rosh Penin</option>
+						<option value="Rebel">Rebel</option>
+						<option value="Rebel Pilot">Rebel Pilot</option>
+						<option value="Bespin Cop">Bespin Cop</option>
+						<option value="Prisoner">Prisoner</option>
+						<option value="Ugnaught">Ugnaught</option>
+					</optgroup>
+					<optgroup label="Dark Side">
+						<option value="Desann">Desann</option>
+						<option value="Tavion">Tavion</option>
+						<option value="Alora">Alora</option>
+						<option value="Galak Fyarr">Galak Fyarr</option>
+						<option value="Reborn">Reborn</option>
+						<option value="New Reborn">New Reborn</option>
+						<option value="Reborn Master">Reborn Master</option>
+						<option value="Reborn Twin">Reborn Twin</option>
+						<option value="Cultist">Cultist</option>
+						<option value="Shadowtrooper">Shadowtrooper</option>
+						<option value="Stormtrooper">Stormtrooper</option>
+						<option value="Snowtrooper">Snowtrooper</option>
+						<option value="Swamptrooper">Swamptrooper</option>
+						<option value="TIE Pilot">TIE Pilot</option>
+						<option value="Imperial Officer">Imperial Officer</option>
+						<option value="Imperial Saboteur">Imperial Saboteur</option>
+						<option value="Imperial Worker">Imperial Worker</option>
+						<option value="Lannik Racto">Lannik Racto</option>
+						<option value="Rax Joris">Rax Joris</option>
+					</optgroup>
+					<optgroup label="Mercenaries &amp; Neutrals">
+						<option value="Boba Fett">Boba Fett</option>
+						<option value="Mercenary">Mercenary</option>
+						<option value="Chiss">Chiss</option>
+						<option value="Gran">Gran</option>
+						<option value="Noghri">Noghri</option>
+						<option value="Reelo">Reelo</option>
+						<option value="Rodian">Rodian</option>
+						<option value="Trandoshan">Trandoshan</option>
+						<option value="Tusken Raider">Tusken Raider</option>
+						<option value="Weequay">Weequay</option>
+					</optgroup>
 				</select>
 				<select id="addbot-skill">
 					<option value="1">1 — Padawan</option>
@@ -1201,7 +1238,7 @@
 					'local cvMinSkill = CreateCvar("autobot_minskill", "1", 0)',
 					'local cvMaxSkill = CreateCvar("autobot_maxskill", "5", 0)',
 					'local cvStartSk  = CreateCvar("autobot_startskill", "2", 0)',
-					'local roster = { "Kyle Katarn", "Luke Skywalker", "Desann", "Tavion", "Alora", "Reborn", "Boba Fett", "Stormtrooper", "Shadowtrooper", "Chewbacca", "Jan Ors", "Rosh Penin" }',
+					'local roster = { "Kyle Katarn", "Luke Skywalker", "Desann", "Tavion", "Alora", "Reborn", "Boba Fett", "Stormtrooper", "Shadowtrooper", "Chewbacca", "Jan Ors", "Rosh Penin", "Jedi", "Jedi Trainer", "Galak Fyarr", "Reborn Master", "New Reborn", "Reborn Twin", "Cultist", "Snowtrooper", "Swamptrooper", "TIE Pilot", "Imperial Officer", "Imperial Saboteur", "Imperial Worker", "Lannik Racto", "Rax Joris", "Mercenary", "Chiss", "Gran", "Noghri", "Reelo", "Rodian", "Trandoshan", "Tusken Raider", "Weequay", "Bespin Cop", "Mon Mothma", "Morgan Katarn", "Prisoner", "Rebel", "Rebel Pilot", "Ugnaught" }',
 					'local skillNames = { [1] = "Padawan", [2] = "Jedi", [3] = "Jedi Knight", [4] = "Jedi Master", [5] = "Nightmare" }',
 					'local botSkills = {}',
 					'local pendingSpawns = {}',

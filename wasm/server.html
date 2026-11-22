@@ -283,6 +283,25 @@
 			color: #364054;
 			letter-spacing: 0.03em;
 		}
+		.field-hint {
+			font-size: 11.5px;
+			line-height: 1.35;
+			color: var(--ink-muted);
+			margin-top: 2px;
+		}
+		.lua-chip-del {
+			margin-left: 2px;
+			border: none;
+			background: transparent;
+			color: inherit;
+			opacity: 0.7;
+			font-weight: 800;
+			cursor: pointer;
+			padding: 0 2px;
+			font-size: 13px;
+			line-height: 1;
+		}
+		.lua-chip-del:hover { opacity: 1; color: #ef4444; }
 		.field input,
 		.field select {
 			width: 100%;
@@ -725,16 +744,17 @@
 				<div class="field">
 					<label for="cfg-gametype">Gametype</label>
 					<select id="cfg-gametype">
-						<option value="0" selected>Free For All (FFA)</option>
-						<option value="3">Duel (1v1)</option>
-						<option value="4">Power Duel (2v1)</option>
-						<option value="6">Team FFA</option>
-						<option value="7">Siege</option>
-						<option value="8">Capture The Flag (CTF)</option>
-						<option value="9">Capture The Ysalamiri (CTY)</option>
-						<option value="1">Holocron FFA</option>
-						<option value="2">Jedi Master</option>
+						<option value="0" selected title="Everyone for themselves — first player to reach the frag limit wins.">Free For All (FFA)</option>
+						<option value="3" title="Tournament 1v1 lightsaber duels — winner stays in the arena while others spectate in queue.">Duel (1v1)</option>
+						<option value="4" title="2v1 tournament — one supercharged Lone Jedi (extra health &amp; Force) fights two challengers at once.">Power Duel (2v1)</option>
+						<option value="6" title="Red vs. Blue team deathmatch — highest combined team frags wins.">Team FFA</option>
+						<option value="7" title="Class-based objective mode (Infantry, Heavy, Tech, Scout, Sniper, Jedi) on Siege maps.">Siege</option>
+						<option value="8" title="Red vs. Blue — steal the enemy flag and return it to your base while defending yours.">Capture The Flag (CTF)</option>
+						<option value="9" title="CTF twist where carrying the enemy Ysalamiri disables your Force powers.">Capture The Ysalamiri (CTY)</option>
+						<option value="1" title="Free For All where Force powers are collected from Holocrons scattered around the map.">Holocron FFA</option>
+						<option value="2" title="Only one lightsaber exists on the map — pick it up to become the Jedi Master while everyone else hunts you with blasters.">Jedi Master</option>
 					</select>
+					<small id="cfg-gt-desc" class="field-hint">Everyone for themselves — first player to reach the frag limit wins.</small>
 				</div>
 				<div class="field">
 					<label for="cfg-map">Starting Map</label>
@@ -823,6 +843,21 @@
 				</div>
 			</div>
 
+			<!-- JA++ Server Lua Plugins -->
+			<div id="japp-lua-box" class="japp-box hidden">
+				<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:9px;">
+					<div class="japp-box-title" style="margin:0;">JA++ Server Lua Plugins (hover for details · hot-reloadable)</div>
+					<div style="display:flex; gap:6px; align-items:center;">
+						<label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+							+ Upload .lua Script
+							<input id="lua-upload-input" type="file" accept=".lua" multiple style="display:none;">
+						</label>
+						<button id="btn-lua-reload" class="btn btn-secondary btn-sm hidden" type="button" title="Reload all server Lua plugins without restarting the match (lua_reload)">Reload Lua</button>
+					</div>
+				</div>
+				<div id="lua-plugin-list" class="toggle-row"></div>
+			</div>
+
 			<div id="asset-alert" class="alert-box">
 				<strong>Game files needed:</strong> No cached Jedi Academy <code>assets0–3.pk3</code> files were found in this browser.
 				<div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
@@ -865,15 +900,15 @@
 			<!-- Live Gametype, Map & Rules Controls -->
 			<div class="control-row">
 				<select id="live-gt-select" title="Choose gametype to switch to">
-					<option value="0">Free For All (FFA)</option>
-					<option value="3">Duel (1v1)</option>
-					<option value="4">Power Duel (2v1)</option>
-					<option value="6">Team FFA</option>
-					<option value="7">Siege</option>
-					<option value="8">Capture The Flag (CTF)</option>
-					<option value="9">Capture The Ysalamiri (CTY)</option>
-					<option value="1">Holocron FFA</option>
-					<option value="2">Jedi Master</option>
+					<option value="0" title="Everyone for themselves — first player to reach the frag limit wins.">Free For All (FFA)</option>
+					<option value="3" title="Tournament 1v1 lightsaber duels — winner stays in the arena while others spectate in queue.">Duel (1v1)</option>
+					<option value="4" title="2v1 tournament — one supercharged Lone Jedi fights two challengers at once.">Power Duel (2v1)</option>
+					<option value="6" title="Red vs. Blue team deathmatch — highest combined team frags wins.">Team FFA</option>
+					<option value="7" title="Class-based objective mode on Siege maps (Hoth, Korriban, Desert).">Siege</option>
+					<option value="8" title="Red vs. Blue — steal the enemy flag and return it to your base.">Capture The Flag (CTF)</option>
+					<option value="9" title="CTF twist where carrying the enemy Ysalamiri disables your Force powers.">Capture The Ysalamiri (CTY)</option>
+					<option value="1" title="Free For All where Force powers are collected from Holocrons on the map.">Holocron FFA</option>
+					<option value="2" title="Only one lightsaber exists on the map — become the Jedi Master while others hunt you with blasters.">Jedi Master</option>
 				</select>
 				<button id="btn-change-gt" class="btn btn-secondary btn-sm" type="button" title="Switches g_gametype and loads the selected map">Change Gametype</button>
 				<select id="live-map-select" class="grow" title="Choose map to load">
@@ -1010,6 +1045,139 @@
 			4: 'Power Duel', 6: 'Team FFA', 7: 'Siege', 8: 'CTF', 9: 'CTY'
 		};
 
+		var GAMETYPE_DESCS = {
+			0: 'Everyone for themselves — first player to reach the frag limit wins.',
+			1: 'Free For All where Force powers must be collected from glowing Holocrons scattered around the map.',
+			2: 'Only one lightsaber exists on the map — pick it up to become the Jedi Master (with full Force) while everyone else hunts you with blasters.',
+			3: 'Tournament-style 1-on-1 lightsaber duels; winner stays in the arena while others spectate in queue.',
+			4: '2-vs-1 tournament — one supercharged Lone Jedi (extra health & Force) fights two challengers at once.',
+			6: 'Red vs. Blue team deathmatch — highest combined team frags wins.',
+			7: 'Class-based objective mode (Infantry, Heavy, Tech, Scout, Sniper, Jedi) with attackers vs. defenders on Siege maps.',
+			8: 'Red vs. Blue — steal the enemy flag and return it to your base while defending your own flag.',
+			9: 'CTF twist where carrying the enemy Ysalamiri disables your Force powers, forcing pure saber/gunplay and teamwork.'
+		};
+
+		// Clean-room ready-made JA++ server Lua plugins (written strictly from GPLv2 C++ bindings)
+		var BUILTIN_LUA_PLUGINS = [
+			{
+				id: 'killstreaks',
+				label: 'Killstreaks',
+				defaultOn: true,
+				tip: 'Announces 3/5/7/10/15-kill streaks and streak shutdowns in server chat.',
+				code: [
+					'RegisterPlugin("Killstreaks", "1.0.0", "13.0.0")',
+					'local streaks = {}',
+					'local tiers = { [3] = "^2is on a Killing Spree! (3)", [5] = "^3is Dominating! (5)", [7] = "^1is on a Rampage! (7)", [10] = "^6is Unstoppable! (10)", [15] = "^5is a Jedi Master! (15)" }',
+					'AddListener("JPLUA_EVENT_PLAYERDEATH", function(victim, mod, attacker)',
+					'    local vid = victim and victim.id or nil',
+					'    local aid = attacker and attacker.id or nil',
+					'    if vid ~= nil then',
+					'        local old = streaks[vid] or 0',
+					'        if old >= 3 and attacker and aid ~= vid then',
+					'            SendReliableCommand(-1, string.format(\'print "^7%s ^3ended %s^3\\\'s %d-kill streak!\\n"\', attacker.name, victim.name, old))',
+					'        end',
+					'        streaks[vid] = 0',
+					'    end',
+					'    if attacker and aid ~= nil and aid ~= vid then',
+					'        streaks[aid] = (streaks[aid] or 0) + 1',
+					'        local msg = tiers[streaks[aid]]',
+					'        if msg then',
+					'            SendReliableCommand(-1, string.format(\'print "^7%s %s^7\\n"\', attacker.name, msg))',
+					'        end',
+					'    end',
+					'end)',
+					'AddListener("JPLUA_EVENT_CLIENTDISCONNECT", function(player)',
+					'    if player and player.id ~= nil then streaks[player.id] = nil end',
+					'end)'
+				].join('\n')
+			},
+			{
+				id: 'vampire',
+				label: 'Vampire (Heal on Kill)',
+				defaultOn: false,
+				tip: 'Restores +25 Health (up to 125) and +25 Force energy to the attacker on every kill.',
+				code: [
+					'RegisterPlugin("Vampire Heal on Kill", "1.0.0", "13.0.0")',
+					'AddListener("JPLUA_EVENT_PLAYERDEATH", function(victim, mod, attacker)',
+					'    if not attacker or (victim and attacker.id == victim.id) then return end',
+					'    if not attacker.isAlive then return end',
+					'    local hp = (attacker.health or 100) + 25',
+					'    if hp > 125 then hp = 125 end',
+					'    attacker.health = hp',
+					'    local fp = (attacker.force or 100) + 25',
+					'    if fp > 100 then fp = 100 end',
+					'    attacker.force = fp',
+					'end)'
+				].join('\n')
+			},
+			{
+				id: 'welcome',
+				label: 'Welcome Banner',
+				defaultOn: true,
+				tip: 'Shows a center-screen welcome banner with server name and current map when human players join.',
+				code: [
+					'RegisterPlugin("Welcome Banner", "1.0.0", "13.0.0")',
+					'AddListener("JPLUA_EVENT_CLIENTBEGIN", function(player)',
+					'    if not player or player.isBot then return end',
+					'    local hostCvar = GetCvar("sv_hostname")',
+					'    local host = hostCvar and hostCvar:GetString() or "OpenJK Web Server"',
+					'    local map = GetMap() or ""',
+					'    SendReliableCommand(player.id, string.format(\'cp "^5Welcome to ^7%s\\n^7Map: ^2%s"\', host, map))',
+					'end)'
+				].join('\n')
+			},
+			{
+				id: 'stats_db',
+				label: 'SQLite Stats (/stats)',
+				defaultOn: false,
+				tip: 'Persists player kills & deaths in SQLite (player_stats.db) across matches; adds /stats client command and stats_top server command.',
+				code: [
+					'RegisterPlugin("SQLite Player Stats", "1.0.0", "13.0.0")',
+					'local db = ConnectToDB(DBType.SQLITE, "player_stats.db")',
+					'if db then',
+					'    db:Query("CREATE TABLE IF NOT EXISTS stats (name TEXT PRIMARY KEY, kills INTEGER DEFAULT 0, deaths INTEGER DEFAULT 0)")',
+					'end',
+					'local function esc(s) return tostring(s or ""):gsub("\'", "\'\'") end',
+					'AddListener("JPLUA_EVENT_PLAYERDEATH", function(victim, mod, attacker)',
+					'    if not db then return end',
+					'    if victim and victim.name then',
+					'        local vn = esc(victim.name)',
+					'        db:Query("INSERT OR IGNORE INTO stats(name,kills,deaths) VALUES(\'" .. vn .. "\',0,0)")',
+					'        db:Query("UPDATE stats SET deaths = deaths + 1 WHERE name = \'" .. vn .. "\'")',
+					'    end',
+					'    if attacker and attacker.name and (not victim or attacker.id ~= victim.id) then',
+					'        local an = esc(attacker.name)',
+					'        db:Query("INSERT OR IGNORE INTO stats(name,kills,deaths) VALUES(\'" .. an .. "\',0,0)")',
+					'        db:Query("UPDATE stats SET kills = kills + 1 WHERE name = \'" .. an .. "\'")',
+					'    end',
+					'end)',
+					'AddClientCommand("stats", function(player, args)',
+					'    if not db or not player then return end',
+					'    local rows = db:Query("SELECT kills, deaths FROM stats WHERE name = \'" .. esc(player.name) .. "\'")',
+					'    local k, d = 0, 0',
+					'    if rows and rows[1] then k = rows[1].kills or 0; d = rows[1].deaths or 0 end',
+					'    SendReliableCommand(player.id, string.format(\'print "^5[Stats]^7 %s: ^2%d kills^7 / ^1%d deaths^7\\n"\', player.name, k, d))',
+					'end)',
+					'AddServerCommand("stats_top", function(args)',
+					'    if not db then print("SQLite DB unavailable\\n") return end',
+					'    local rows = db:Query("SELECT name, kills, deaths FROM stats ORDER BY kills DESC LIMIT 10")',
+					'    print("^5--- Top SQLite Player Stats ---^7\\n")',
+					'    if rows then',
+					'        for i, r in ipairs(rows) do',
+					'            print(string.format("  %d. %s — %d kills / %d deaths\\n", i, tostring(r.name), r.kills or 0, r.deaths or 0))',
+					'        end',
+					'    end',
+					'end)'
+				].join('\n')
+			}
+		];
+
+		var customLuaPlugins = []; // { id, label, code, enabled }
+		var builtinLuaEnabled = {};
+		for (var _bi = 0; _bi < BUILTIN_LUA_PLUGINS.length; _bi++) {
+			builtinLuaEnabled[BUILTIN_LUA_PLUGINS[_bi].id] = BUILTIN_LUA_PLUGINS[_bi].defaultOn;
+		}
+
 		var worker = null;
 		var running = false;
 		var currentVip = '';
@@ -1030,6 +1198,7 @@
 			cfgHostname: document.getElementById('cfg-hostname'),
 			cfgMod: document.getElementById('cfg-mod'),
 			cfgGametype: document.getElementById('cfg-gametype'),
+			cfgGtDesc: document.getElementById('cfg-gt-desc'),
 			cfgMap: document.getElementById('cfg-map'),
 			cfgCustomMap: document.getElementById('cfg-custom-map'),
 			cfgMaxClients: document.getElementById('cfg-maxclients'),
@@ -1039,6 +1208,10 @@
 			cfgBotSkill: document.getElementById('cfg-botskill'),
 			cfgPassword: document.getElementById('cfg-password'),
 			jappOptions: document.getElementById('japp-options'),
+			jappLuaBox: document.getElementById('japp-lua-box'),
+			luaPluginList: document.getElementById('lua-plugin-list'),
+			luaUploadInput: document.getElementById('lua-upload-input'),
+			btnLuaReload: document.getElementById('btn-lua-reload'),
 			assetAlert: document.getElementById('asset-alert'),
 			inlinePk3Input: document.getElementById('inline-pk3-input'),
 			inlinePk3Status: document.getElementById('inline-pk3-status'),
@@ -1144,7 +1317,60 @@
 		function updateModVisibility() {
 			var isJapp = els.cfgMod.value.toLowerCase() === 'japp';
 			els.jappOptions.classList.toggle('hidden', !isJapp);
+			els.jappLuaBox.classList.toggle('hidden', !isJapp);
 			syncToggleChipStyles();
+		}
+
+		function updateGametypeDesc() {
+			var gt = parseInt(els.cfgGametype.value, 10) || 0;
+			var desc = GAMETYPE_DESCS[gt] || '';
+			if (els.cfgGtDesc) els.cfgGtDesc.textContent = desc;
+			els.cfgGametype.title = desc;
+		}
+
+		function getEnabledLuaIds() {
+			var out = [];
+			for (var i = 0; i < BUILTIN_LUA_PLUGINS.length; i++) {
+				var p = BUILTIN_LUA_PLUGINS[i];
+				if (builtinLuaEnabled[p.id]) out.push(p.id);
+			}
+			for (var j = 0; j < customLuaPlugins.length; j++) {
+				if (customLuaPlugins[j].enabled) out.push(customLuaPlugins[j].id);
+			}
+			return out;
+		}
+
+		function getAllLuaPluginsPayload() {
+			var out = [];
+			for (var i = 0; i < BUILTIN_LUA_PLUGINS.length; i++) {
+				out.push({ id: BUILTIN_LUA_PLUGINS[i].id, code: BUILTIN_LUA_PLUGINS[i].code });
+			}
+			for (var j = 0; j < customLuaPlugins.length; j++) {
+				out.push({ id: customLuaPlugins[j].id, code: customLuaPlugins[j].code });
+			}
+			return out;
+		}
+
+		function renderLuaPlugins() {
+			var html = '';
+			for (var i = 0; i < BUILTIN_LUA_PLUGINS.length; i++) {
+				var bp = BUILTIN_LUA_PLUGINS[i];
+				var on = !!builtinLuaEnabled[bp.id];
+				html += '<label class="toggle-chip' + (on ? ' active' : '') + '" data-tip="' + escapeHtml(bp.tip) + '" title="' + escapeHtml(bp.tip) + '">' +
+					'<input type="checkbox" class="lua-toggle-cb" data-lua-kind="builtin" data-lua-id="' + escapeHtml(bp.id) + '"' + (on ? ' checked' : '') + '> ' +
+					escapeHtml(bp.label) + '</label>';
+			}
+			for (var j = 0; j < customLuaPlugins.length; j++) {
+				var cp = customLuaPlugins[j];
+				var cOn = !!cp.enabled;
+				var cTip = 'Custom uploaded server Lua plugin (lua/sv/' + cp.id + '/plugin.lua).';
+				html += '<label class="toggle-chip' + (cOn ? ' active' : '') + '" data-tip="' + escapeHtml(cTip) + '" title="' + escapeHtml(cTip) + '">' +
+					'<input type="checkbox" class="lua-toggle-cb" data-lua-kind="custom" data-lua-id="' + escapeHtml(cp.id) + '"' + (cOn ? ' checked' : '') + '> ' +
+					escapeHtml(cp.label) +
+					'<button type="button" class="lua-chip-del" data-lua-del="' + escapeHtml(cp.id) + '" title="Remove script">&times;</button>' +
+					'</label>';
+			}
+			els.luaPluginList.innerHTML = html;
 		}
 
 		function setConfigLocked(locked) {
@@ -1229,6 +1455,10 @@
 			lastState = state;
 			els.statMap.textContent = state.mapname || '—';
 			els.statGt.textContent = GAMETYPE_NAMES[state.gametype] || ('GT ' + state.gametype);
+			if (els.statGt.parentElement) {
+				els.statGt.parentElement.title = GAMETYPE_DESCS[state.gametype] || '';
+			}
+			els.btnLuaReload.classList.toggle('hidden', !(state.japp && state.japp.active));
 			var players = state.players || [];
 			var bots = players.filter(function (p) { return p.isBot; }).length;
 			var humans = players.length - bots;
@@ -1280,6 +1510,7 @@
 			els.btnStart.classList.remove('hidden');
 			els.btnStop.classList.add('hidden');
 			els.btnRestartMap.classList.add('hidden');
+			els.btnLuaReload.classList.add('hidden');
 			els.visorSub.textContent = 'Host a headless Jedi Academy server right from your browser — players on this site can join via Local/LAN or direct link.';
 			appendConsole('sys', '--- Dedicated server stopped ---');
 		}
@@ -1316,6 +1547,8 @@
 					jetpack: document.getElementById('japp-jetpack').checked,
 					instagib: document.getElementById('japp-instagib').checked
 				},
+				luaPlugins: getAllLuaPluginsPayload(),
+				luaEnabled: getEnabledLuaIds(),
 				sessionBaseFiles: sessionBaseFiles
 			};
 
@@ -1407,6 +1640,30 @@
 				}
 			}
 			updateModVisibility();
+			updateGametypeDesc();
+
+			// Restore any previously uploaded custom server Lua scripts from OPFS
+			try {
+				if (navigator.storage && typeof navigator.storage.getDirectory === 'function') {
+					var svRoot = await navigator.storage.getDirectory();
+					var svDir = await svRoot.getDirectoryHandle('openjk-saves');
+					var jappDir = await svDir.getDirectoryHandle('japp');
+					var luaDir = await jappDir.getDirectoryHandle('lua');
+					var svLuaDir = await luaDir.getDirectoryHandle('sv');
+					var builtinSet = Object.create(null);
+					for (var bi = 0; bi < BUILTIN_LUA_PLUGINS.length; bi++) builtinSet[BUILTIN_LUA_PLUGINS[bi].id] = true;
+					for await (var entry of svLuaDir.entries()) {
+						var pName = entry[0];
+						if (entry[1].kind !== 'directory' || builtinSet[pName]) continue;
+						try {
+							var pfh = await entry[1].getFileHandle('plugin.lua');
+							var pText = await (await pfh.getFile()).text();
+							customLuaPlugins.push({ id: pName, label: pName + '.lua', code: pText, enabled: true });
+						} catch (e) { }
+					}
+				}
+			} catch (e) { }
+			renderLuaPlugins();
 
 			// Check if base assets are available (OPFS or hosted)
 			var hasAssets = false;
@@ -1431,9 +1688,93 @@
 
 		// Event listeners
 		els.cfgMod.addEventListener('change', updateModVisibility);
+		els.cfgGametype.addEventListener('change', updateGametypeDesc);
 		els.btnStart.addEventListener('click', startServer);
 		els.btnStop.addEventListener('click', stopServer);
 		els.btnRestartMap.addEventListener('click', function () { execCmd('map_restart'); });
+		els.btnLuaReload.addEventListener('click', function () { execCmd('lua_reload'); });
+
+		els.luaPluginList.addEventListener('change', function (ev) {
+			var cb = ev.target.closest('.lua-toggle-cb');
+			if (!cb) return;
+			var kind = cb.getAttribute('data-lua-kind');
+			var id = cb.getAttribute('data-lua-id');
+			var on = cb.checked;
+			if (kind === 'builtin') {
+				builtinLuaEnabled[id] = on;
+			} else {
+				for (var i = 0; i < customLuaPlugins.length; i++) {
+					if (customLuaPlugins[i].id === id) { customLuaPlugins[i].enabled = on; break; }
+				}
+			}
+			renderLuaPlugins();
+			if (running && worker) {
+				worker.postMessage({ type: 'lua_toggle', id: id, enable: on, enabledList: getEnabledLuaIds() });
+			}
+		});
+
+		els.luaPluginList.addEventListener('click', async function (ev) {
+			var delBtn = ev.target.closest('.lua-chip-del');
+			if (!delBtn) return;
+			ev.preventDefault();
+			ev.stopPropagation();
+			var id = delBtn.getAttribute('data-lua-del');
+			customLuaPlugins = customLuaPlugins.filter(function (p) { return p.id !== id; });
+			renderLuaPlugins();
+			if (running && worker) {
+				worker.postMessage({ type: 'lua_remove', id: id, enabledList: getEnabledLuaIds() });
+			} else {
+				try {
+					var r = await navigator.storage.getDirectory();
+					var d = await r.getDirectoryHandle('openjk-saves');
+					d = await d.getDirectoryHandle('japp');
+					d = await d.getDirectoryHandle('lua');
+					d = await d.getDirectoryHandle('sv');
+					await d.removeEntry(id, { recursive: true });
+				} catch (e) { }
+			}
+		});
+
+		els.luaUploadInput.addEventListener('change', async function (ev) {
+			var files = Array.prototype.slice.call(ev.target.files || []);
+			ev.target.value = '';
+			for (var i = 0; i < files.length; i++) {
+				var f = files[i];
+				var rawId = f.name.replace(/\.lua$/i, '').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/^_+|_+$/g, '') || ('plugin_' + Date.now());
+				var code = await f.text();
+				// Auto-add RegisterPlugin header if user uploaded a raw snippet without one
+				if (!/RegisterPlugin\s*\(/.test(code)) {
+					code = 'RegisterPlugin("' + rawId + '", "1.0.0", "13.0.0")\n' + code;
+				}
+				var existing = null;
+				for (var j = 0; j < customLuaPlugins.length; j++) {
+					if (customLuaPlugins[j].id === rawId) { existing = customLuaPlugins[j]; break; }
+				}
+				if (existing) {
+					existing.code = code;
+					existing.enabled = true;
+				} else {
+					customLuaPlugins.push({ id: rawId, label: f.name, code: code, enabled: true });
+				}
+				if (running && worker) {
+					worker.postMessage({ type: 'lua_install', id: rawId, code: code, enabledList: getEnabledLuaIds() });
+				} else {
+					try {
+						var r = await navigator.storage.getDirectory();
+						var d = await r.getDirectoryHandle('openjk-saves', { create: true });
+						d = await d.getDirectoryHandle('japp', { create: true });
+						d = await d.getDirectoryHandle('lua', { create: true });
+						d = await d.getDirectoryHandle('sv', { create: true });
+						d = await d.getDirectoryHandle(rawId, { create: true });
+						var fh = await d.getFileHandle('plugin.lua', { create: true });
+						var w = await fh.createWritable();
+						await w.write(code);
+						await w.close();
+					} catch (e) { }
+				}
+			}
+			renderLuaPlugins();
+		});
 
 		els.btnCopyLink.addEventListener('click', function () {
 			if (!currentVip) return;
@@ -1470,6 +1811,7 @@
 
 		els.liveGtSelect.addEventListener('change', function () {
 			var gt = parseInt(els.liveGtSelect.value, 10);
+			els.liveGtSelect.title = GAMETYPE_DESCS[gt] || '';
 			var curMap = els.liveMapSelect.value || '';
 			var needsSwitch =
 				((gt === 8 || gt === 9) && curMap.indexOf('mp/ctf') !== 0) ||

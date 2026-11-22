@@ -7,6 +7,8 @@
 //     or pause the server's tick loop or WebTransport connection.
 
 var workerStarted = false;
+var serverReadyForCommands = false;
+var pendingBootMessages = [];
 var statusTimer = null;
 var lastVipStr = '';
 var pendingAutoBots = 0;
@@ -629,6 +631,14 @@ function pollServerStatus() {
 						M.ccall('OpenJKDed_ExecCommand', null, ['string'], ['addbot "' + botName + '" ' + pendingBotSkill]);
 					}
 				}
+
+				// Replay any commands or Lua plugin toggles clicked while the server was still booting
+				if (!serverReadyForCommands && state.running && state.mapname) {
+					serverReadyForCommands = true;
+					while (pendingBootMessages.length > 0) {
+						handleLiveMessage(pendingBootMessages.shift());
+					}
+				}
 			}
 		} catch (e) { }
 	}
@@ -736,13 +746,11 @@ async function bootServer(cfg) {
 	}
 }
 
-self.onmessage = function (ev) {
-	var msg = ev.data || {};
-	if (msg.type === 'start') {
-		bootServer(msg.config || {});
-	} else if (msg.type === 'exec') {
-		var M = self.Module;
-		if (M && typeof M._OpenJKDed_ExecCommand === 'function' && msg.cmd) {
+function handleLiveMessage(msg) {
+	var M = self.Module;
+	if (!M || typeof M._OpenJKDed_ExecCommand !== 'function') return;
+	if (msg.type === 'exec') {
+		if (msg.cmd) {
 			M.ccall('OpenJKDed_ExecCommand', null, ['string'], [String(msg.cmd)]);
 			setTimeout(pollServerStatus, 120);
 		}
@@ -753,26 +761,23 @@ self.onmessage = function (ev) {
 			var pPath = '/saves/japp/lua/sv/' + pid + '/plugin.lua';
 			writeWasmFile(fs, pPath, new TextEncoder().encode(msg.code));
 			globalThis.__openjkOpfsSyncFile(pPath);
-			var M = self.Module;
-			if (M && typeof M._OpenJKDed_ExecCommand === 'function') {
-				if (Array.isArray(msg.enabledList)) {
-					var autoVal = msg.enabledList.length > 0 ? msg.enabledList.join(' ') : '0';
-					M.ccall('OpenJKDed_ExecCommand', null, ['string'], ['set g_jpluaAutoload "' + autoVal + '"']);
-				}
-				M.ccall('OpenJKDed_ExecCommand', null, ['string'], ['lua_reload']);
-				postLog('sys', 'Hot-loaded Lua plugin "' + pid + '" via lua_reload.');
+			if (Array.isArray(msg.enabledList)) {
+				var autoVal = msg.enabledList.length > 0 ? msg.enabledList.join(' ') : '0';
+				M.ccall('OpenJKDed_ExecCommand', null, ['string'], ['set g_jpluaAutoload "' + autoVal + '"']);
 			}
+			M.ccall('OpenJKDed_ExecCommand', null, ['string'], ['lua_reload']);
+			postLog('sys', 'Hot-loaded Lua plugin "' + pid + '" via lua_reload.');
 		}
 	} else if (msg.type === 'lua_toggle') {
 		var pidT = sanitizeModName(msg.id);
-		var MT = self.Module;
-		if (pidT && MT && typeof MT._OpenJKDed_ExecCommand === 'function') {
-			if (Array.isArray(msg.enabledList)) {
-				var autoValT = msg.enabledList.length > 0 ? msg.enabledList.join(' ') : '0';
-				MT.ccall('OpenJKDed_ExecCommand', null, ['string'], ['set g_jpluaAutoload "' + autoValT + '"']);
-			}
-			MT.ccall('OpenJKDed_ExecCommand', null, ['string'], [(msg.enable ? 'lua_enable ' : 'lua_disable ') + pidT]);
+		if (!pidT) return;
+		if (Array.isArray(msg.enabledList)) {
+			var autoValT = msg.enabledList.length > 0 ? msg.enabledList.join(' ') : '0';
+			M.ccall('OpenJKDed_ExecCommand', null, ['string'], ['set g_jpluaAutoload "' + autoValT + '"']);
 		}
+		var toggleCmd = (msg.enable ? 'lua_enable ' : 'lua_disable ') + pidT;
+		postLog('sys', '] ' + toggleCmd);
+		M.ccall('OpenJKDed_ExecCommand', null, ['string'], [toggleCmd]);
 	} else if (msg.type === 'lua_remove') {
 		var fsR = getWasmFs();
 		var pidR = sanitizeModName(msg.id);
@@ -780,15 +785,29 @@ self.onmessage = function (ev) {
 			var rPath = '/saves/japp/lua/sv/' + pidR + '/plugin.lua';
 			try { fsR.unlink(rPath); } catch (e) { }
 			globalThis.__openjkOpfsRemoveFile(rPath);
-			var MR = self.Module;
-			if (MR && typeof MR._OpenJKDed_ExecCommand === 'function') {
-				if (Array.isArray(msg.enabledList)) {
-					var autoValR = msg.enabledList.length > 0 ? msg.enabledList.join(' ') : '0';
-					MR.ccall('OpenJKDed_ExecCommand', null, ['string'], ['set g_jpluaAutoload "' + autoValR + '"']);
-				}
-				MR.ccall('OpenJKDed_ExecCommand', null, ['string'], ['lua_reload']);
-				postLog('sys', 'Removed Lua plugin "' + pidR + '" and reloaded JPLua.');
+			if (Array.isArray(msg.enabledList)) {
+				var autoValR = msg.enabledList.length > 0 ? msg.enabledList.join(' ') : '0';
+				M.ccall('OpenJKDed_ExecCommand', null, ['string'], ['set g_jpluaAutoload "' + autoValR + '"']);
 			}
+			M.ccall('OpenJKDed_ExecCommand', null, ['string'], ['lua_reload']);
+			postLog('sys', 'Removed Lua plugin "' + pidR + '" and reloaded JPLua.');
+		}
+	}
+}
+
+self.onmessage = function (ev) {
+	var msg = ev.data || {};
+	if (msg.type === 'start') {
+		bootServer(msg.config || {});
+	} else if (msg.type === 'exec' || msg.type === 'lua_install' || msg.type === 'lua_toggle' || msg.type === 'lua_remove') {
+		if (serverReadyForCommands) {
+			handleLiveMessage(msg);
+		} else {
+			pendingBootMessages.push(msg);
+			var desc = msg.type === 'lua_toggle'
+				? ((msg.enable ? 'lua_enable ' : 'lua_disable ') + sanitizeModName(msg.id))
+				: (msg.type === 'exec' ? String(msg.cmd || '') : (msg.type + ' ' + sanitizeModName(msg.id)));
+			postLog('sys', 'Queued ' + desc + ' (waiting for server boot)...');
 		}
 	} else if (msg.type === 'poll') {
 		pollServerStatus();

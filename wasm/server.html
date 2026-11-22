@@ -566,6 +566,37 @@
 			color: #166534;
 			text-transform: uppercase;
 		}
+		.team-select {
+			padding: 3px 7px;
+			border-radius: 999px;
+			border: 1.5px solid #cbd5e1;
+			font-size: 11.5px;
+			font-weight: 700;
+			font-family: inherit;
+			cursor: pointer;
+			background: #f8fafc;
+			color: #334155;
+		}
+		.team-select.team-red {
+			background: #fee2e2;
+			border-color: #f87171;
+			color: #991b1b;
+		}
+		.team-select.team-blue {
+			background: #dbeafe;
+			border-color: #60a5fa;
+			color: #1e40af;
+		}
+		.team-select.team-spec {
+			background: #f1f5f9;
+			border-color: #94a3b8;
+			color: #475569;
+		}
+		.team-select.team-free {
+			background: #ecfdf5;
+			border-color: #6ee7b7;
+			color: #065f46;
+		}
 		.empty-row {
 			text-align: center;
 			color: var(--ink-muted);
@@ -893,16 +924,17 @@
 				<table class="players-table">
 					<thead>
 						<tr>
-							<th style="width:42px;">ID</th>
+							<th style="width:38px;">ID</th>
 							<th>Player</th>
-							<th style="width:76px;">Type</th>
-							<th style="width:66px;">Score</th>
-							<th style="width:66px;">Ping</th>
-							<th style="width:230px;">Actions</th>
+							<th style="width:108px;">Team</th>
+							<th style="width:68px;">Type</th>
+							<th style="width:58px;">Score</th>
+							<th style="width:62px;">Ping</th>
+							<th style="width:225px;">Actions</th>
 						</tr>
 					</thead>
 					<tbody id="players-tbody">
-						<tr><td colspan="6" class="empty-row">No players connected yet.</td></tr>
+						<tr><td colspan="7" class="empty-row">No players connected yet.</td></tr>
 					</tbody>
 				</table>
 			</div>
@@ -929,8 +961,14 @@
 					<option value="4">4 — Jedi Master</option>
 					<option value="5">5 — Nightmare</option>
 				</select>
+				<select id="addbot-team" class="hidden" title="Team for newly spawned bot">
+					<option value="">Auto Team</option>
+					<option value="red">Red Team</option>
+					<option value="blue">Blue Team</option>
+				</select>
 				<button id="btn-add-bot" class="btn btn-secondary btn-sm" type="button">+ Add Bot</button>
 				<button id="btn-kick-bots" class="btn btn-secondary btn-sm" type="button">Kick All Bots</button>
+				<button id="btn-shuffle-teams" class="btn btn-secondary btn-sm hidden" type="button" title="Randomly rebalance teams (JA++ shuffle)">Shuffle Teams</button>
 			</div>
 
 			<!-- Live Server Console -->
@@ -1026,8 +1064,10 @@
 			playersTbody: document.getElementById('players-tbody'),
 			addbotChar: document.getElementById('addbot-char'),
 			addbotSkill: document.getElementById('addbot-skill'),
+			addbotTeam: document.getElementById('addbot-team'),
 			btnAddBot: document.getElementById('btn-add-bot'),
 			btnKickBots: document.getElementById('btn-kick-bots'),
+			btnShuffleTeams: document.getElementById('btn-shuffle-teams'),
 			consoleBox: document.getElementById('console-box'),
 			consoleCmd: document.getElementById('console-cmd'),
 			btnExecCmd: document.getElementById('btn-exec-cmd'),
@@ -1143,13 +1183,29 @@
 		function renderPlayers(state) {
 			var players = (state && Array.isArray(state.players)) ? state.players : [];
 			var isJapp = !!(state && state.japp && state.japp.active);
+			var isTeamGame = !!(state && state.gametype >= 6);
 			if (players.length === 0) {
-				els.playersTbody.innerHTML = '<tr><td colspan="6" class="empty-row">No players connected yet. Share the Join Link or add bots below!</td></tr>';
+				els.playersTbody.innerHTML = '<tr><td colspan="7" class="empty-row">No players connected yet. Share the Join Link or add bots below!</td></tr>';
+				return;
+			}
+			// Avoid disrupting an open team dropdown if the user is interacting with it
+			if (document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('team-select')) {
 				return;
 			}
 			var html = '';
 			for (var i = 0; i < players.length; i++) {
 				var p = players[i];
+				var t = p.team | 0;
+				var teamClass = t === 1 ? 'team-red' : (t === 2 ? 'team-blue' : (t === 3 ? 'team-spec' : 'team-free'));
+				var curVal = t === 1 ? 'red' : (t === 2 ? 'blue' : (t === 3 ? 's' : 'free'));
+				var teamOpts = isTeamGame
+					? ('<option value="red"' + (curVal === 'red' ? ' selected' : '') + '>Red</option>' +
+						'<option value="blue"' + (curVal === 'blue' ? ' selected' : '') + '>Blue</option>' +
+						'<option value="s"' + (curVal === 's' ? ' selected' : '') + '>Spectator</option>')
+					: ('<option value="free"' + (curVal === 'free' ? ' selected' : '') + '>Playing</option>' +
+						'<option value="s"' + (curVal === 's' ? ' selected' : '') + '>Spectator</option>');
+				var teamCell = '<select class="team-select ' + teamClass + '" data-pid="' + p.id + '" title="Switch player team">' + teamOpts + '</select>';
+
 				var actions = '<button class="btn btn-danger btn-sm p-act" data-cmd="clientkick ' + p.id + '" type="button">Kick</button>';
 				if (isJapp) {
 					actions += ' <button class="btn btn-secondary btn-sm p-act" data-cmd="amslap ' + p.id + '" type="button">Slap</button>';
@@ -1159,6 +1215,7 @@
 				html += '<tr>' +
 					'<td><code>' + p.id + '</code></td>' +
 					'<td><strong>' + renderQuakeText(p.name || 'Unnamed', false) + '</strong></td>' +
+					'<td>' + teamCell + '</td>' +
 					'<td>' + (p.isBot ? '<span class="tag-bot">Bot</span>' : '<span class="tag-human">Human</span>') + '</td>' +
 					'<td>' + (p.score || 0) + '</td>' +
 					'<td>' + (p.isBot ? '—' : ((p.ping || 0) + ' ms')) + '</td>' +
@@ -1180,8 +1237,11 @@
 			els.statFps.textContent = (state.svFps || 20) + ' Hz';
 
 			var isJapp = !!(state.japp && state.japp.active);
+			var isTeamGame = (state.gametype >= 6);
 			els.liveModBadge.textContent = isJapp ? (state.japp.version || 'JA++') : (state.gameDir || 'base');
 			els.liveModBadge.classList.add('online');
+			els.addbotTeam.classList.toggle('hidden', !isTeamGame);
+			els.btnShuffleTeams.classList.toggle('hidden', !(isJapp && isTeamGame));
 
 			var jappOnlyBtns = document.querySelectorAll('.japp-only');
 			for (var i = 0; i < jappOnlyBtns.length; i++) {
@@ -1459,10 +1519,14 @@
 		});
 
 		els.btnAddBot.addEventListener('click', function () {
-			execCmd('addbot "' + els.addbotChar.value + '" ' + els.addbotSkill.value);
+			var team = (!els.addbotTeam.classList.contains('hidden') && els.addbotTeam.value) ? (' ' + els.addbotTeam.value) : '';
+			execCmd('addbot "' + els.addbotChar.value + '" ' + els.addbotSkill.value + team);
 		});
 		els.btnKickBots.addEventListener('click', function () {
 			execCmd('kick allbots');
+		});
+		els.btnShuffleTeams.addEventListener('click', function () {
+			execCmd('shuffle');
 		});
 
 		els.playersTbody.addEventListener('click', function (ev) {
@@ -1470,6 +1534,17 @@
 			if (!btn) return;
 			var cmd = btn.getAttribute('data-cmd');
 			if (cmd) execCmd(cmd);
+		});
+
+		els.playersTbody.addEventListener('change', function (ev) {
+			var sel = ev.target.closest('.team-select');
+			if (!sel) return;
+			var pid = sel.getAttribute('data-pid');
+			var team = sel.value;
+			if (pid != null && team) {
+				sel.blur();
+				execCmd('forceteam ' + pid + ' ' + team);
+			}
 		});
 
 		function submitConsoleCmd() {

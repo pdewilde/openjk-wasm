@@ -821,6 +821,7 @@
 						Import JSON
 						<input id="cfg-import-input" type="file" accept=".json,application/json" style="display:none;">
 					</label>
+					<button id="btn-reset-cfg" class="btn btn-secondary btn-sm" type="button" title="Reset all server settings, weapons, force powers, bot rules, and Lua toggles back to defaults">Reset Defaults</button>
 					<span id="phase-badge" class="phase-badge">Stopped</span>
 				</div>
 			</div>
@@ -1836,6 +1837,7 @@
 			cfgPassword: document.getElementById('cfg-password'),
 			btnExportCfg: document.getElementById('btn-export-cfg'),
 			cfgImportInput: document.getElementById('cfg-import-input'),
+			btnResetCfg: document.getElementById('btn-reset-cfg'),
 			cfgIoMsg: document.getElementById('cfg-io-msg'),
 			cfgMaxForceRank: document.getElementById('cfg-maxforcerank'),
 			cfgGravity: document.getElementById('cfg-gravity'),
@@ -2804,6 +2806,58 @@
 			} catch (err) {
 				showCfgIoMsg('Invalid JSON: ' + err.message, true);
 			}
+		});
+
+		els.btnResetCfg.addEventListener('click', function () {
+			var defaultLua = [];
+			for (var bi = 0; bi < BUILTIN_LUA_PLUGINS.length; bi++) {
+				if (BUILTIN_LUA_PLUGINS[bi].defaultOn) defaultLua.push(BUILTIN_LUA_PLUGINS[bi].id);
+			}
+			applyFullConfigJson({
+				hostname: 'OpenJK Web Server',
+				mod: els.cfgMod.value.trim(),
+				gametype: 0,
+				map: 'mp/ffa1',
+				customMap: '',
+				maxClients: 32,
+				fraglimit: 20,
+				timelimit: 15,
+				botCount: 2,
+				botSkill: 2,
+				password: '',
+				rules: {
+					maxForceRank: 7,
+					gravity: 800,
+					speed: 250,
+					knockback: 1000,
+					forceRegenTime: 200,
+					saberDamageScale: 1.0,
+					friendlyFire: false,
+					dismember: false,
+					saberLocking: true,
+					forceBasedTeams: false,
+					allowVote: true,
+					autoMapCycle: false,
+					allowNPC: true,
+					weaponDisable: 0,
+					forcePowerDisable: 0
+				},
+				jappOpts: {
+					unlagged: true,
+					promode: false,
+					vq3: false,
+					hook: false,
+					jetpack: false,
+					instagib: false
+				},
+				botRules: {
+					noForce: false,
+					mercMode: false,
+					weaponDisable: 0
+				},
+				luaEnabled: defaultLua
+			});
+			showCfgIoMsg('Reset to defaults' + (running ? ' (restart server to apply)' : ''), false);
 		});
 
 		// Advanced Gameplay & Physics Rules listeners

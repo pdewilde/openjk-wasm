@@ -3,12 +3,12 @@
 		{
 			"id": "japp",
 			"name": "JA++",
-			"version": "japp-wasm-4",
+			"version": "japp-wasm-5",
 			"description": "Open-source Jedi Academy MP mod with JPLua scripting (clean-room init.lua + SQLite), improved physics, chat/scoreboard, and admin tools.",
 			"license": "GPLv2",
 			"sourceUrl": "https://github.com/pdewilde/japp-wasm",
 			"url": "mods/japp-wasm.zip",
-			"size": 1348422,
+			"size": 1352539,
 			"type": "code"
 		}
 	]

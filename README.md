@@ -32,6 +32,7 @@ Play **Star Wars Jedi Knight: Jedi Academy** (Singleplayer & Multiplayer) right 
 ## Known Limitations
 
 - **Singleplayer is currently untested:** Testing and polish so far have focused on Multiplayer. Singleplayer launches, but has not been thoroughly tested and likely has bugs.
+- **JA++ extra asset pack (`japp-assets`) is not bundled:** Because `Razish/japp-assets` has no open-source license, `japp-wasm` ships only GPLv2 code plus clean-room assets (`lua/init.lua` and a `?` `gfx/menus/missing_skin.tga` placeholder). To avoid blank tiles for BaseJKA skins that lack portraits, `ui_showMissingSkins` defaults to `0` in `japp-wasm` (matching vanilla OpenJK); if you previously launched JA++ and still see `?` tiles in the Character Model picker, run `/ui_showMissingSkins 0` and `/ui_restart` in the console (or set it to `1` if you want access to hidden/SP skins).
 - **Closed-source desktop code mods (`.dll` / `.so` / `.dylib`):** Mods that ship only precompiled native x86 binaries (such as **JA+ / japlus**) cannot run their custom game code in the browser without being compiled from source to WebAssembly. Their `.pk3` maps, sabers, skins, and animations still load, and the launcher flags them with an **Assets Only (x86 code)** badge.
 - **`Ctrl + W` in windowed mode or Firefox:** Browsers don't let web pages block `Ctrl+W` outside Chromium fullscreen mode. A "Leave site?" prompt helps prevent accidental tab closes—use **`Alt + Enter`** fullscreen in Chrome/Edge or rebind Crouch in-game for the smoothest experience.
 

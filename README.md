@@ -14,7 +14,7 @@ Play **Star Wars Jedi Knight: Jedi Academy** (Singleplayer & Multiplayer) right 
 
 - **Multiplayer in the Browser (plus Experimental Singleplayer):** Runs in modern Chrome, Edge, and Firefox with hardware-accelerated WebGL2 graphics and WebAudio sound. *(Singleplayer is included but currently untested and likely has bugs.)*
 - **Browser Multiplayer & Dedicated Server Hosting:** Host a full headless dedicated server (`openjkded.wasm32`) directly from your browser tab via **`server.html`** ("Host Dedicated Server") running inside a Web Worker on the `wtunnel` Virtual LAN — complete with a live Control Deck, 1-click Join Links, automatic Local/LAN browser discovery, all 43 JKA bots, live map/gametype/team switching, collapsible **Weapon / Force Power / Physics** rules, and **JSON config export/import**.
-- **Easy Mod Support + JA++ JPLua & SQLite:** Enable built-in FOSS mods like **JA++** with a single checkbox (no upload needed!), or drag and drop your own `.zip`, `.pk3`, or mod folders right onto the home page. Dedicated JA++ servers support hot-reloadable **JPLua** server scripts + bundled **SQLite**, including built-in plugins for **Auto-Bot Balancing**, **Bot-Only Weapon/Force Restrictions**, **SQLite Stats DB**, **Killstreaks**, and **Vampire**.
+- **Easy Mod Support + Built-In [JA++ (`japp-wasm`)](https://github.com/pdewilde/japp-wasm):** Enable **JA++** with a single checkbox (no upload needed!), powered by our WebAssembly fork [pdewilde/japp-wasm](https://github.com/pdewilde/japp-wasm) (forked from [Razish/japp](https://github.com/Razish/japp)), or drag and drop your own `.zip`, `.pk3`, or mod folders right onto the home page. Dedicated JA++ servers support hot-reloadable **JPLua** server scripts + bundled **SQLite**, including built-in plugins for **Auto-Bot Balancing**, **Bot-Only Weapon/Force Restrictions**, **SQLite Stats DB**, **Killstreaks**, and **Vampire**.
 - **Saved Locally:** Your singleplayer saves, settings, server Lua scripts, SQLite databases, and installed mods are stored locally in your browser (OPFS).
 - **Display & Controls:** Defaults to a classic crisp **4:3** aspect ratio fitted to your window, with a pre-launch resolution picker under **Advanced options**, live in-game resolution & brightness sliders, and shareable map/server links.
 
@@ -39,9 +39,19 @@ Play **Star Wars Jedi Knight: Jedi Academy** (Singleplayer & Multiplayer) right 
 
 ## Technical & Developer Documentation
 
+- **[JA++ WebAssembly Fork (`pdewilde/japp-wasm`)](https://github.com/pdewilde/japp-wasm)** — Fork of [Razish/japp](https://github.com/Razish/japp) compiled to OpenJK WebAssembly `SIDE_MODULE=2` binaries (`cgamewasm32.wasm`, `jampgamewasm32.wasm`, `uiwasm32.wasm`) with bundled SQLite and a clean-room GPLv2 `lua/init.lua` JPLua bootstrap. Automatically fetched and version-synced into OPFS via `wasm/mods/catalog.json` for both the browser client and the Web Worker dedicated server (`server.html?mod=japp`).
 - **[Building & Self-Hosting Guide (`wasm/BUILDING.md`)](wasm/BUILDING.md)** — Emscripten build instructions, architecture details, progressive asset streaming (`gen_asset_manifest.py`), and running the `wtunnel` WebTransport server.
 - **[Native WebAssembly Mod SDK (`wasm/mod-sdk/README.md`)](wasm/mod-sdk/README.md)** — Compiling C/C++ multiplayer mods to WebAssembly (`SIDE_MODULE=2`) and building the sample mod.
 - **[Original Upstream OpenJK README (`README_ORIG.md`)](README_ORIG.md)** — Desktop OpenJK documentation and contributor credits.
+
+---
+
+## Contributing & Bug Reports
+
+Found a bug, hit a browser quirk, or want to help test Singleplayer, Multiplayer, or Dedicated Server hosting? Contributions are very welcome!
+
+- **Report bugs or request features:** Open an issue on [openjk-wasm Issues](https://github.com/pdewilde/openjk-wasm/issues) (or [japp-wasm Issues](https://github.com/pdewilde/japp-wasm/issues) for JA++-specific bugs). Including your browser/OS and any console log output (`Ctrl + \``) helps a lot.
+- **Submit Pull Requests:** PRs for bug fixes, browser compatibility, UI improvements, Lua server plugins, and documentation are always welcome on both [openjk-wasm](https://github.com/pdewilde/openjk-wasm/pulls) and [japp-wasm](https://github.com/pdewilde/japp-wasm/pulls).
 
 ---
 

@@ -13,9 +13,9 @@ Play **Star Wars Jedi Knight: Jedi Academy** (Singleplayer & Multiplayer) right 
 ## Features
 
 - **Multiplayer in the Browser (plus Experimental Singleplayer):** Runs in modern Chrome, Edge, and Firefox with hardware-accelerated WebGL2 graphics and WebAudio sound. *(Singleplayer is included but currently untested and likely has bugs.)*
-- **Browser Multiplayer:** Host or join multiplayer matches directly from the browser via WebTransport.
-- **Easy Mod Support:** Enable built-in FOSS mods like **JA++** with a single checkbox (no upload needed!), or drag and drop your own `.zip`, `.pk3`, or mod folders right onto the home page.
-- **Saved Locally:** Your singleplayer saves, settings, and installed mods are stored locally in your browser.
+- **Browser Multiplayer & Dedicated Server Hosting:** Host a full headless dedicated server (`openjkded.wasm32`) directly from your browser tab via **`server.html`** ("Host Dedicated Server") running inside a Web Worker on the `wtunnel` Virtual LAN — complete with a live Control Deck, 1-click Join Links, automatic Local/LAN browser discovery, all 43 JKA bots, live map/gametype/team switching, collapsible **Weapon / Force Power / Physics** rules, and **JSON config export/import**.
+- **Easy Mod Support + JA++ JPLua & SQLite:** Enable built-in FOSS mods like **JA++** with a single checkbox (no upload needed!), or drag and drop your own `.zip`, `.pk3`, or mod folders right onto the home page. Dedicated JA++ servers support hot-reloadable **JPLua** server scripts + bundled **SQLite**, including built-in plugins for **Auto-Bot Balancing**, **Bot-Only Weapon/Force Restrictions**, **SQLite Stats DB**, **Killstreaks**, and **Vampire**.
+- **Saved Locally:** Your singleplayer saves, settings, server Lua scripts, SQLite databases, and installed mods are stored locally in your browser (OPFS).
 - **Display & Controls:** Defaults to a classic crisp **4:3** aspect ratio fitted to your window, with a pre-launch resolution picker under **Advanced options**, live in-game resolution & brightness sliders, and shareable map/server links.
 
 ---

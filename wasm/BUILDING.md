@@ -8,11 +8,12 @@ For a player-oriented overview, see the root [README.md](../README.md). For nati
 
 ## Architecture Overview
 
-- **Modular `SIDE_MODULE=2` Layout:** Compiles Singleplayer (`openjk_sp.wasm32` + `jagamewasm32.wasm`) and Multiplayer (`openjk.wasm32` + `jampgamewasm32.wasm`, `cgamewasm32.wasm`, `uiwasm32.wasm`) as dynamically loaded Wasm side modules via `dlopen`.
+- **Modular `SIDE_MODULE=2` Layout:** Compiles Singleplayer (`openjk_sp.wasm32` + `jagamewasm32.wasm`), Multiplayer (`openjk.wasm32` + `jampgamewasm32.wasm`, `cgamewasm32.wasm`, `uiwasm32.wasm`), and the headless Web Worker Dedicated Server (`openjkded.wasm32` + `jampgamewasm32.wasm`) as dynamically loaded Wasm side modules via `dlopen`.
+- **Browser-Hosted Dedicated Server (`server.html` + `server_worker.js`):** Runs `openjkded.wasm32` inside a background Web Worker so tab switching never pauses the server tick loop, registers on `wtunnel`'s `100.64.0.0/10` Virtual LAN (visible in Local/LAN Server Browser and via `?connect=` join links), exposes GUI weapon/force/physics/bot/team controls + JSON config import/export, and supports JA++ JPLua + SQLite server plugins persisted in OPFS.
 - **Graphics, Audio, & Codegen:** GL4ES OpenGL-to-WebGL2 translation, OpenAL via Emscripten WebAudio, WebAssembly SIMD (`-msimd128`), and native Wasm exceptions (`-fwasm-exceptions`).
 - **Progressive HTTP `Range` Streaming + OPFS Caching:** `wasm/tools/gen_asset_manifest.py` extracts a small `00_boot.pk3` + `manifest.json` so menus boot quickly while map assets stream on demand via HTTP `Range` requests and cache in the browser's Origin Private File System (OPFS).
 - **Hybrid WebTransport Relay (`wasm/wtunnel`):** Tunnels Quake 3 / JKA UDP packets over HTTP/3 WebTransport datagrams with automatic framed unidirectional stream fallback for oversized packets, plus per-IP/global session & rate limiting and optional HTTP Basic Auth for `/base/*`.
-- **URL Launch Parameters:** `openjk.wasm32.html` and `openjk_sp.wasm32.html` support `?res=<auto43|window|WxH>`, `?mod=<fs_game>`, `?map=<mapname>`, `?connect=<host:port>`, `?allowdownload=1`, and `?args=<raw_args>`.
+- **URL Launch Parameters:** `openjk.wasm32.html` and `openjk_sp.wasm32.html` support `?res=<auto43|window|WxH>`, `?mod=<fs_game>`, `?map=<mapname>`, `?connect=<host:port>`, `?allowdownload=1`, and `?args=<raw_args>`. `server.html` supports `?mod=<fs_game>`.
 
 ---
 
@@ -38,22 +39,25 @@ emcmake cmake -S . -B build-wasm \
   -DBUILD_CGAME=ON \
   -DBUILD_UI=ON \
   -DBUILD_SP_GAME=ON \
-  -DBUILD_DEDICATED=OFF
+  -DBUILD_DEDICATED=ON
 
 cmake --build build-wasm -j
 ```
 
-Stage the built artifacts, launcher, and icons into a web root (for example `dist/`):
+Stage the built artifacts, launcher, dedicated server UI, and icons into a web root (for example `dist/`):
 
 ```bash
 mkdir -p dist/base dist/icons dist/mods
 cp build-wasm/openjk.wasm32.{html,js,wasm} dist/
 cp build-wasm/openjk_sp.wasm32.{html,js,wasm} dist/
+cp build-wasm/openjkded.wasm32.{js,wasm} dist/
 cp build-wasm/codemp/game/jampgamewasm32.wasm dist/
 cp build-wasm/codemp/cgame/cgamewasm32.wasm dist/
 cp build-wasm/codemp/ui/uiwasm32.wasm dist/
 cp build-wasm/code/game/jagamewasm32.wasm dist/
 cp wasm/index.html dist/index.html
+cp wasm/server.html dist/server.html
+cp wasm/server_worker.js dist/server_worker.js
 cp wasm/gog_extractor.js dist/gog_extractor.js
 cp wasm/icons/mp128.png wasm/icons/sp128.png dist/icons/
 cp wasm/mods/catalog.json dist/mods/catalog.json
